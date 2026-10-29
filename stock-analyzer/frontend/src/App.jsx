@@ -29,7 +29,8 @@ export default function App() {
   }
 
   const handleLogout = async () => {
-    try { await api.logout() } finally {
+    try { await api.logout() } catch { /* serveur injoignable : on déconnecte quand même */ } finally {
+      storedEmail.clear()
       setUser(null)
     }
   }
@@ -48,6 +49,6 @@ export default function App() {
   if (user === undefined) {
     return <div className="flex min-h-full items-center justify-center"><Spinner /></div>
   }
-  if (!user) return <LoginScreen onLogin={handleLogin} defaultEmail={storedEmail.get() || ''} />
+  if (!user) return <LoginScreen onLogin={handleLogin} />
   return <AppLayout user={user} onLogout={handleLogout} />
 }

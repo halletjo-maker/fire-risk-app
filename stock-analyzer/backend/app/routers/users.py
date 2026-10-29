@@ -1,10 +1,11 @@
 """Module 1 — identification par adresse mail (sans mot de passe)."""
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, EmailStr
 
 from ..database import get_conn
+from ..deps import current_user
 
 router = APIRouter(prefix="/users", tags=["utilisateur"])
 
@@ -58,3 +59,35 @@ def logout() -> dict:
     with get_conn() as conn:
         conn.execute("DELETE FROM app_settings WHERE key = ?", (ACTIVE_USER_KEY,))
     return {"user": None}
+
+
+@router.get("/known")
+def known_users() -> dict:
+    """Comptes déjà utilisés sur cette installation (choix rapide à l'écran d'accueil)."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT email, last_login_at FROM users ORDER BY last_login_at DESC LIMIT 10"
+        ).fetchall()
+    return {"users": [dict(r) for r in rows]}
+
+
+@router.get("/me")
+def me(user: dict = Depends(current_user)) -> dict:
+    """Profil de l'utilisateur identifié + quelques chiffres."""
+    uid = user["id"]
+    with get_conn() as conn:
+        stats = conn.execute(
+            """
+            SELECT
+              (SELECT COUNT(*) FROM watchlists WHERE user_id = :u) AS watchlists,
+              (SELECT COUNT(*) FROM watchlist_items i
+                 JOIN watchlists w ON w.id = i.watchlist_id WHERE w.user_id = :u) AS products,
+              (SELECT COUNT(*) FROM alerts a
+                 JOIN watchlist_items i ON i.id = a.item_id
+                 JOIN watchlists w ON w.id = i.watchlist_id
+                 WHERE w.user_id = :u AND a.enabled = 1) AS active_alerts,
+              (SELECT COUNT(*) FROM analysis_history WHERE user_id = :u) AS analyses
+            """,
+            {"u": uid},
+        ).fetchone()
+    return {"user": user, "stats": dict(stats)}

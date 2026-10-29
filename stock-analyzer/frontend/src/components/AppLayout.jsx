@@ -3,6 +3,7 @@ import { api } from '../lib/api'
 import Sidebar from './Sidebar'
 import MobileHeader from './MobileHeader'
 import MainArea from './MainArea'
+import ProfileModal from './ProfileModal'
 
 const selKey = (email) => `ab_selected_watchlist:${email}`
 
@@ -14,6 +15,7 @@ export default function AppLayout({ user, onLogout }) {
     try { return Number(localStorage.getItem(selKey(user.email))) || null } catch { return null }
   })
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -50,7 +52,8 @@ export default function AppLayout({ user, onLogout }) {
   }
 
   const selected = watchlists.find((w) => w.id === selectedId) || null
-  const sidebarProps = { user, watchlists, loading, error, selectedId, onSelect: select, onCreate: create, onLogout }
+  const sidebarProps = { user, watchlists, loading, error, selectedId, onSelect: select, onCreate: create, onLogout,
+    onProfile: () => { setDrawerOpen(false); setProfileOpen(true) } }
 
   return (
     <div className="flex h-full">
@@ -68,6 +71,8 @@ export default function AppLayout({ user, onLogout }) {
           </aside>
         </div>
       )}
+
+      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} onLogout={onLogout} />}
 
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileHeader

@@ -55,7 +55,7 @@ function NewWatchlistForm({ onCreate, onDone }) {
   )
 }
 
-export default function Sidebar({ user, watchlists, loading, error, selectedId, onSelect, onCreate, onLogout, onClose }) {
+export default function Sidebar({ user, watchlists, loading, error, selectedId, onSelect, onCreate, onLogout, onProfile, onClose }) {
   const [creating, setCreating] = useState(false)
 
   return (
@@ -113,7 +113,11 @@ export default function Sidebar({ user, watchlists, loading, error, selectedId, 
 
       {/* Profil : mail actif + changement d'utilisateur */}
       <div className="border-t border-line p-3">
-        <div className="flex items-center gap-3 px-2 py-1">
+        <button
+          onClick={onProfile}
+          className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-panel2"
+          title="Voir mon profil"
+        >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bull/15 font-semibold text-bull">
             {user.email[0].toUpperCase()}
           </div>
@@ -121,7 +125,7 @@ export default function Sidebar({ user, watchlists, loading, error, selectedId, 
             <p className="text-xs text-muted">Connecté en tant que</p>
             <p className="truncate text-sm" title={user.email}>{user.email}</p>
           </div>
-        </div>
+        </button>
         <button className="btn-ghost mt-2 w-full justify-center" onClick={onLogout}>
           <LogOut className="h-4 w-4" /> Changer d'utilisateur
         </button>

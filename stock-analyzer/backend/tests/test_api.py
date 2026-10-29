@@ -71,3 +71,31 @@ def test_alerts_deleted_with_item(client):
         conn.execute("DELETE FROM watchlists WHERE id = ?", (wl_id,))
         assert conn.execute("SELECT COUNT(*) FROM watchlist_items").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM alerts").fetchone()[0] == 0
+
+
+def test_profile_and_known_users(client):
+    client.post("/users/login", json={"email": "a@exemple.be"})
+    client.post("/users/login", json={"email": "b@exemple.be"})
+    h = {"X-User-Email": "A@Exemple.be"}  # casse indifférente
+    client.post("/watchlists", json={"name": "Tech US"}, headers=h)
+
+    r = client.get("/users/me", headers=h)
+    assert r.status_code == 200
+    assert r.json()["user"]["email"] == "a@exemple.be"
+    assert r.json()["stats"] == {"watchlists": 1, "products": 0, "active_alerts": 0, "analyses": 0}
+    assert client.get("/users/me").status_code == 401
+
+    known = [u["email"] for u in client.get("/users/known").json()["users"]]
+    assert set(known) == {"a@exemple.be", "b@exemple.be"}
+
+
+def test_data_kept_after_switching_user(client):
+    """Changer d'utilisateur ne supprime rien : on retrouve ses watchlists en revenant."""
+    client.post("/users/login", json={"email": "a@exemple.be"})
+    client.post("/watchlists", json={"name": "Long terme"}, headers={"X-User-Email": "a@exemple.be"})
+    client.post("/users/logout")
+    client.post("/users/login", json={"email": "b@exemple.be"})
+    client.post("/users/logout")
+    client.post("/users/login", json={"email": "a@exemple.be"})
+    names = [w["name"] for w in client.get("/watchlists", headers={"X-User-Email": "a@exemple.be"}).json()["watchlists"]]
+    assert names == ["Long terme"]

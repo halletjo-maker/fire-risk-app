@@ -181,6 +181,8 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | POST | `/users/login` | Identification par mail (création si nouveau) |
 | GET | `/users/current` | Utilisateur mémorisé |
 | POST | `/users/logout` | Changer d'utilisateur |
+| GET | `/users/known` | Comptes déjà utilisés (choix rapide) |
+| GET | `/users/me` | Profil + statistiques (en-tête `X-User-Email`) |
 | GET / POST | `/watchlists` | Lister / créer (en-tête `X-User-Email`) |
 | GET | `/analyze?q=...` | Analyse — vide pour l'instant |
 
@@ -199,7 +201,7 @@ python -m pytest -q
 ## 🗺️ Avancement
 
 - [x] **Étape 0** — Structure, backend FastAPI, SQLite, APScheduler, layout React
-- [ ] Module 1 — Identification utilisateur
+- [x] **Module 1** — Identification utilisateur (profil, comptes récents)
 - [ ] Module 2 — Recherche et identification du produit
 - [ ] Module 3 — Analyse fondamentale
 - [ ] Module 4 — Analyse technique (MM100)

@@ -31,6 +31,8 @@ export const api = {
   currentUser: () => request('/users/current'),
   login: (email) => request('/users/login', { method: 'POST', body: { email } }),
   logout: () => request('/users/logout', { method: 'POST' }),
+  knownUsers: () => request('/users/known'),
+  me: () => request('/users/me'),
   watchlists: () => request('/watchlists'),
   createWatchlist: (name, color) => request('/watchlists', { method: 'POST', body: { name, color } }),
   analyze: (q) => request(`/analyze?q=${encodeURIComponent(q)}`),
