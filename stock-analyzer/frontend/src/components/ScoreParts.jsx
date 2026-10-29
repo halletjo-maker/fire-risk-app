@@ -46,6 +46,9 @@ export const VERDICT_STYLE = {
   Solide: 'border-bull/40 bg-bull/10 text-bull',
   Correct: 'border-warn/40 bg-warn/10 text-warn',
   Fragile: 'border-bear/40 bg-bear/10 text-bear',
+  Positif: 'border-bull/40 bg-bull/10 text-bull',
+  Neutre: 'border-warn/40 bg-warn/10 text-warn',
+  Négatif: 'border-bear/40 bg-bear/10 text-bear',
 }
 
 export function ScoreHeader({ title, subtitle, score, verdict }) {

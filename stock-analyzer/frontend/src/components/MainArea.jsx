@@ -9,6 +9,7 @@ import ProductCard from './ProductCard'
 import TypeBadge from './TypeBadge'
 import FundamentalsCard from './FundamentalsCard'
 import TechnicalCard from './TechnicalCard'
+import SentimentCard from './SentimentCard'
 
 const TABS = [
   { id: 'achat', label: 'ACHAT', icon: TrendingUp, active: 'border-bull text-bull', },
@@ -41,7 +42,7 @@ function DecisionTabs({ product, scores = {} }) {
           </p>
           <p className="mt-1">
             {product
-              ? 'Scores technique et fondamental ci-dessous. Score global, stop-loss et rapport : Modules 5 à 7.'
+              ? 'Scores technique et fondamental ci-dessous. Score global, stop-loss et rapport : Modules 6 et 7.'
               : 'Lance une recherche pour obtenir le score global /10, la position vs MM100, les stop-loss proposés et le rapport justificatif.'}
           </p>
         </div>
@@ -105,6 +106,7 @@ export default function MainArea({ watchlist }) {
   const [error, setError] = useState(null)
   const [fund, setFund] = useState({ data: null, loading: false, error: null })
   const [tech, setTech] = useState({ data: null, loading: false, error: null })
+  const [senti, setSenti] = useState({ data: null, loading: false, error: null })
   const latest = useRef(0)
 
   const loadFundamentals = async (product, run) => {
@@ -114,6 +116,16 @@ export default function MainArea({ watchlist }) {
       if (latest.current === run) setFund({ data: r.fundamentals, loading: false, error: null })
     } catch (e) {
       if (latest.current === run) setFund({ data: null, loading: false, error: e.message })
+    }
+  }
+
+  const loadSentiment = async (product, run) => {
+    setSenti({ data: null, loading: true, error: null })
+    try {
+      const r = await api.sentiment(product.id, product.isin)
+      if (latest.current === run) setSenti({ data: r.sentiment, loading: false, error: null })
+    } catch (e) {
+      if (latest.current === run) setSenti({ data: null, loading: false, error: e.message })
     }
   }
 
@@ -138,6 +150,7 @@ export default function MainArea({ watchlist }) {
         setResult(r)
         loadFundamentals(r.product, run)
         loadTechnical(r.product, run)
+        loadSentiment(r.product, run)
       } else setError(r.message)
     } catch (e) {
       if (latest.current === run) setError(e.message)
@@ -164,9 +177,10 @@ export default function MainArea({ watchlist }) {
               <ProductCard result={result} />
             </div>
           )}
-          <DecisionTabs product={result?.product} scores={{ fundamental: fund.data?.score, technical: tech.data?.score }} />
+          <DecisionTabs product={result?.product} scores={{ fundamental: fund.data?.score, technical: tech.data?.score, sentiment: senti.data?.score }} />
           {result && <TechnicalCard {...tech} />}
           {result && <FundamentalsCard {...fund} />}
+          {result && <SentimentCard {...senti} />}
           {result && <Alternatives items={result.alternatives} query={result.query} onPick={(c) => analyze(result.query, c)} />}
         </div>
         <div className="min-w-0 space-y-4">

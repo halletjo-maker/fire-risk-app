@@ -111,6 +111,15 @@ def info(symbol: str) -> dict | None:
     return data
 
 
+def calendar(symbol: str) -> dict | None:
+    """Calendrier Yahoo : résultats, détachement et versement du dividende."""
+    try:
+        cal = yf.Ticker(symbol).calendar
+    except Exception:
+        return None
+    return cal if isinstance(cal, dict) else None
+
+
 def next_earnings(symbol: str):
     """Date des prochains résultats trimestriels (datetime.date) ou None."""
     try:

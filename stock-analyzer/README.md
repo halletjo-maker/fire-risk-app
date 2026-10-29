@@ -188,6 +188,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET | `/quote?id=...` | Cours d'un produit (`yf:NOW`, `bo:/bourse/...`) avec fallback |
 | GET | `/fundamentals?id=...` | Module 3 — analyse fondamentale et score /10 |
 | GET | `/technical?id=...` | Module 4 — analyse technique (MM100), score /10 et données du graphique |
+| GET | `/sentiment?id=...` | Module 5 — actualités 72 h, sentiment par titre, événements, score /10 |
 | GET | `/analyze?q=...` | Identification + cours (+ enregistrement dans l'historique). Scores aux Modules 3 à 6 |
 
 ---
@@ -209,7 +210,7 @@ python -m pytest -q
 - [x] **Module 2** — Recherche et identification du produit
 - [x] **Module 3** — Analyse fondamentale
 - [x] **Module 4** — Analyse technique (MM100)
-- [ ] Module 5 — Actualités et sentiment
+- [x] **Module 5** — Actualités et sentiment
 - [ ] Module 6 — Décision Achat / Vente
 - [ ] Module 7 — Rapport justificatif
 - [ ] Module 8 — Watchlists multiples
@@ -270,6 +271,22 @@ python -m pytest -q
 - Graphique interactif : chandeliers + MM50 / MM100 / MM200 (+ Bollinger en option),
   MACD et RSI dans des panneaux séparés synchronisés, périodes 3M / 6M / 1A, infobulle,
   vue tableau des 10 dernières séances. Couleurs des moyennes validées pour le daltonisme.
+
+### Actualités et sentiment (Module 5)
+
+- **Sources** : Google News RSS en français (édition Belgique) et en anglais ; NewsAPI en
+  plus si `NEWSAPI_KEY` est renseignée dans `.env`.
+- **Sélection** : les 10 titres les plus récents (72 h) qui **citent le produit**. Les pages
+  de cotation, les doublons et, en anglais, les homonymes sans contexte boursier
+  (ex. la ville de Solvay, NY) sont écartés.
+- **Sentiment par titre** 🟢 🟡 🔴 : lexique financier FR/EN (« plonge », « abaisse son
+  objectif », « beats estimates »…), négations gérées ; les mots repérés sont affichés.
+- **Score /10** = 5 + 5 × moyenne (titres de moins de 24 h plus lourds), ramené vers 5 s'il
+  y a moins de 5 articles. Verdict : Positif ≥ 6 · Négatif ≤ 4.
+- **Événements à venir** (30 jours) : résultats trimestriels, détachement / versement du
+  dividende ; avertissement si les résultats tombent dans les 48 h.
+- Produit dérivé : actualités du **sous-jacent** ; pour un **put**, score inversé.
+- ETF : actualités de l'indice suivi (souvent peu nombreuses → score proche de 5).
 
 ### Choix techniques à noter
 - **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.
