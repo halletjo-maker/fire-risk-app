@@ -8,10 +8,17 @@ export const storedEmail = {
   clear: () => { try { localStorage.removeItem(STORAGE_KEY) } catch { /* idem */ } },
 }
 
+// Mode démo (VITE_DEMO=1) : API simulée dans la page, sans serveur
+export const DEMO = import.meta.env.VITE_DEMO === '1'
+
 async function request(path, { method = 'GET', body, signal } = {}) {
   const headers = { 'Content-Type': 'application/json' }
   const email = storedEmail.get()
   if (email) headers['X-User-Email'] = email
+  if (DEMO) {
+    const { mockRequest } = await import('../demo/mockApi.js')
+    return mockRequest(path, { method, body, headers })
+  }
   let res
   try {
     res = await fetch(BASE + path, { method, headers, signal, body: body ? JSON.stringify(body) : undefined })

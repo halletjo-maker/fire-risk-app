@@ -18,3 +18,4 @@ frontend/dist/
 .vscode/
 .idea/
 backend/data/outbox/
+dist-demo/

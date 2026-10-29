@@ -126,15 +126,16 @@ export default function ReportCard({ data, loading, error, onPick }) {
 
   const copy = async () => {
     const text = asText(r)
-    try {
-      if (navigator.share && /Mobi|Android|iPhone/i.test(navigator.userAgent)) {
-        await navigator.share({ title: `Rapport ${r.product.name}`, text })
-      } else {
-        await navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+    if (navigator.share && /Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+      try { await navigator.share({ title: `Rapport ${r.product.name}`, text }); return } catch (e) {
+        if (e?.name === 'AbortError') return // partage annulé par l'utilisateur
       }
-    } catch { /* partage annulé */ }
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { /* presse-papiers refusé */ }
   }
 
   return (

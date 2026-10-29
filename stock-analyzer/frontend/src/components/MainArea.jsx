@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { api } from '../lib/api'
+import { api, DEMO } from '../lib/api'
 import { changeColor, fmtPct } from '../lib/format'
 import { Spinner } from './ui'
 import { useWatchlists } from '../lib/watchlists'
@@ -13,6 +13,31 @@ import TechnicalCard from './TechnicalCard'
 import SentimentCard from './SentimentCard'
 import DecisionPanel from './DecisionPanel'
 import ReportCard from './ReportCard'
+
+function DemoBanner({ onPick }) {
+  const data = window.__DEMO_DATA__ || { products: {} }
+  const at = data.recorded_at
+  const day = at ? new Date(at.slice(0, 10)).toLocaleDateString('fr-BE', { day: 'numeric', month: 'long' }) : ''
+  const short = (n) => n.split(/,| - | \(|\bUCITS\b/)[0].replace(/\s+(SA|NV|N\.V\.|S\.A\.|PLC|Inc\.?|SE)$/i, '').trim()
+  const items = Object.entries(data.products).map(([id, p]) => ({
+    id, symbol: p.analyze.product.symbol, name: short(p.analyze.product.name), type: p.analyze.product.type_label,
+  }))
+  return (
+    <details className="rounded-xl border border-warn/40 bg-warn/5 px-3 py-2 text-xs text-warn">
+      <summary className="cursor-pointer select-none">
+        <b>Démo</b> · données réelles du {day}, cours figés · <span className="underline">voir les {items.length} produits</span>
+      </summary>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {items.map((i) => (
+          <button key={i.id} onClick={() => onPick({ symbol: i.symbol || i.name, product_id: i.id })}
+            className="rounded-full border border-line bg-panel px-2 py-1 text-[11px] text-gray-200 hover:border-bull/60">
+            {i.name} <span className="text-muted">· {i.type}</span>
+          </button>
+        ))}
+      </div>
+    </details>
+  )
+}
 
 function Alternatives({ items, query, onPick }) {
   if (!items?.length) return null
@@ -111,6 +136,7 @@ export default function MainArea() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 p-3 xs:p-4 md:p-6">
+      {DEMO && <DemoBanner onPick={wl.analyze} />}
       <SearchBar onAnalyze={analyze} busy={busy} />
       {error && (
         <div className="card border-bear/40 p-4 text-sm text-bear" role="alert">{error}</div>

@@ -210,6 +210,18 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 
 ---
 
+## 📱 Démo hors ligne
+
+Une version de démonstration, sans serveur, peut être générée en un seul fichier HTML :
+l'API est simulée dans la page (`frontend/src/demo/mockApi.js`) à partir de réponses réelles
+enregistrées, injectées dans `window.__DEMO_DATA__`. Compte, watchlists et alertes y sont
+conservés dans le navigateur ; aucun mail n'est envoyé et les cours ne sont pas mis à jour.
+
+```bash
+cd frontend
+npm run build:demo        # → dist-demo/index.html (il reste à y injecter les données)
+```
+
 ## 🧪 Tests
 
 ```bash
