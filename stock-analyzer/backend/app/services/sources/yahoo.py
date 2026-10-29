@@ -135,3 +135,17 @@ def ytd_return(symbol: str) -> float | None:
     if before.empty:
         return None
     return round((float(closes.iloc[-1]) / float(before.iloc[-1]) - 1) * 100, 2)
+
+
+def history(symbol: str, period: str = "2y"):
+    """Historique journalier OHLCV (DataFrame avec colonnes open/high/low/close/volume) ou None."""
+    try:
+        hist = yf.Ticker(symbol).history(period=period, interval="1d", auto_adjust=False, raise_errors=False)
+    except Exception as exc:
+        logger.info("Historique Yahoo impossible (%s) : %s", symbol, exc)
+        return None
+    if hist is None or hist.empty:
+        return None
+    df = hist[["Open", "High", "Low", "Close", "Volume"]].rename(columns=str.lower).dropna(subset=["close"])
+    df.index = df.index.tz_localize(None) if df.index.tz is not None else df.index
+    return df if not df.empty else None

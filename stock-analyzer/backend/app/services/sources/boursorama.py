@@ -391,3 +391,31 @@ def etf_details(path: str) -> dict | None:
         "ytd_pct": None,
         "source": SOURCE,
     }
+
+
+def history(path: str, days: int = 730):
+    """Historique journalier Boursorama (secours) → DataFrame open/high/low/close/volume."""
+    import json
+
+    import pandas as pd
+
+    m = re.search(r"/cours/(?:[^/]+/)*([^/]+)/?$", path)
+    if not m:
+        return None
+    text = fetch_text(
+        f"{BASE}/bourse/action/graph/ws/GetTicksEOD",
+        params={"symbol": m.group(1), "length": str(days), "period": "0", "guid": ""},
+        headers={"X-Requested-With": "XMLHttpRequest", "Referer": f"{BASE}{path}"},
+    )
+    if not text:
+        return None
+    try:
+        ticks = json.loads(text)["d"]["QuoteTab"]
+    except (ValueError, KeyError, TypeError):
+        return None
+    if not ticks:
+        return None
+    df = pd.DataFrame(ticks)
+    df.index = pd.to_datetime(df["d"], unit="D")  # jours depuis le 01/01/1970
+    df = df.rename(columns={"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"})
+    return df[["open", "high", "low", "close", "volume"]].astype(float)

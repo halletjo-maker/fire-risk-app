@@ -187,6 +187,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET | `/search?q=...` | Propositions (nom, ticker, ISIN, mot-clé) avec type détecté |
 | GET | `/quote?id=...` | Cours d'un produit (`yf:NOW`, `bo:/bourse/...`) avec fallback |
 | GET | `/fundamentals?id=...` | Module 3 — analyse fondamentale et score /10 |
+| GET | `/technical?id=...` | Module 4 — analyse technique (MM100), score /10 et données du graphique |
 | GET | `/analyze?q=...` | Identification + cours (+ enregistrement dans l'historique). Scores aux Modules 3 à 6 |
 
 ---
@@ -207,7 +208,7 @@ python -m pytest -q
 - [x] **Module 1** — Identification utilisateur (profil, comptes récents)
 - [x] **Module 2** — Recherche et identification du produit
 - [x] **Module 3** — Analyse fondamentale
-- [ ] Module 4 — Analyse technique (MM100)
+- [x] **Module 4** — Analyse technique (MM100)
 - [ ] Module 5 — Actualités et sentiment
 - [ ] Module 6 — Décision Achat / Vente
 - [ ] Module 7 — Rapport justificatif
@@ -249,6 +250,26 @@ python -m pytest -q
 - **ZoneBourse** bloque les accès automatiques (HTTP 403) : il est remplacé par le
   consensus Boursorama (avis, objectif de cours, prévisions), **justETF** (ETF européens)
   et **CoinGecko** (cryptos, API publique gratuite).
+
+### Analyse technique (Module 4)
+
+| Critère | Poids | Lecture |
+|---|---|---|
+| ★ **Position vs MM100** | 35 | ✅ AU-DESSUS · ❌ EN-DESSOUS · ⚡ CROISEMENT (dans les 5 dernières séances) + écart en % et pente |
+| Tendance MM50 / MM200 | 15 | moyennes alignées à la hausse ou à la baisse |
+| RSI (14) | 15 | survente < 30, surachat > 70 |
+| MACD (12, 26, 9) | 15 | position vs signal, croisement du jour |
+| Bollinger (20, 2) | 10 | position dans les bandes |
+| Volume vs moyenne 20 j | 10 | mouvement confirmé ou non par les volumes |
+
+- Historique : Yahoo Finance (2 ans), secours Boursorama.
+- Supports / résistances : plus proches plus bas / plus hauts locaux des 6 derniers mois
+  (réutilisés pour les stop-loss du Module 7).
+- **Turbos / warrants** : l'analyse porte sur le **sous-jacent** (ex. LVMH → MC.PA) ;
+  pour un **put**, le score est inversé (10 − score), car un sous-jacent baissier lui est favorable.
+- Graphique interactif : chandeliers + MM50 / MM100 / MM200 (+ Bollinger en option),
+  MACD et RSI dans des panneaux séparés synchronisés, périodes 3M / 6M / 1A, infobulle,
+  vue tableau des 10 dernières séances. Couleurs des moyennes validées pour le daltonisme.
 
 ### Choix techniques à noter
 - **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.

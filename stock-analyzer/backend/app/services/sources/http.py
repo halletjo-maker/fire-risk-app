@@ -36,11 +36,13 @@ def _wait_turn(host: str) -> None:
         time.sleep(wait)
 
 
-def fetch_text(url: str, *, params: dict | None = None, timeout: float = 10) -> str | None:
+def fetch_text(
+    url: str, *, params: dict | None = None, headers: dict | None = None, timeout: float = 10
+) -> str | None:
     """Renvoie le contenu de la page, ou None en cas d'échec (jamais d'exception)."""
     _wait_turn(urlparse(url).netloc)
     try:
-        r = _session.get(url, params=params, timeout=timeout, allow_redirects=True)
+        r = _session.get(url, params=params, headers=headers, timeout=timeout, allow_redirects=True)
         if r.status_code != 200:
             logger.info("HTTP %s pour %s", r.status_code, url)
             return None

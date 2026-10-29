@@ -8,6 +8,7 @@ from fastapi import APIRouter, Header, HTTPException, Query
 from ..database import get_conn
 from ..services import fundamentals as fundamentals_service
 from ..services import market
+from ..services import technical as technical_service
 
 router = APIRouter(tags=["analyse"])
 
@@ -73,4 +74,19 @@ def fundamentals(
     return {
         "product": data["product"],
         "fundamentals": fundamentals_service.analyze(data["product"], data["quote"], data.get("derivative")),
+    }
+
+
+@router.get("/technical")
+def technical(
+    id: str = Query(..., description="Identifiant renvoyé par /search ou /analyze"),
+    isin: str | None = None,
+) -> dict:
+    """Module 4 — analyse technique (MM100 en critère principal) + données du graphique."""
+    data = market.get_quote(id, isin=isin)
+    if data is None:
+        raise HTTPException(status_code=503, detail="Produit indisponible sur toutes les sources")
+    return {
+        "product": data["product"],
+        "technical": technical_service.analyze(data["product"], data["quote"], data.get("derivative")),
     }
