@@ -8,14 +8,15 @@ export const storedEmail = {
   clear: () => { try { localStorage.removeItem(STORAGE_KEY) } catch { /* idem */ } },
 }
 
-async function request(path, { method = 'GET', body } = {}) {
+async function request(path, { method = 'GET', body, signal } = {}) {
   const headers = { 'Content-Type': 'application/json' }
   const email = storedEmail.get()
   if (email) headers['X-User-Email'] = email
   let res
   try {
-    res = await fetch(BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined })
-  } catch {
+    res = await fetch(BASE + path, { method, headers, signal, body: body ? JSON.stringify(body) : undefined })
+  } catch (e) {
+    if (e.name === 'AbortError') throw e
     throw new Error('Serveur injoignable. Le backend est-il lancé ?')
   }
   const data = await res.json().catch(() => ({}))
@@ -35,7 +36,13 @@ export const api = {
   me: () => request('/users/me'),
   watchlists: () => request('/watchlists'),
   createWatchlist: (name, color) => request('/watchlists', { method: 'POST', body: { name, color } }),
-  analyze: (q) => request(`/analyze?q=${encodeURIComponent(q)}`),
+  search: (q, signal) => request(`/search?q=${encodeURIComponent(q)}`, { signal }),
+  analyze: (q, id, isin) => {
+    const p = new URLSearchParams({ q })
+    if (id) p.set('id', id)
+    if (isin) p.set('isin', isin)
+    return request(`/analyze?${p}`)
+  },
 }
 
 // Les 8 couleurs proposées (identiques au backend).

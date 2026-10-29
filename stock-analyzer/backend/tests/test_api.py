@@ -7,10 +7,8 @@ def test_health(client):
         assert table in body["database"]["tables"]
 
 
-def test_analyze_placeholder(client):
-    r = client.get("/analyze", params={"q": "NOW"})
-    assert r.status_code == 200
-    assert r.json()["status"] == "not_implemented"
+def test_analyze_requires_query(client):
+    assert client.get("/analyze").status_code == 422
 
 
 def test_login_remember_logout(client):
@@ -99,3 +97,25 @@ def test_data_kept_after_switching_user(client):
     client.post("/users/login", json={"email": "a@exemple.be"})
     names = [w["name"] for w in client.get("/watchlists", headers={"X-User-Email": "a@exemple.be"}).json()["watchlists"]]
     assert names == ["Long terme"]
+
+
+def test_analyze_saves_history(client, monkeypatch):
+    from app.services import market
+
+    fake = {
+        "query": "NOW", "query_kind": "ticker", "status": "ok", "message": "",
+        "product": {"id": "yf:NOW", "symbol": "NOW", "name": "ServiceNow", "type": "ACTION"},
+        "quote": {"price": 100.0}, "sources": [{"name": "Yahoo Finance", "ok": True}],
+    }
+    monkeypatch.setattr(market, "analyze", lambda *a, **k: fake)
+    client.post("/users/login", json={"email": "a@exemple.be"})
+    h = {"X-User-Email": "a@exemple.be"}
+    assert client.get("/analyze", params={"q": "NOW"}, headers=h).json()["status"] == "ok"
+    assert client.get("/users/me", headers=h).json()["stats"]["analyses"] == 1
+
+
+def test_quote_unavailable(client, monkeypatch):
+    from app.services import market
+
+    monkeypatch.setattr(market, "get_quote", lambda *a, **k: None)
+    assert client.get("/quote", params={"id": "yf:XYZ"}).status_code == 503

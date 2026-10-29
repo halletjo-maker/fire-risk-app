@@ -184,7 +184,9 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET | `/users/known` | Comptes déjà utilisés (choix rapide) |
 | GET | `/users/me` | Profil + statistiques (en-tête `X-User-Email`) |
 | GET / POST | `/watchlists` | Lister / créer (en-tête `X-User-Email`) |
-| GET | `/analyze?q=...` | Analyse — vide pour l'instant |
+| GET | `/search?q=...` | Propositions (nom, ticker, ISIN, mot-clé) avec type détecté |
+| GET | `/quote?id=...` | Cours d'un produit (`yf:NOW`, `bo:/bourse/...`) avec fallback |
+| GET | `/analyze?q=...` | Identification + cours (+ enregistrement dans l'historique). Scores aux Modules 3 à 6 |
 
 ---
 
@@ -202,7 +204,7 @@ python -m pytest -q
 
 - [x] **Étape 0** — Structure, backend FastAPI, SQLite, APScheduler, layout React
 - [x] **Module 1** — Identification utilisateur (profil, comptes récents)
-- [ ] Module 2 — Recherche et identification du produit
+- [x] **Module 2** — Recherche et identification du produit
 - [ ] Module 3 — Analyse fondamentale
 - [ ] Module 4 — Analyse technique (MM100)
 - [ ] Module 5 — Actualités et sentiment
@@ -210,6 +212,23 @@ python -m pytest -q
 - [ ] Module 7 — Rapport justificatif
 - [ ] Module 8 — Watchlists multiples
 - [ ] Module 9 — Alertes mail
+
+### Sources de données (Module 2)
+
+| Ordre | Source | Utilisée pour |
+|---|---|---|
+| 1 | Yahoo Finance (yfinance) | Actions, ETF, crypto, indices — recherche par nom, ticker ou ISIN |
+| 2 | Google Finance | Secours si Yahoo ne répond pas (prix + variation) |
+| 3 | Boursorama | Turbos et warrants (émetteur, barrière, levier, parité…) + dernier secours |
+
+- Si une source échoue, la suivante est essayée sans erreur visible ; l'interface indique la
+  source utilisée (✓) et celles qui n'ont pas répondu (barrées).
+- La variation du jour est **recalculée** à partir de l'historique : la « clôture veille »
+  fournie directement par Yahoo est parfois fausse.
+- Les cryptos sont proposées d'abord en **EUR** (BTC-EUR avant BTC-USD).
+- Un délai de `SCRAPING_DELAY_SECONDS` est respecté entre deux requêtes vers un même site,
+  et les résultats sont mis en cache (recherche : 30 min, cours : 1 min).
+- ZoneBourse (fondamentaux européens) sera branché au Module 3.
 
 ### Choix techniques à noter
 - **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.

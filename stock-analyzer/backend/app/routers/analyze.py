@@ -1,18 +1,60 @@
-"""Analyse d'un produit — squelette, rempli à partir du Module 2."""
+"""Module 2 — recherche, cours et (premier niveau d') analyse d'un produit."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+import json
+
+from fastapi import APIRouter, Header, HTTPException, Query
+
+from ..database import get_conn
+from ..services import market
 
 router = APIRouter(tags=["analyse"])
 
 
+@router.get("/search")
+def search(q: str = Query(..., min_length=1, max_length=80, description="Nom, ticker, ISIN ou mot-clé")) -> dict:
+    """Propositions de produits (autocomplétion)."""
+    return market.search(q)
+
+
+@router.get("/quote")
+def quote(
+    id: str = Query(..., description="Identifiant renvoyé par /search (ex. yf:NOW)"),
+    isin: str | None = None,
+) -> dict:
+    data = market.get_quote(id, isin=isin)
+    if data is None:
+        raise HTTPException(status_code=503, detail="Cours indisponible sur toutes les sources")
+    return data
+
+
 @router.get("/analyze")
-def analyze(q: str = Query(..., min_length=1, description="Nom, ticker, ISIN ou mot-clé")) -> dict:
-    return {
-        "query": q.strip(),
-        "status": "not_implemented",
-        "message": "L'analyse sera disponible à partir du Module 2.",
-        "product": None,
-        "scores": None,
-        "sources": [],
-    }
+def analyze(
+    q: str = Query(..., min_length=1, max_length=80, description="Nom, ticker, ISIN ou mot-clé"),
+    id: str | None = Query(None, description="Produit précis choisi dans les propositions"),
+    isin: str | None = None,
+    x_user_email: str | None = Header(default=None),
+) -> dict:
+    result = market.analyze(q.strip(), product_id=id, isin=isin)
+    if result["status"] == "ok":
+        _save_history(x_user_email, q.strip(), result)
+    return result
+
+
+def _save_history(email: str | None, query: str, result: dict) -> None:
+    product, quote = result["product"], result["quote"]
+    with get_conn() as conn:
+        user = conn.execute("SELECT id FROM users WHERE email = ?", (email or "",)).fetchone()
+        conn.execute(
+            "INSERT INTO analysis_history (user_id, query, symbol, name, product_type, price, sources) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                user["id"] if user else None,
+                query,
+                product.get("symbol") or product.get("isin"),
+                product.get("name"),
+                product.get("type"),
+                quote.get("price"),
+                json.dumps(result.get("sources", [])),
+            ),
+        )
