@@ -1,0 +1,159 @@
+"""Connexion SQLite et schéma complet de l'application."""
+from __future__ import annotations
+
+import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path
+
+from .config import ALERT_FREQUENCIES, ALERT_TYPES, PRODUCT_TYPES, get_settings
+
+
+def _in(values: list[str]) -> str:
+    return ", ".join(f"'{v}'" for v in values)
+
+
+SCHEMA = f"""
+-- Utilisateurs identifiés par leur adresse mail (sans mot de passe)
+CREATE TABLE IF NOT EXISTS users (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    email           TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+    last_login_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Réglages globaux de l'application (ex. utilisateur actif)
+CREATE TABLE IF NOT EXISTS app_settings (
+    key     TEXT PRIMARY KEY,
+    value   TEXT
+);
+
+-- Watchlists nommées et colorées
+CREATE TABLE IF NOT EXISTS watchlists (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name        TEXT    NOT NULL,
+    color       TEXT    NOT NULL DEFAULT '#00FF88',
+    position    INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (user_id, name)
+);
+
+-- Produits d'une watchlist + dernier état connu (rafraîchi toutes les 15 min)
+CREATE TABLE IF NOT EXISTS watchlist_items (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    watchlist_id      INTEGER NOT NULL REFERENCES watchlists(id) ON DELETE CASCADE,
+    symbol            TEXT    NOT NULL,
+    name              TEXT,
+    isin              TEXT,
+    exchange          TEXT,
+    product_type      TEXT    NOT NULL DEFAULT 'ACTION'
+                      CHECK (product_type IN ({_in(PRODUCT_TYPES)})),
+    position          INTEGER NOT NULL DEFAULT 0,
+    last_price        REAL,
+    last_change_pct   REAL,
+    last_score        REAL,
+    last_signal       TEXT CHECK (last_signal IN ('ACHAT', 'VENTE', 'NEUTRE')),
+    last_refresh_at   TEXT,
+    added_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (watchlist_id, symbol)
+);
+
+-- Alertes mail configurées par produit (supprimées avec le produit)
+CREATE TABLE IF NOT EXISTS alerts (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id             INTEGER NOT NULL REFERENCES watchlist_items(id) ON DELETE CASCADE,
+    alert_type          TEXT    NOT NULL CHECK (alert_type IN ({_in(ALERT_TYPES)})),
+    enabled             INTEGER NOT NULL DEFAULT 1,
+    frequency           TEXT    NOT NULL DEFAULT 'immediate'
+                        CHECK (frequency IN ({_in(ALERT_FREQUENCIES)})),
+    last_state          TEXT,       -- ex. 'ABOVE'/'BELOW' pour détecter un croisement MM100
+    last_triggered_at   TEXT,
+    unsubscribe_token   TEXT    NOT NULL UNIQUE,
+    created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (item_id, alert_type)
+);
+
+-- Historique des analyses réalisées
+CREATE TABLE IF NOT EXISTS analysis_history (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id             INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    query               TEXT    NOT NULL,
+    symbol              TEXT,
+    name                TEXT,
+    product_type        TEXT,
+    price               REAL,
+    score_fundamental   REAL,
+    score_technical     REAL,
+    score_sentiment     REAL,
+    score_global        REAL,
+    verdict             TEXT,       -- FAVORABLE | PRUDENCE | DEFAVORABLE
+    sources             TEXT,       -- JSON : sources utilisées
+    report              TEXT,       -- JSON : rapport complet
+    created_at          TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Cache des réponses des sources (limite les requêtes / le scraping)
+CREATE TABLE IF NOT EXISTS data_cache (
+    cache_key   TEXT PRIMARY KEY,
+    payload     TEXT NOT NULL,
+    source      TEXT,
+    fetched_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_watchlists_user       ON watchlists(user_id, position);
+CREATE INDEX IF NOT EXISTS idx_items_watchlist       ON watchlist_items(watchlist_id, position);
+CREATE INDEX IF NOT EXISTS idx_alerts_item           ON alerts(item_id);
+CREATE INDEX IF NOT EXISTS idx_history_user_date     ON analysis_history(user_id, created_at);
+"""
+
+TABLES = [
+    "users",
+    "app_settings",
+    "watchlists",
+    "watchlist_items",
+    "alerts",
+    "analysis_history",
+    "data_cache",
+]
+
+
+def _connect(path: Path) -> sqlite3.Connection:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path, timeout=10, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")
+    return conn
+
+
+def init_db() -> None:
+    with _connect(get_settings().database_path) as conn:
+        conn.executescript(SCHEMA)
+
+
+@contextmanager
+def get_conn() -> Iterator[sqlite3.Connection]:
+    """Connexion courte : commit si tout va bien, rollback sinon."""
+    conn = _connect(get_settings().database_path)
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def db_status() -> dict:
+    try:
+        with get_conn() as conn:
+            rows = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+            ).fetchall()
+        present = {r["name"] for r in rows}
+        return {"ok": all(t in present for t in TABLES), "tables": sorted(present)}
+    except sqlite3.Error as exc:
+        return {"ok": False, "error": str(exc)}
