@@ -44,6 +44,11 @@ export const api = {
   removeItem: (id, itemId) => request(`/watchlists/${id}/items/${itemId}`, { method: 'DELETE' }),
   reorderItems: (id, ids) => request(`/watchlists/${id}/items/order`, { method: 'PUT', body: { ids } }),
   refreshWatchlist: (id) => request(`/watchlists/${id}/refresh`, { method: 'POST' }),
+  itemAlerts: (itemId) => request(`/alerts/item/${itemId}`),
+  saveItemAlerts: (itemId, alerts) => request(`/alerts/item/${itemId}`, { method: 'PUT', body: { alerts } }),
+  alertHistory: (limit = 10) => request(`/alerts/history?limit=${limit}`),
+  testMail: () => request('/alerts/test', { method: 'POST' }),
+  checkAlerts: () => request('/alerts/check', { method: 'POST' }),
   search: (q, signal) => request(`/search?q=${encodeURIComponent(q)}`, { signal }),
   report: (id, isin) => {
     const p = new URLSearchParams({ id })

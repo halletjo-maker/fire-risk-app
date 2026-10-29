@@ -124,6 +124,10 @@ d'alerte fonctionnent depuis le téléphone.
 Outlook / Hotmail : `SMTP_HOST=smtp-mail.outlook.com`, port `587`.
 
 L'encart **« État du serveur »** de l'application indique si le SMTP est bien détecté.
+Ensuite : **Mon profil → Alertes mail → « Mail de test »**.
+
+Tant que le SMTP n'est pas configuré, les alertes ne sont pas perdues : elles apparaissent
+dans l'historique (profil) et sont enregistrées en fichiers `.eml` dans `backend/data/outbox/`.
 
 ---
 
@@ -190,6 +194,11 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | DELETE | `/watchlists/{id}/items/{item}` | Retirer un produit (ses alertes sont supprimées) |
 | PUT | `/watchlists/{id}/items/order` | Nouvel ordre (glisser-déposer) |
 | POST | `/watchlists/{id}/refresh` | Rafraîchissement immédiat |
+| GET / PUT | `/alerts/item/{item}` | Alertes d'un produit (5 types, activée, fréquence) |
+| GET | `/alerts/history` | Dernières alertes déclenchées |
+| POST | `/alerts/test` | Envoie un mail de test (vérifie le SMTP) |
+| POST | `/alerts/check` | Vérifie les alertes tout de suite |
+| GET | `/alerts/unsubscribe/{jeton}` | Lien de désinscription (pied de mail) |
 | GET | `/search?q=...` | Propositions (nom, ticker, ISIN, mot-clé) avec type détecté |
 | GET | `/quote?id=...` | Cours d'un produit (`yf:NOW`, `bo:/bourse/...`) avec fallback |
 | GET | `/fundamentals?id=...` | Module 3 — analyse fondamentale et score /10 |
@@ -222,7 +231,7 @@ python -m pytest -q
 - [x] **Module 6** — Décision Achat / Vente
 - [x] **Module 7** — Rapport justificatif
 - [x] **Module 8** — Watchlists multiples
-- [ ] Module 9 — Alertes mail
+- [x] **Module 9** — Alertes mail
 
 ### Sources de données (Module 2)
 
@@ -344,6 +353,25 @@ python -m pytest -q
   au doigt, à la souris ou au clavier (Espace + flèches).
 - PC : barre latérale avec chaque watchlist dépliable (menu déroulant de ses produits) ;
   mobile : sélecteur en haut d'écran, watchlist affichée en premier.
+
+### Alertes mail (Module 9)
+
+| Type | Se déclenche quand… |
+|---|---|
+| 🚨 Signal fort | le score global **passe** à 7,5/10 ou plus |
+| 📉 Alerte baisse | le score global **passe** sous 5/10 |
+| 📊 Croisement MM100 | le prix croise sa MM100 (hausse ou baisse) |
+| 📰 Actualité importante | le sentiment des titres passe sous 3/10 |
+| 💰 Résultats à venir | des résultats trimestriels tombent dans moins de 48 h (une fois par date) |
+
+- Réglage par produit (🔔 dans la watchlist) : chaque type activable séparément, fréquence
+  max. **immédiate · 1×/jour · 1×/semaine** (une alerte trop rapprochée reste en attente et
+  part à la fin du délai si la condition tient toujours).
+- Un mail part quand la condition **devient** vraie, pas à chaque vérification.
+- Vérification toutes les 15 min (APScheduler), 3 min après le rafraîchissement des watchlists.
+- Mail : objet `[SIGNAL ACHAT ✅] ServiceNow (NOW) — Score 8,2/10`, résumé en 5 lignes,
+  bouton « Voir l'analyse complète » (`APP_PUBLIC_URL/?analyse=…`), lien de désinscription.
+- Envoi : `smtplib` (STARTTLS port 587 ou SSL port 465), paramètres dans `.env`.
 
 ### Choix techniques à noter
 - **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.

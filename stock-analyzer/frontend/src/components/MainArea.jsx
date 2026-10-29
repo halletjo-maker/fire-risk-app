@@ -90,6 +90,16 @@ export default function MainArea() {
     }
   }
 
+  // Lien « Voir l'analyse complète » d'un mail d'alerte : /?analyse=yf:NOW
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const id = params.get('analyse')
+    if (!id) return
+    window.history.replaceState(null, '', window.location.pathname)
+    analyze(id.replace(/^(yf|bo):/, '').split('/').filter(Boolean).pop() || id, { id })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Analyse demandée depuis une watchlist, la barre latérale ou une alternative
   useEffect(() => {
     const req = wl.analysisRequest

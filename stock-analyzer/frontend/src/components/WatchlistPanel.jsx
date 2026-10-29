@@ -6,6 +6,7 @@ import { changeColor, fmtPct, fmtPrice, fmtScore, scoreColor } from '../lib/form
 import { ColorDot, Spinner } from './ui'
 import ConfirmDialog from './ConfirmDialog'
 import WatchlistSettings from './WatchlistSettings'
+import AlertSettings from './AlertSettings'
 
 export const SIGNAL = {
   ACHAT: { dot: '🟢', label: 'Signal achat' },
@@ -22,7 +23,7 @@ function since(sqlDate) {
   return d.toLocaleString('fr-BE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
-function ItemRow({ item, index, onOpen, onRemove }) {
+function ItemRow({ item, index, onOpen, onRemove, onAlerts }) {
   const sig = SIGNAL[item.last_signal]
   return (
     <Draggable draggableId={String(item.id)} index={index}>
@@ -43,7 +44,6 @@ function ItemRow({ item, index, onOpen, onRemove }) {
               <span className="block truncate text-sm font-medium">{item.name}</span>
               <span className="flex items-center gap-1.5 truncate text-xs text-muted">
                 {item.symbol}
-                {item.alert_count > 0 && <Bell className="h-3 w-3 text-warn" aria-label={`${item.alert_count} alerte(s)`} />}
               </span>
             </span>
             <span className="shrink-0 text-right">
@@ -54,6 +54,14 @@ function ItemRow({ item, index, onOpen, onRemove }) {
               {item.last_score != null ? fmtScore(item.last_score) : '–'}
               <span className="block text-[10px] font-normal text-muted">/10</span>
             </span>
+          </button>
+          <button
+            onClick={() => onAlerts(item)}
+            className={`shrink-0 rounded-md p-1.5 transition hover:bg-panel2 ${item.alert_count > 0 ? 'text-warn' : 'text-muted'}`}
+            aria-label={`Alertes mail pour ${item.name}${item.alert_count ? ` (${item.alert_count} active${item.alert_count > 1 ? 's' : ''})` : ''}`}
+            title="Alertes mail"
+          >
+            <Bell className={`h-4 w-4 ${item.alert_count > 0 ? 'fill-warn' : ''}`} />
           </button>
           <button
             onClick={() => onRemove(item)}
@@ -76,6 +84,7 @@ export default function WatchlistPanel() {
   const list = state?.list || []
   const [settings, setSettings] = useState(false)
   const [removing, setRemoving] = useState(null)
+  const [alertsFor, setAlertsFor] = useState(null)
   const [error, setError] = useState(null)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -130,7 +139,7 @@ export default function WatchlistPanel() {
             {(provided) => (
               <ul ref={provided.innerRef} {...provided.droppableProps} className="mt-2 divide-y divide-line">
                 {list.map((item, i) => (
-                  <ItemRow key={item.id} item={item} index={i} onOpen={wl.analyze} onRemove={setRemoving} />
+                  <ItemRow key={item.id} item={item} index={i} onOpen={wl.analyze} onRemove={setRemoving} onAlerts={setAlertsFor} />
                 ))}
                 {provided.placeholder}
               </ul>
@@ -145,6 +154,9 @@ export default function WatchlistPanel() {
         {lastRefresh && <span>Mis à jour {since(lastRefresh)} · auto 15 min</span>}
       </div>
 
+      {alertsFor && (
+        <AlertSettings item={alertsFor} onClose={() => setAlertsFor(null)} onSaved={() => wl.loadItems(watchlist.id, { silent: true })} />
+      )}
       {settings && watchlist && <WatchlistSettings watchlist={watchlist} onClose={() => setSettings(false)} />}
       {removing && (
         <ConfirmDialog

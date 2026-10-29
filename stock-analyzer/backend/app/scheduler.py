@@ -7,11 +7,11 @@ Les deux tâches tournent toutes les REFRESH_INTERVAL_MINUTES (15 par défaut).
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from .config import get_settings
-from .database import get_conn
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +33,12 @@ def refresh_watchlists() -> None:
 
 
 def check_alerts() -> None:
-    """Placeholder — l'évaluation et l'envoi des mails arrivent au Module 9."""
+    """Évalue les alertes actives et envoie les mails (Module 9)."""
+    from .services import alerts
+
     try:
-        with get_conn() as conn:
-            count = conn.execute("SELECT COUNT(*) FROM alerts WHERE enabled = 1").fetchone()[0]
-        logger.info("Vérification des alertes : %s alerte(s) active(s)", count)
+        sent = alerts.check_all()
+        logger.info("Vérification des alertes : %s mail(s) envoyé(s)", sent)
     except Exception:
         logger.exception("Échec de la vérification des alertes")
 
@@ -51,9 +52,11 @@ def start_scheduler() -> None:
         refresh_watchlists, "interval", minutes=minutes, id="refresh_watchlists",
         name="Rafraîchissement des watchlists", replace_existing=True,
     )
+    # Les alertes passent 3 minutes après le rafraîchissement : les analyses sont alors en cache
     scheduler.add_job(
         check_alerts, "interval", minutes=minutes, id="check_alerts",
         name="Vérification des alertes mail", replace_existing=True,
+        next_run_time=datetime.now().astimezone() + timedelta(minutes=minutes + 3),
     )
     scheduler.start()
     logger.info("Planificateur démarré (toutes les %s min)", minutes)

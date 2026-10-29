@@ -76,6 +76,20 @@ CREATE TABLE IF NOT EXISTS alerts (
     UNIQUE (item_id, alert_type)
 );
 
+-- Mails d'alerte envoyés (ou enregistrés dans outbox si SMTP absent)
+CREATE TABLE IF NOT EXISTS alert_events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    alert_id    INTEGER REFERENCES alerts(id) ON DELETE SET NULL,
+    alert_type  TEXT,
+    product_id  TEXT,
+    product     TEXT,
+    subject     TEXT,
+    delivered   INTEGER NOT NULL DEFAULT 0,
+    status      TEXT,
+    sent_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Historique des analyses réalisées
 CREATE TABLE IF NOT EXISTS analysis_history (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,6 +126,7 @@ CREATE INDEX IF NOT EXISTS idx_history_user_date     ON analysis_history(user_id
 
 TABLES = [
     "users",
+    "alert_events",
     "app_settings",
     "watchlists",
     "watchlist_items",

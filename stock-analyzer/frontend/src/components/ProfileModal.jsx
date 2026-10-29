@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { LogOut, UserRound, X } from 'lucide-react'
 import { api } from '../lib/api'
 import { Spinner } from './ui'
+import AlertsSection from './AlertsSection'
 
 const fmt = (iso) => {
   if (!iso) return '—'
@@ -34,7 +35,7 @@ export default function ProfileModal({ onClose, onLogout }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label="Mon profil">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-      <div className="card relative w-full max-w-md rounded-b-none p-5 sm:rounded-xl sm:p-6">
+      <div className="card relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-b-none p-5 sm:rounded-xl sm:p-6">
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold"><UserRound className="h-5 w-5" /> Mon profil</h2>
           <button className="btn-ghost p-2" onClick={onClose} aria-label="Fermer"><X className="h-5 w-5" /></button>
@@ -69,8 +70,9 @@ export default function ProfileModal({ onClose, onLogout }) {
               ))}
             </div>
 
+            <AlertsSection />
             <p className="mt-4 text-xs text-muted">
-              Les alertes mail seront envoyées à cette adresse. Tes données restent sur cette
+              Les alertes mail sont envoyées à cette adresse. Tes données restent sur cette
               installation, même si tu changes d'utilisateur.
             </p>
           </>
