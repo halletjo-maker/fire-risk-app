@@ -13,9 +13,11 @@ export default defineConfig(({ mode }) => {
       rewrite: (path) => path.replace(/^\/api/, ''),
     },
   }
+  // Noms d'hôte autorisés en plus de localhost / IP (ex. ALLOWED_HOSTS=.lhr.life,monpc.local)
+  const allowedHosts = env.ALLOWED_HOSTS ? env.ALLOWED_HOSTS.split(',').map((h) => h.trim()).filter(Boolean) : undefined
   return {
     plugins: [react()],
-    server: { host: true, port: 3000, strictPort: true, proxy },
-    preview: { host: true, port: 3000, strictPort: true, proxy },
+    server: { host: true, port: 3000, strictPort: true, proxy, allowedHosts },
+    preview: { host: true, port: 3000, strictPort: true, proxy, allowedHosts },
   }
 })
