@@ -22,11 +22,12 @@ scheduler = BackgroundScheduler(
 
 
 def refresh_watchlists() -> None:
-    """Placeholder — sera branché sur les sources de données au Module 8."""
+    """Met à jour prix, variation, score et signal de tous les produits suivis."""
+    from .services import watchlist  # import local : évite de charger les sources au démarrage
+
     try:
-        with get_conn() as conn:
-            count = conn.execute("SELECT COUNT(*) FROM watchlist_items").fetchone()[0]
-        logger.info("Rafraîchissement watchlists : %s produit(s) à mettre à jour", count)
+        done = watchlist.refresh_all()
+        logger.info("Rafraîchissement watchlists : %s produit(s) mis à jour", done)
     except Exception:  # une tâche de fond ne doit jamais faire tomber l'app
         logger.exception("Échec du rafraîchissement des watchlists")
 

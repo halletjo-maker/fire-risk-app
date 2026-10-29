@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
 import { changeColor, fmtPct } from '../lib/format'
-import { ColorDot, Spinner } from './ui'
+import { Spinner } from './ui'
+import { useWatchlists } from '../lib/watchlists'
+import WatchlistPanel from './WatchlistPanel'
 import BackendStatus from './BackendStatus'
 import SearchBar from './SearchBar'
 import ProductCard from './ProductCard'
@@ -11,25 +13,6 @@ import TechnicalCard from './TechnicalCard'
 import SentimentCard from './SentimentCard'
 import DecisionPanel from './DecisionPanel'
 import ReportCard from './ReportCard'
-
-function WatchlistPanel({ watchlist }) {
-  return (
-    <section className="card p-4">
-      <div className="flex items-center gap-2">
-        {watchlist && <ColorDot color={watchlist.color} />}
-        <h2 className="font-semibold">{watchlist ? watchlist.name : 'Aucune watchlist sélectionnée'}</h2>
-      </div>
-      <p className="mt-3 rounded-lg border border-dashed border-line p-4 text-center text-sm text-muted">
-        {watchlist
-          ? 'Aucun produit. L\'ajout depuis la recherche arrive avec le Module 8.'
-          : 'Crée une watchlist depuis le menu pour commencer.'}
-      </p>
-      <div className="mt-3 flex justify-center gap-4 text-xs text-muted">
-        <span>🟢 Achat</span><span>🟡 Neutre</span><span>🔴 Vente</span>
-      </div>
-    </section>
-  )
-}
 
 function Alternatives({ items, query, onPick }) {
   if (!items?.length) return null
@@ -52,7 +35,8 @@ function Alternatives({ items, query, onPick }) {
   )
 }
 
-export default function MainArea({ watchlist }) {
+export default function MainArea() {
+  const wl = useWatchlists()
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -106,6 +90,15 @@ export default function MainArea({ watchlist }) {
     }
   }
 
+  // Analyse demandée depuis une watchlist, la barre latérale ou une alternative
+  useEffect(() => {
+    const req = wl.analysisRequest
+    if (!req) return
+    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+    analyze(req.query, { id: req.id, isin: req.isin })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wl.analysisRequest])
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 p-3 xs:p-4 md:p-6">
       <SearchBar onAnalyze={analyze} busy={busy} />
@@ -141,13 +134,14 @@ export default function MainArea({ watchlist }) {
           {result && (
             <ReportCard
               {...report}
-              onPick={(a) => { document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); analyze(a.symbol, { id: a.id }) }}
+              onPick={(a) => wl.analyze({ symbol: a.symbol, product_id: a.id })}
             />
           )}
           {result && <Alternatives items={result.alternatives} query={result.query} onPick={(c) => analyze(result.query, c)} />}
         </div>
-        <div className="min-w-0 space-y-4">
-          <WatchlistPanel watchlist={watchlist} />
+        {/* Sur mobile, sans analyse en cours, la watchlist passe en premier */}
+        <div className={`min-w-0 space-y-4 ${result ? '' : 'order-first lg:order-none'}`}>
+          <WatchlistPanel />
           <BackendStatus />
         </div>
       </div>

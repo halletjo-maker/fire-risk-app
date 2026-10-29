@@ -1,7 +1,11 @@
 import { useState } from 'react'
-import { LogOut, Plus, X } from 'lucide-react'
+import { ChevronDown, LogOut, Plus, Settings, X } from 'lucide-react'
 import { WATCHLIST_COLORS } from '../lib/api'
+import { useWatchlists } from '../lib/watchlists'
+import { fmtScore, scoreColor } from '../lib/format'
 import { ColorDot, Logo, Spinner } from './ui'
+import WatchlistSettings from './WatchlistSettings'
+import { SIGNAL } from './WatchlistPanel'
 
 function NewWatchlistForm({ onCreate, onDone }) {
   const [name, setName] = useState('')
@@ -55,8 +59,49 @@ function NewWatchlistForm({ onCreate, onDone }) {
   )
 }
 
-export default function Sidebar({ user, watchlists, loading, error, selectedId, onSelect, onCreate, onLogout, onProfile, onClose }) {
+// Produits d'une watchlist, dépliés sous son nom (menu déroulant)
+function WatchlistItems({ id, onOpen }) {
+  const wl = useWatchlists()
+  const state = wl.items[id]
+  if (!state || (state.loading && !state.list.length)) return <div className="py-2 pl-9"><Spinner className="h-4 w-4" /></div>
+  if (!state.list.length) return <p className="py-1.5 pl-9 text-xs text-muted">Aucun produit</p>
+  return (
+    <ul className="pb-1 pl-6">
+      {state.list.map((i) => (
+        <li key={i.id}>
+          <button onClick={() => onOpen(i)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-muted hover:bg-panel2 hover:text-gray-100">
+            <span className="w-4 text-center">{SIGNAL[i.last_signal]?.dot || '⚪'}</span>
+            <span className="min-w-0 flex-1 truncate">{i.name}</span>
+            <span className={`shrink-0 font-semibold ${scoreColor(i.last_score)}`}>{i.last_score != null ? fmtScore(i.last_score) : '–'}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export default function Sidebar({ user, onLogout, onProfile, onClose, onNavigate }) {
+  const wl = useWatchlists()
+  const { watchlists, loading, error, selectedId } = wl
   const [creating, setCreating] = useState(false)
+  const [expanded, setExpanded] = useState(() => new Set(selectedId ? [selectedId] : []))
+  const [settingsFor, setSettingsFor] = useState(null)
+  const onCreate = wl.create
+
+  const toggle = (id) => {
+    setExpanded((s) => {
+      const n = new Set(s)
+      if (n.has(id)) n.delete(id)
+      else { n.add(id); if (!wl.items[id]) wl.loadItems(id) }
+      return n
+    })
+  }
+  const select = (id) => {
+    wl.select(id)
+    setExpanded((s) => new Set(s).add(id))
+    onNavigate?.()
+  }
+  const openItem = (item) => { wl.analyze(item); onNavigate?.() }
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -94,20 +139,29 @@ export default function Sidebar({ user, watchlists, loading, error, selectedId, 
             </button>
           </div>
         )}
-        <ul className="space-y-1">
-          {watchlists.map((w) => (
-            <li key={w.id}>
-              <button
-                onClick={() => onSelect(w.id)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition
-                  ${w.id === selectedId ? 'bg-panel2 text-gray-100' : 'text-muted hover:bg-panel2/60 hover:text-gray-100'}`}
-              >
-                <ColorDot color={w.color} />
-                <span className="flex-1 truncate">{w.name}</span>
-                <span className="rounded bg-bg px-1.5 py-0.5 text-xs text-muted">{w.item_count}</span>
-              </button>
-            </li>
-          ))}
+        <ul className="space-y-0.5">
+          {watchlists.map((w) => {
+            const open = expanded.has(w.id)
+            return (
+              <li key={w.id}>
+                <div className={`group flex items-center rounded-lg transition ${w.id === selectedId ? 'bg-panel2 text-gray-100' : 'text-muted hover:bg-panel2/60 hover:text-gray-100'}`}>
+                  <button className="p-2 pl-2.5" onClick={() => toggle(w.id)} aria-expanded={open} aria-label={`${open ? 'Replier' : 'Déplier'} ${w.name}`}>
+                    <ChevronDown className={`h-3.5 w-3.5 transition ${open ? '' : '-rotate-90'}`} />
+                  </button>
+                  <button onClick={() => select(w.id)} className="flex min-w-0 flex-1 items-center gap-2.5 py-2.5 pr-1 text-left text-sm">
+                    <ColorDot color={w.color} />
+                    <span className="flex-1 truncate">{w.name}</span>
+                    <span className="rounded bg-bg px-1.5 py-0.5 text-xs text-muted">{w.item_count}</span>
+                  </button>
+                  <button className="p-2 text-muted opacity-100 hover:text-gray-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
+                    onClick={() => setSettingsFor(w)} aria-label={`Paramètres de ${w.name}`} title="Paramètres">
+                    <Settings className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                {open && <WatchlistItems id={w.id} onOpen={openItem} />}
+              </li>
+            )
+          })}
         </ul>
       </nav>
 
@@ -130,6 +184,7 @@ export default function Sidebar({ user, watchlists, loading, error, selectedId, 
           <LogOut className="h-4 w-4" /> Changer d'utilisateur
         </button>
       </div>
+      {settingsFor && <WatchlistSettings watchlist={watchlists.find((w) => w.id === settingsFor.id) || settingsFor} onClose={() => setSettingsFor(null)} />}
     </div>
   )
 }

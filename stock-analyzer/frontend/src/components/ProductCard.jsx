@@ -1,6 +1,7 @@
 import { ArrowDownRight, ArrowUpRight, CheckCircle2, Clock, Database, XCircle } from 'lucide-react'
 import { changeColor, fmtDateTime, fmtNumber, fmtPct, fmtPrice, fmtVolume } from '../lib/format'
 import TypeBadge from './TypeBadge'
+import AddToWatchlist from './AddToWatchlist'
 
 function Stat({ label, children, className = '' }) {
   return (
@@ -68,6 +69,7 @@ export default function ProductCard({ result }) {
             </p>
           )}
         </div>
+        <div className="shrink-0"><AddToWatchlist product={p} /></div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-1">

@@ -184,6 +184,12 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET | `/users/known` | Comptes déjà utilisés (choix rapide) |
 | GET | `/users/me` | Profil + statistiques (en-tête `X-User-Email`) |
 | GET / POST | `/watchlists` | Lister / créer (en-tête `X-User-Email`) |
+| PATCH / DELETE | `/watchlists/{id}` | Renommer, changer la couleur / supprimer (produits + alertes) |
+| POST | `/watchlists/{id}/duplicate` | Dupliquer (produits copiés, alertes non copiées) |
+| GET / POST | `/watchlists/{id}/items` | Produits suivis / ajouter un produit (score calculé en arrière-plan) |
+| DELETE | `/watchlists/{id}/items/{item}` | Retirer un produit (ses alertes sont supprimées) |
+| PUT | `/watchlists/{id}/items/order` | Nouvel ordre (glisser-déposer) |
+| POST | `/watchlists/{id}/refresh` | Rafraîchissement immédiat |
 | GET | `/search?q=...` | Propositions (nom, ticker, ISIN, mot-clé) avec type détecté |
 | GET | `/quote?id=...` | Cours d'un produit (`yf:NOW`, `bo:/bourse/...`) avec fallback |
 | GET | `/fundamentals?id=...` | Module 3 — analyse fondamentale et score /10 |
@@ -215,7 +221,7 @@ python -m pytest -q
 - [x] **Module 5** — Actualités et sentiment
 - [x] **Module 6** — Décision Achat / Vente
 - [x] **Module 7** — Rapport justificatif
-- [ ] Module 8 — Watchlists multiples
+- [x] **Module 8** — Watchlists multiples
 - [ ] Module 9 — Alertes mail
 
 ### Sources de données (Module 2)
@@ -323,8 +329,24 @@ python -m pytest -q
 - **Sources + horodatage + avertissement MiFID II** ; bouton « Partager » (texte copié ou
   partage natif sur téléphone).
 
+### Watchlists (Module 8)
+
+- Watchlists illimitées, nom + couleur (8 choix) ; créer, renommer, dupliquer, supprimer
+  (confirmation « Supprimer la watchlist [NOM] et ses [X] produits ? »).
+- Ajout depuis la fiche produit (bouton « Ajouter à une watchlist », création possible à la volée).
+- Chaque produit : 🟢 achat (≥ 7,5) · 🟡 neutre · 🔴 vente (< 5), prix, variation du jour,
+  score global /10 ; 🔔 si des alertes sont actives.
+- Rafraîchissement : tâche de fond APScheduler toutes les 15 min (chaque produit analysé une
+  seule fois même s'il est dans plusieurs watchlists) + rechargement automatique de l'écran.
+- Retrait : ✕ (au survol sur PC, toujours visible sur mobile) avec confirmation ; les alertes
+  du produit sont supprimées.
+- Glisser-déposer : `@hello-pangea/dnd` (suite maintenue de `react-beautiful-dnd`, même API),
+  au doigt, à la souris ou au clavier (Espace + flèches).
+- PC : barre latérale avec chaque watchlist dépliable (menu déroulant de ses produits) ;
+  mobile : sélecteur en haut d'écran, watchlist affichée en premier.
+
 ### Choix techniques à noter
 - **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.
-- **@hello-pangea/dnd** sera utilisé pour le glisser-déposer (Module 8) : c'est la suite
-  maintenue de `react-beautiful-dnd` (archivé), avec exactement la même API.
+- **@hello-pangea/dnd** pour le glisser-déposer : suite maintenue de `react-beautiful-dnd`
+  (archivé), avec exactement la même API.
 - **pandas-ta 0.4.71b0** (compatible numpy 2 / pandas 3).

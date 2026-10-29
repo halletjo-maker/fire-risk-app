@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS watchlist_items (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     watchlist_id      INTEGER NOT NULL REFERENCES watchlists(id) ON DELETE CASCADE,
     symbol            TEXT    NOT NULL,
+    product_id        TEXT,       -- identifiant de la source (ex. yf:NOW, bo:/bourse/...)
     name              TEXT,
     isin              TEXT,
     exchange          TEXT,
@@ -104,6 +105,7 @@ CREATE TABLE IF NOT EXISTS data_cache (
 
 CREATE INDEX IF NOT EXISTS idx_watchlists_user       ON watchlists(user_id, position);
 CREATE INDEX IF NOT EXISTS idx_items_watchlist       ON watchlist_items(watchlist_id, position);
+CREATE INDEX IF NOT EXISTS idx_items_product         ON watchlist_items(product_id);
 CREATE INDEX IF NOT EXISTS idx_alerts_item           ON alerts(item_id);
 CREATE INDEX IF NOT EXISTS idx_history_user_date     ON analysis_history(user_id, created_at);
 """
@@ -128,8 +130,20 @@ def _connect(path: Path) -> sqlite3.Connection:
     return conn
 
 
+# Colonnes ajoutées après la première version (bases déjà créées)
+MIGRATIONS = [
+    ("watchlist_items", "product_id", "TEXT"),
+]
+
+
 def init_db() -> None:
     with _connect(get_settings().database_path) as conn:
+        for table, column, kind in MIGRATIONS:
+            exists = conn.execute(f"SELECT 1 FROM sqlite_master WHERE type='table' AND name='{table}'").fetchone()
+            if exists:
+                cols = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+                if column not in cols:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {kind}")
         conn.executescript(SCHEMA)
 
 

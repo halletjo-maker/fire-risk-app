@@ -36,6 +36,14 @@ export const api = {
   me: () => request('/users/me'),
   watchlists: () => request('/watchlists'),
   createWatchlist: (name, color) => request('/watchlists', { method: 'POST', body: { name, color } }),
+  updateWatchlist: (id, patch) => request(`/watchlists/${id}`, { method: 'PATCH', body: patch }),
+  deleteWatchlist: (id) => request(`/watchlists/${id}`, { method: 'DELETE' }),
+  duplicateWatchlist: (id) => request(`/watchlists/${id}/duplicate`, { method: 'POST' }),
+  watchlistItems: (id) => request(`/watchlists/${id}/items`),
+  addItem: (id, productId, isin) => request(`/watchlists/${id}/items`, { method: 'POST', body: { product_id: productId, isin } }),
+  removeItem: (id, itemId) => request(`/watchlists/${id}/items/${itemId}`, { method: 'DELETE' }),
+  reorderItems: (id, ids) => request(`/watchlists/${id}/items/order`, { method: 'PUT', body: { ids } }),
+  refreshWatchlist: (id) => request(`/watchlists/${id}/refresh`, { method: 'POST' }),
   search: (q, signal) => request(`/search?q=${encodeURIComponent(q)}`, { signal }),
   report: (id, isin) => {
     const p = new URLSearchParams({ id })
