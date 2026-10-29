@@ -189,6 +189,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET | `/fundamentals?id=...` | Module 3 — analyse fondamentale et score /10 |
 | GET | `/technical?id=...` | Module 4 — analyse technique (MM100), score /10 et données du graphique |
 | GET | `/sentiment?id=...` | Module 5 — actualités 72 h, sentiment par titre, événements, score /10 |
+| GET | `/decision?id=...` | Module 6 — score global, décision ACHAT / VENTE (+ historique) |
 | GET | `/analyze?q=...` | Identification + cours (+ enregistrement dans l'historique). Scores aux Modules 3 à 6 |
 
 ---
@@ -211,7 +212,7 @@ python -m pytest -q
 - [x] **Module 3** — Analyse fondamentale
 - [x] **Module 4** — Analyse technique (MM100)
 - [x] **Module 5** — Actualités et sentiment
-- [ ] Module 6 — Décision Achat / Vente
+- [x] **Module 6** — Décision Achat / Vente
 - [ ] Module 7 — Rapport justificatif
 - [ ] Module 8 — Watchlists multiples
 - [ ] Module 9 — Alertes mail
@@ -287,6 +288,24 @@ python -m pytest -q
   dividende ; avertissement si les résultats tombent dans les 48 h.
 - Produit dérivé : actualités du **sous-jacent** ; pour un **put**, score inversé.
 - ETF : actualités de l'indice suivi (souvent peu nombreuses → score proche de 5).
+
+### Décision (Module 6)
+
+**Score global = Fondamental × 0,35 + Technique × 0,45 + Sentiment × 0,20**
+
+| Score | Onglet ACHAT | Onglet VENTE (score de vente = 10 − score global) |
+|---|---|---|
+| ≥ 7,5 | ✅ CONDITIONS FAVORABLES À L'ACHAT | ✅ CONDITIONS FAVORABLES À LA VENTE |
+| 5 à 7,4 | ⚠️ PRUDENCE | ⚠️ PRUDENCE (conserver avec stop-loss) |
+| < 5 | ❌ CONDITIONS DÉFAVORABLES + **avertissement fort** | ❌ CONDITIONS DÉFAVORABLES À LA VENTE (conserver) |
+
+- Analyse non applicable (ex. fondamental d'un indice) : poids redistribués et signalés.
+- Points d'appui / de vigilance en langage clair (position vs MM100, qualité, actualité),
+  alerte si fondamental et technique divergent de 3 points ou plus, et si des résultats
+  tombent dans les 48 h.
+- Signal des watchlists : 🟢 ACHAT ≥ 7,5 · 🟡 NEUTRE · 🔴 VENTE < 5.
+- L'enchaînement complet (`services/analysis.py`) est réutilisé par les watchlists et les
+  alertes ; chaque décision est enregistrée dans `analysis_history`.
 
 ### Choix techniques à noter
 - **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.

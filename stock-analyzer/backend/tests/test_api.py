@@ -119,3 +119,24 @@ def test_quote_unavailable(client, monkeypatch):
 
     monkeypatch.setattr(market, "get_quote", lambda *a, **k: None)
     assert client.get("/quote", params={"id": "yf:XYZ"}).status_code == 503
+
+
+def test_decision_saves_scores(client, monkeypatch):
+    from app.services import analysis
+
+    full = {
+        "product": {"id": "yf:NOW", "symbol": "NOW", "name": "ServiceNow", "type": "ACTION"},
+        "quote": {"price": 100.0},
+        "decision": {"available": True, "score": 5.5, "buy": {"level": "PRUDENCE"},
+                     "components": [{"key": "fundamental", "score": 8.0}, {"key": "technical", "score": 4.3},
+                                    {"key": "sentiment", "score": 3.6}]},
+    }
+    monkeypatch.setattr(analysis, "run", lambda *a, **k: full)
+    client.post("/users/login", json={"email": "a@exemple.be"})
+    h = {"X-User-Email": "a@exemple.be"}
+    assert client.get("/decision", params={"id": "yf:NOW"}, headers=h).json()["decision"]["score"] == 5.5
+    from app.database import get_conn
+
+    with get_conn() as conn:
+        row = conn.execute("SELECT score_global, score_technical, verdict FROM analysis_history").fetchone()
+    assert (row["score_global"], row["score_technical"], row["verdict"]) == (5.5, 4.3, "PRUDENCE")

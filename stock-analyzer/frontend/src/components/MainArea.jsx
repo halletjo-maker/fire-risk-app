@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
-import { TrendingDown, TrendingUp } from 'lucide-react'
 import { api } from '../lib/api'
-import { changeColor, fmtPct, fmtScore, scoreColor } from '../lib/format'
+import { changeColor, fmtPct } from '../lib/format'
 import { ColorDot, Spinner } from './ui'
 import BackendStatus from './BackendStatus'
 import SearchBar from './SearchBar'
@@ -10,55 +9,7 @@ import TypeBadge from './TypeBadge'
 import FundamentalsCard from './FundamentalsCard'
 import TechnicalCard from './TechnicalCard'
 import SentimentCard from './SentimentCard'
-
-const TABS = [
-  { id: 'achat', label: 'ACHAT', icon: TrendingUp, active: 'border-bull text-bull', },
-  { id: 'vente', label: 'VENTE', icon: TrendingDown, active: 'border-bear text-bear' },
-]
-
-function DecisionTabs({ product, scores = {} }) {
-  const [tab, setTab] = useState('achat')
-  return (
-    <section className="card overflow-hidden">
-      <div className="flex border-b border-line" role="tablist">
-        {TABS.map(({ id, label, icon: Icon, active }) => (
-          <button
-            key={id}
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => setTab(id)}
-            className={`flex flex-1 items-center justify-center gap-2 border-b-2 py-3 text-sm font-semibold tracking-wide transition
-              ${tab === id ? active + ' bg-panel2' : 'border-transparent text-muted hover:text-gray-100'}`}
-          >
-            <Icon className="h-4 w-4" /> {label}
-          </button>
-        ))}
-      </div>
-      <div className="p-4 sm:p-6" role="tabpanel">
-        <div className="py-4 text-center text-sm text-muted">
-          <p className="text-base text-gray-100">
-            {tab === 'achat' ? "Analyse à l'achat" : 'Analyse à la vente'}
-            {product && <span className="text-muted"> · {product.name}</span>}
-          </p>
-          <p className="mt-1">
-            {product
-              ? 'Scores technique et fondamental ci-dessous. Score global, stop-loss et rapport : Modules 6 et 7.'
-              : 'Lance une recherche pour obtenir le score global /10, la position vs MM100, les stop-loss proposés et le rapport justificatif.'}
-          </p>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          {[['Fondamental', '35 %', 'fundamental'], ['Technique', '45 %', 'technical'], ['Sentiment', '20 %', 'sentiment']].map(([k, w, key]) => (
-            <div key={k} className="rounded-lg bg-bg p-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted">{k}</p>
-              <p className={`mt-1 text-lg font-bold ${scores[key] != null ? scoreColor(scores[key]) : 'text-gray-500'}`}>{fmtScore(scores[key])}/10</p>
-              <p className="text-[11px] text-muted">poids {w}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
+import DecisionPanel from './DecisionPanel'
 
 function WatchlistPanel({ watchlist }) {
   return (
@@ -104,39 +55,33 @@ export default function MainArea({ watchlist }) {
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const [fund, setFund] = useState({ data: null, loading: false, error: null })
-  const [tech, setTech] = useState({ data: null, loading: false, error: null })
-  const [senti, setSenti] = useState({ data: null, loading: false, error: null })
+  const empty = { data: null, loading: false, error: null }
+  const [fund, setFund] = useState(empty)
+  const [tech, setTech] = useState(empty)
+  const [senti, setSenti] = useState(empty)
+  const [decision, setDecision] = useState(empty)
   const latest = useRef(0)
 
-  const loadFundamentals = async (product, run) => {
-    setFund({ data: null, loading: true, error: null })
+  // Charge une analyse ; ignore la réponse si une recherche plus récente a été lancée
+  const load = async (setter, call, pick, run) => {
+    setter({ data: null, loading: true, error: null })
     try {
-      const r = await api.fundamentals(product.id, product.isin)
-      if (latest.current === run) setFund({ data: r.fundamentals, loading: false, error: null })
+      const r = await call()
+      if (latest.current === run) setter({ data: pick(r), loading: false, error: null })
     } catch (e) {
-      if (latest.current === run) setFund({ data: null, loading: false, error: e.message })
+      if (latest.current === run) setter({ data: null, loading: false, error: e.message })
     }
   }
 
-  const loadSentiment = async (product, run) => {
-    setSenti({ data: null, loading: true, error: null })
-    try {
-      const r = await api.sentiment(product.id, product.isin)
-      if (latest.current === run) setSenti({ data: r.sentiment, loading: false, error: null })
-    } catch (e) {
-      if (latest.current === run) setSenti({ data: null, loading: false, error: e.message })
-    }
-  }
-
-  const loadTechnical = async (product, run) => {
-    setTech({ data: null, loading: true, error: null })
-    try {
-      const r = await api.technical(product.id, product.isin)
-      if (latest.current === run) setTech({ data: r.technical, loading: false, error: null })
-    } catch (e) {
-      if (latest.current === run) setTech({ data: null, loading: false, error: e.message })
-    }
+  const loadAll = async (p, run) => {
+    setDecision({ data: null, loading: true, error: null })
+    await Promise.allSettled([
+      load(setFund, () => api.fundamentals(p.id, p.isin), (r) => r.fundamentals, run),
+      load(setTech, () => api.technical(p.id, p.isin), (r) => r.technical, run),
+      load(setSenti, () => api.sentiment(p.id, p.isin), (r) => r.sentiment, run),
+    ])
+    // les trois analyses sont en cache côté serveur : la décision est immédiate
+    await load(setDecision, () => api.decision(p.id, p.isin), (r) => r.decision, run)
   }
 
   const analyze = async (query, candidate) => {
@@ -148,9 +93,7 @@ export default function MainArea({ watchlist }) {
       if (latest.current !== run) return  // une recherche plus récente a été lancée
       if (r.status === 'ok') {
         setResult(r)
-        loadFundamentals(r.product, run)
-        loadTechnical(r.product, run)
-        loadSentiment(r.product, run)
+        loadAll(r.product, run)
       } else setError(r.message)
     } catch (e) {
       if (latest.current === run) setError(e.message)
@@ -177,7 +120,17 @@ export default function MainArea({ watchlist }) {
               <ProductCard result={result} />
             </div>
           )}
-          <DecisionTabs product={result?.product} scores={{ fundamental: fund.data?.score, technical: tech.data?.score, sentiment: senti.data?.score }} />
+          <DecisionPanel
+            product={result?.product}
+            decision={decision.data}
+            loading={decision.loading}
+            scores={{
+              // undefined = en cours · null = non applicable / indisponible
+              fundamental: fund.loading ? undefined : fund.data?.score ?? null,
+              technical: tech.loading ? undefined : tech.data?.score ?? null,
+              sentiment: senti.loading ? undefined : senti.data?.score ?? null,
+            }}
+          />
           {result && <TechnicalCard {...tech} />}
           {result && <FundamentalsCard {...fund} />}
           {result && <SentimentCard {...senti} />}

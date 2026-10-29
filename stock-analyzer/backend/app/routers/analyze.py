@@ -6,9 +6,9 @@ import json
 from fastapi import APIRouter, Header, HTTPException, Query
 
 from ..database import get_conn
+from ..services import analysis as analysis_service
 from ..services import fundamentals as fundamentals_service
 from ..services import market
-from ..services import sentiment as sentiment_service
 from ..services import technical as technical_service
 
 router = APIRouter(tags=["analyse"])
@@ -102,17 +102,50 @@ def sentiment(
     data = market.get_quote(id, isin=isin)
     if data is None:
         raise HTTPException(status_code=503, detail="Produit indisponible sur toutes les sources")
-    product, derivative = data["product"], data.get("derivative")
-    extra, events_symbol = None, None
-    if product["type"] == "ETF":  # l'actualité d'un ETF = celle de son indice
-        f = fundamentals_service.analyze(product, data["quote"])
-        extra = {"index": next((i["display"] for i in f.get("info", []) if i["label"] == "Indice suivi"), None)}
-    elif product["type"] in ("TURBO", "WARRANT") and derivative:
-        under = technical_service._underlying_product(derivative)
-        events_symbol = under["symbol"] if under and under["id"].startswith("yf:") else None
-    elif id.startswith("yf:") and product["type"] == "ACTION":
-        events_symbol = id[3:]
-    return {
-        "product": product,
-        "sentiment": sentiment_service.analyze(product, derivative, extra, events_symbol),
-    }
+    return {"product": data["product"], "sentiment": analysis_service.sentiment_for(data)}
+
+
+@router.get("/decision")
+def decision(
+    id: str = Query(..., description="Identifiant renvoyé par /search ou /analyze"),
+    isin: str | None = None,
+    x_user_email: str | None = Header(default=None),
+) -> dict:
+    """Module 6 — score global et décision ACHAT / VENTE."""
+    full = analysis_service.run(id, isin=isin)
+    if full is None:
+        raise HTTPException(status_code=503, detail="Produit indisponible sur toutes les sources")
+    d = full["decision"]
+    if d.get("available"):
+        _save_scores(x_user_email, full)
+    return {"product": full["product"], "decision": d}
+
+
+def _save_scores(email: str | None, full: dict) -> None:
+    """Complète la ligne d'historique de l'analyse (ou en crée une)."""
+    product, d = full["product"], full["decision"]
+    symbol = product.get("symbol") or product.get("isin")
+    scores = {c["key"]: c["score"] for c in d["components"]}
+    with get_conn() as conn:
+        user = conn.execute("SELECT id FROM users WHERE email = ?", (email or "",)).fetchone()
+        uid = user["id"] if user else None
+        row = conn.execute(
+            "SELECT id FROM analysis_history WHERE user_id IS ? AND symbol IS ? "
+            "AND created_at >= datetime('now', '-2 hours') ORDER BY id DESC LIMIT 1",
+            (uid, symbol),
+        ).fetchone()
+        values = (scores["fundamental"], scores["technical"], scores["sentiment"], d["score"], d["buy"]["level"])
+        if row:
+            conn.execute(
+                "UPDATE analysis_history SET score_fundamental = ?, score_technical = ?, score_sentiment = ?, "
+                "score_global = ?, verdict = ? WHERE id = ?",
+                (*values, row["id"]),
+            )
+        else:
+            conn.execute(
+                "INSERT INTO analysis_history (user_id, query, symbol, name, product_type, price, "
+                "score_fundamental, score_technical, score_sentiment, score_global, verdict) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (uid, symbol or "", symbol, product.get("name"), product.get("type"),
+                 full["quote"].get("price"), *values),
+            )
