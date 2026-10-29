@@ -9,6 +9,7 @@ from ..database import get_conn
 from ..services import analysis as analysis_service
 from ..services import fundamentals as fundamentals_service
 from ..services import market
+from ..services import report as report_service
 from ..services import technical as technical_service
 
 router = APIRouter(tags=["analyse"])
@@ -149,3 +150,15 @@ def _save_scores(email: str | None, full: dict) -> None:
                 (uid, symbol or "", symbol, product.get("name"), product.get("type"),
                  full["quote"].get("price"), *values),
             )
+
+
+@router.get("/report")
+def report(
+    id: str = Query(..., description="Identifiant renvoyé par /search ou /analyze"),
+    isin: str | None = None,
+) -> dict:
+    """Module 7 — rapport justificatif (résumé, forces/faiblesses, MM100, stop-loss, alternatives)."""
+    data = report_service.build(id, isin=isin)
+    if data is None:
+        raise HTTPException(status_code=503, detail="Produit indisponible sur toutes les sources")
+    return data

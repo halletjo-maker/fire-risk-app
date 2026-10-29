@@ -419,3 +419,34 @@ def history(path: str, days: int = 730):
     df.index = pd.to_datetime(df["d"], unit="D")  # jours depuis le 01/01/1970
     df = df.rename(columns={"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"})
     return df[["open", "high", "low", "close", "volume"]].astype(float)
+
+
+# Secteur Boursorama (français) → secteur Yahoo (anglais) par mots-clés
+_SECTOR_KEYWORDS = [
+    ("Technology", r"logiciel|informatique|technolog|semi-?conduct|electronique|internet"),
+    ("Healthcare", r"pharma|sante|biotech|medic|hopita"),
+    ("Financial Services", r"banque|assurance|financ|credit|gestion d'actifs"),
+    ("Energy", r"petrol|gaz|energie|parapetro"),
+    ("Utilities", r"electricite|services aux collectivites|eau\b|distribution d'energie"),
+    ("Basic Materials", r"chimi|materiaux|mines|metaux|acier|papier"),
+    ("Consumer Defensive", r"alimentaire|boisson|brasse|hygiene|tabac|grande distribution"),
+    ("Consumer Cyclical", r"automobile|luxe|textile|loisir|habillement|distribution|hotel|voyage|biens de consommation"),
+    ("Communication Services", r"telecom|media|publicite|divertissement"),
+    ("Real Estate", r"immobili|fonciere"),
+    ("Industrials", r"industri|aeronaut|defense|construction|transport|equipement|ingenierie"),
+]
+
+
+def sector(path: str) -> str | None:
+    """Secteur d'une action d'après sa fiche Boursorama, traduit en secteur Yahoo."""
+    html = fetch_text(BASE + path)
+    if not html:
+        return None
+    soup = BeautifulSoup(html, "lxml")
+    for li in soup.select("li.c-list-info__item"):
+        text = _norm(_clean(li))
+        if text.startswith("secteur"):
+            for name, pattern in _SECTOR_KEYWORDS:
+                if re.search(pattern, text):
+                    return name
+    return None

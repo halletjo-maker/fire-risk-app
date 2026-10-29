@@ -10,6 +10,7 @@ import FundamentalsCard from './FundamentalsCard'
 import TechnicalCard from './TechnicalCard'
 import SentimentCard from './SentimentCard'
 import DecisionPanel from './DecisionPanel'
+import ReportCard from './ReportCard'
 
 function WatchlistPanel({ watchlist }) {
   return (
@@ -60,6 +61,7 @@ export default function MainArea({ watchlist }) {
   const [tech, setTech] = useState(empty)
   const [senti, setSenti] = useState(empty)
   const [decision, setDecision] = useState(empty)
+  const [report, setReport] = useState(empty)
   const latest = useRef(0)
 
   // Charge une analyse ; ignore la réponse si une recherche plus récente a été lancée
@@ -75,6 +77,7 @@ export default function MainArea({ watchlist }) {
 
   const loadAll = async (p, run) => {
     setDecision({ data: null, loading: true, error: null })
+    setReport({ data: null, loading: true, error: null })
     await Promise.allSettled([
       load(setFund, () => api.fundamentals(p.id, p.isin), (r) => r.fundamentals, run),
       load(setTech, () => api.technical(p.id, p.isin), (r) => r.technical, run),
@@ -82,6 +85,7 @@ export default function MainArea({ watchlist }) {
     ])
     // les trois analyses sont en cache côté serveur : la décision est immédiate
     await load(setDecision, () => api.decision(p.id, p.isin), (r) => r.decision, run)
+    await load(setReport, () => api.report(p.id, p.isin), (r) => r, run)
   }
 
   const analyze = async (query, candidate) => {
@@ -134,6 +138,12 @@ export default function MainArea({ watchlist }) {
           {result && <TechnicalCard {...tech} />}
           {result && <FundamentalsCard {...fund} />}
           {result && <SentimentCard {...senti} />}
+          {result && (
+            <ReportCard
+              {...report}
+              onPick={(a) => { document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); analyze(a.symbol, { id: a.id }) }}
+            />
+          )}
           {result && <Alternatives items={result.alternatives} query={result.query} onPick={(c) => analyze(result.query, c)} />}
         </div>
         <div className="min-w-0 space-y-4">

@@ -190,6 +190,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET | `/technical?id=...` | Module 4 — analyse technique (MM100), score /10 et données du graphique |
 | GET | `/sentiment?id=...` | Module 5 — actualités 72 h, sentiment par titre, événements, score /10 |
 | GET | `/decision?id=...` | Module 6 — score global, décision ACHAT / VENTE (+ historique) |
+| GET | `/report?id=...` | Module 7 — rapport justificatif complet |
 | GET | `/analyze?q=...` | Identification + cours (+ enregistrement dans l'historique). Scores aux Modules 3 à 6 |
 
 ---
@@ -213,7 +214,7 @@ python -m pytest -q
 - [x] **Module 4** — Analyse technique (MM100)
 - [x] **Module 5** — Actualités et sentiment
 - [x] **Module 6** — Décision Achat / Vente
-- [ ] Module 7 — Rapport justificatif
+- [x] **Module 7** — Rapport justificatif
 - [ ] Module 8 — Watchlists multiples
 - [ ] Module 9 — Alertes mail
 
@@ -306,6 +307,21 @@ python -m pytest -q
 - Signal des watchlists : 🟢 ACHAT ≥ 7,5 · 🟡 NEUTRE · 🔴 VENTE < 5.
 - L'enchaînement complet (`services/analysis.py`) est réutilisé par les watchlists et les
   alertes ; chaque décision est enregistrée dans `analysis_history`.
+
+### Rapport justificatif (Module 7)
+
+- **Résumé exécutif** en 3 phrases (score et verdict, tendance vs MM100 + qualité, actualité / résultats).
+- **Forces / faiblesses** : critères notés ≥ 7 / ≤ 4 des trois analyses.
+- **Position vs MM100** expliquée en langage clair.
+- **Stop-loss** : 1 % sous le support technique, −5 %, −8 %, −12 %. Le niveau ★ conseillé est le
+  support s'il est entre −3 % et −12 %, sinon le % le plus proche de 2 × la volatilité
+  quotidienne (ATR 14). Turbos : stop calculé sur le support/la résistance du sous-jacent
+  et traduit en prix du turbo ; volatilité multipliée par le levier.
+- **3 alternatives** cliquables : même secteur (valeurs proches selon Yahoo, la mieux placée
+  techniquement), ETF sectoriel MSCI World en euros (Xtrackers, XETRA) ou ETF monde,
+  valeur défensive cotée en euros (Ahold Delhaize, Sanofi, Iberdrola, Unilever, Elia).
+- **Sources + horodatage + avertissement MiFID II** ; bouton « Partager » (texte copié ou
+  partage natif sur téléphone).
 
 ### Choix techniques à noter
 - **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.
