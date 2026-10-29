@@ -112,3 +112,31 @@ def parse_quote_page(html: str, anchor: str | None = None) -> dict | None:
         "time": None,
         "source": SOURCE,
     }
+
+
+_STATS = {
+    "per": r"Ratio cours/bénéfice\s+([\d  .,]+)",
+    "eps": r"BPA\s+([-−]?[\d  .,]+)",
+    "market_cap": r"Cap\. boursière\s+([\d  .,]+\s?(?:Md|Bn|k|M|B|T)?)",
+    "dividend_yield_pct": r"Rendement du dividende\s+([\d  .,]+)\s?%",
+    "target_mean": r"Moyen\s+([\d  .,]+)",
+}
+
+
+def stats(symbol: str, exchange_code: str | None = None) -> dict | None:
+    """Ratios clés lus sur Google Finance (secours des fondamentaux)."""
+    for code in google_code(symbol, exchange_code):
+        html = fetch_text(URL.format(code=code), params={"hl": "fr"})
+        if not html:
+            continue
+        text = re.sub(r"[ \t\r\n]+", " ", BeautifulSoup(html, "lxml").get_text(" ", strip=True))
+        start = max(text.find(code), 0)
+        text = text[start:]
+        out = {}
+        for key, pattern in _STATS.items():
+            m = re.search(pattern, text)
+            out[key] = fr_number(m.group(1)) if m else None
+        if any(v is not None for v in out.values()):
+            out["source"] = SOURCE
+            return out
+    return None

@@ -37,6 +37,11 @@ export const api = {
   watchlists: () => request('/watchlists'),
   createWatchlist: (name, color) => request('/watchlists', { method: 'POST', body: { name, color } }),
   search: (q, signal) => request(`/search?q=${encodeURIComponent(q)}`, { signal }),
+  fundamentals: (id, isin) => {
+    const p = new URLSearchParams({ id })
+    if (isin) p.set('isin', isin)
+    return request(`/fundamentals?${p}`)
+  },
   analyze: (q, id, isin) => {
     const p = new URLSearchParams({ q })
     if (id) p.set('id', id)

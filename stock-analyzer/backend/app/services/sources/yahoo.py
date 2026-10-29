@@ -41,6 +41,7 @@ def search(query: str, limit: int = 8) -> list[dict]:
                 "name": q.get("longname") or q.get("shortname") or symbol,
                 "type": TYPE_MAP[q["quoteType"]],
                 "exchange": q.get("exchDisp") or q.get("exchange"),
+                "exchange_code": q.get("exchange"),
                 "source": SOURCE,
             }
         )
@@ -95,3 +96,42 @@ def quote(symbol: str) -> dict | None:
         "time": market_time.isoformat() if market_time is not None else None,
         "source": SOURCE,
     }
+
+
+def info(symbol: str) -> dict | None:
+    """Fiche détaillée Yahoo (fondamentaux). Souvent limitée en fréquence : None si refus."""
+    try:
+        data = yf.Ticker(symbol).info
+    except Exception as exc:
+        logger.info("Fiche Yahoo impossible (%s) : %s", symbol, exc)
+        return None
+    # Une réponse refusée contient seulement quelques clés techniques
+    if not data or len(data) < 10 or not (data.get("quoteType") or data.get("longName")):
+        return None
+    return data
+
+
+def next_earnings(symbol: str):
+    """Date des prochains résultats trimestriels (datetime.date) ou None."""
+    try:
+        cal = yf.Ticker(symbol).calendar or {}
+    except Exception:
+        return None
+    dates = cal.get("Earnings Date") if isinstance(cal, dict) else None
+    return dates[0] if dates else None
+
+
+def ytd_return(symbol: str) -> float | None:
+    """Performance depuis le 1er janvier, en %, calculée sur l'historique."""
+    try:
+        hist = yf.Ticker(symbol).history(period="1y", interval="1d", auto_adjust=False, raise_errors=False)
+    except Exception:
+        return None
+    if hist is None or hist.empty:
+        return None
+    closes = hist["Close"].dropna()
+    year = closes.index[-1].year
+    before = closes[closes.index.year < year]
+    if before.empty:
+        return None
+    return round((float(closes.iloc[-1]) / float(before.iloc[-1]) - 1) * 100, 2)

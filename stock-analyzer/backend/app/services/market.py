@@ -86,6 +86,7 @@ def search(query: str, limit: int = 8) -> dict:
             for c in yf_results[:1]:
                 c["isin"] = query.upper()
         yf_results = _prefer_euro_crypto(yf_results)
+        yf_results = _prefer_euro_listings(yf_results, query.upper() if kind == "isin" else None)
 
     bo_results: list[dict] = []
     if derivatives or not yf_results:
@@ -107,6 +108,40 @@ def search(query: str, limit: int = 8) -> dict:
     if candidates:
         cache.put(key, result, source="+".join(s["name"] for s in sources if s["ok"]))
     return result
+
+
+# Places en euros privilégiées pour les ETF (celles où un investisseur belge achète)
+EURO_EXCHANGES = ["AMS", "BRU", "PAR", "GER", "MIL"]
+BOURSORAMA_TO_YAHOO = {
+    "Euronext Amsterdam": ("AS", "Amsterdam", "AMS"),
+    "Euronext Bruxelles": ("BR", "Brussels", "BRU"),
+    "Euronext Paris": ("PA", "Paris", "PAR"),
+    "XETRA": ("DE", "XETRA", "GER"),
+}
+
+
+def _prefer_euro_listings(results: list[dict], isin: str | None) -> list[dict]:
+    """ETF : la cotation en euros (Amsterdam, Bruxelles, Paris…) passe devant Londres ou New York."""
+    if not results:
+        return results
+    top = results[0]
+    if isin and top["type"] == "ETF" and top.get("exchange_code") not in EURO_EXCHANGES:
+        # Recherche par ISIN : Yahoo ne renvoie souvent qu'une place ; Boursorama les connaît toutes.
+        added = []
+        for c in boursorama.search(isin, limit=10):
+            mapping = BOURSORAMA_TO_YAHOO.get(c.get("exchange") or "")
+            if c["type"] == "ETF" and mapping and c.get("symbol"):
+                suffix, label, code = mapping
+                symbol = f"{c['symbol']}.{suffix}"
+                if all(r["symbol"] != symbol for r in results + added):
+                    added.append({**top, "id": f"yf:{symbol}", "symbol": symbol, "exchange": label,
+                                  "exchange_code": code, "isin": isin})
+        added.sort(key=lambda r: EURO_EXCHANGES.index(r["exchange_code"]))
+        results = added + results
+    rank = {code: i for i, code in enumerate(EURO_EXCHANGES)}
+    etfs = sorted((r for r in results if r["type"] == "ETF"), key=lambda r: rank.get(r.get("exchange_code"), 99))
+    it = iter(etfs)
+    return [next(it) if r["type"] == "ETF" else r for r in results]
 
 
 def _prefer_euro_crypto(results: list[dict]) -> list[dict]:

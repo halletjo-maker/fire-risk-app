@@ -24,7 +24,9 @@ def fr_number(text: str | None) -> float | None:
     except ValueError:
         return None
     suffix = text[m.end():].strip()[:2].upper()
-    if suffix.startswith(("MD", "B")):
+    if suffix.startswith("T"):
+        value *= 1e12
+    elif suffix.startswith(("MD", "B")):
         value *= 1e9
     elif suffix.startswith("M"):
         value *= 1e6

@@ -50,3 +50,8 @@ export const TYPE_STYLES = {
 }
 
 export const changeColor = (v) => (v > 0 ? 'text-bull' : v < 0 ? 'text-bear' : 'text-muted')
+
+// Couleur d'un score /10 : vert ≥ 7,5 · orange ≥ 5 · rouge sinon
+export const scoreColor = (s) => (s == null ? 'text-muted' : s >= 7.5 ? 'text-bull' : s >= 5 ? 'text-warn' : 'text-bear')
+export const scoreBg = (s) => (s == null ? 'bg-line' : s >= 7.5 ? 'bg-bull' : s >= 5 ? 'bg-warn' : 'bg-bear')
+export const fmtScore = (s) => (s == null ? '–' : new Intl.NumberFormat('fr-BE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(s))

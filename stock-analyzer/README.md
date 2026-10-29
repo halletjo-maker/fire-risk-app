@@ -186,6 +186,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET / POST | `/watchlists` | Lister / créer (en-tête `X-User-Email`) |
 | GET | `/search?q=...` | Propositions (nom, ticker, ISIN, mot-clé) avec type détecté |
 | GET | `/quote?id=...` | Cours d'un produit (`yf:NOW`, `bo:/bourse/...`) avec fallback |
+| GET | `/fundamentals?id=...` | Module 3 — analyse fondamentale et score /10 |
 | GET | `/analyze?q=...` | Identification + cours (+ enregistrement dans l'historique). Scores aux Modules 3 à 6 |
 
 ---
@@ -205,7 +206,7 @@ python -m pytest -q
 - [x] **Étape 0** — Structure, backend FastAPI, SQLite, APScheduler, layout React
 - [x] **Module 1** — Identification utilisateur (profil, comptes récents)
 - [x] **Module 2** — Recherche et identification du produit
-- [ ] Module 3 — Analyse fondamentale
+- [x] **Module 3** — Analyse fondamentale
 - [ ] Module 4 — Analyse technique (MM100)
 - [ ] Module 5 — Actualités et sentiment
 - [ ] Module 6 — Décision Achat / Vente
@@ -228,7 +229,26 @@ python -m pytest -q
 - Les cryptos sont proposées d'abord en **EUR** (BTC-EUR avant BTC-USD).
 - Un délai de `SCRAPING_DELAY_SECONDS` est respecté entre deux requêtes vers un même site,
   et les résultats sont mis en cache (recherche : 30 min, cours : 1 min).
-- ZoneBourse (fondamentaux européens) sera branché au Module 3.
+- Les ETF sont proposés d'abord sur une place en euros (Amsterdam, Bruxelles, Paris, XETRA),
+  y compris lors d'une recherche par ISIN.
+
+### Analyse fondamentale (Module 3)
+
+| Produit | Critères notés /10 (poids) | Sources |
+|---|---|---|
+| Action | PER (20) · croissance du CA (15) · marge opérationnelle (15) · dette nette/EBITDA (15) · free cash-flow (10) · dividende (5) · avis des analystes (20) | Yahoo Finance → consensus Boursorama → Google Finance |
+| ETF | TER (30) · taille du fonds (25) · nombre de positions (20) · performance depuis le 1er janvier (15) · réplication (10) | justETF → Boursorama → Yahoo |
+| Turbo / warrant | distance à la barrière (40) · levier (25) · spread achat/vente (20) · émetteur (15) · échéance (warrants) | Boursorama |
+| Crypto | capitalisation (45) · liquidité (30) · offre en circulation / maximale (25) — plafonné à 8/10 | CoinGecko → Yahoo |
+| Indice | non applicable (le score global reposera sur la technique et le sentiment) | — |
+
+- Score = moyenne pondérée des critères disponibles ; la part de données trouvées est affichée.
+- ETF à levier ou inverse : score plafonné à 4/10 avec avertissement.
+- Résultats trimestriels dans les 7 jours : avertissement de volatilité.
+- Les fondamentaux sont mis en cache 6 heures.
+- **ZoneBourse** bloque les accès automatiques (HTTP 403) : il est remplacé par le
+  consensus Boursorama (avis, objectif de cours, prévisions), **justETF** (ETF européens)
+  et **CoinGecko** (cryptos, API publique gratuite).
 
 ### Choix techniques à noter
 - **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.

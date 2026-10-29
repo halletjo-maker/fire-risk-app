@@ -6,6 +6,7 @@ import json
 from fastapi import APIRouter, Header, HTTPException, Query
 
 from ..database import get_conn
+from ..services import fundamentals as fundamentals_service
 from ..services import market
 
 router = APIRouter(tags=["analyse"])
@@ -58,3 +59,18 @@ def _save_history(email: str | None, query: str, result: dict) -> None:
                 json.dumps(result.get("sources", [])),
             ),
         )
+
+
+@router.get("/fundamentals")
+def fundamentals(
+    id: str = Query(..., description="Identifiant renvoyé par /search ou /analyze"),
+    isin: str | None = None,
+) -> dict:
+    """Module 3 — analyse fondamentale adaptée au type de produit (score /10)."""
+    data = market.get_quote(id, isin=isin)
+    if data is None:
+        raise HTTPException(status_code=503, detail="Produit indisponible sur toutes les sources")
+    return {
+        "product": data["product"],
+        "fundamentals": fundamentals_service.analyze(data["product"], data["quote"], data.get("derivative")),
+    }

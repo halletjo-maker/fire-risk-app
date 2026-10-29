@@ -1,19 +1,20 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import { api } from '../lib/api'
-import { changeColor, fmtPct } from '../lib/format'
+import { changeColor, fmtPct, fmtScore, scoreColor } from '../lib/format'
 import { ColorDot, Spinner } from './ui'
 import BackendStatus from './BackendStatus'
 import SearchBar from './SearchBar'
 import ProductCard from './ProductCard'
 import TypeBadge from './TypeBadge'
+import FundamentalsCard from './FundamentalsCard'
 
 const TABS = [
   { id: 'achat', label: 'ACHAT', icon: TrendingUp, active: 'border-bull text-bull', },
   { id: 'vente', label: 'VENTE', icon: TrendingDown, active: 'border-bear text-bear' },
 ]
 
-function DecisionTabs({ product }) {
+function DecisionTabs({ product, scores = {} }) {
   const [tab, setTab] = useState('achat')
   return (
     <section className="card overflow-hidden">
@@ -39,15 +40,15 @@ function DecisionTabs({ product }) {
           </p>
           <p className="mt-1">
             {product
-              ? 'Score global /10, position vs MM100, stop-loss et rapport : disponibles avec les Modules 3 à 7.'
+              ? 'Score global /10, position vs MM100, stop-loss et rapport : disponibles avec les Modules 4 à 7.'
               : 'Lance une recherche pour obtenir le score global /10, la position vs MM100, les stop-loss proposés et le rapport justificatif.'}
           </p>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          {[['Fondamental', '35 %'], ['Technique', '45 %'], ['Sentiment', '20 %']].map(([k, w]) => (
+          {[['Fondamental', '35 %', 'fundamental'], ['Technique', '45 %', 'technical'], ['Sentiment', '20 %', 'sentiment']].map(([k, w, key]) => (
             <div key={k} className="rounded-lg bg-bg p-3">
               <p className="text-[11px] uppercase tracking-wide text-muted">{k}</p>
-              <p className="mt-1 text-lg font-bold text-gray-500">–/10</p>
+              <p className={`mt-1 text-lg font-bold ${scores[key] != null ? scoreColor(scores[key]) : 'text-gray-500'}`}>{fmtScore(scores[key])}/10</p>
               <p className="text-[11px] text-muted">poids {w}</p>
             </div>
           ))}
@@ -101,18 +102,34 @@ export default function MainArea({ watchlist }) {
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [fund, setFund] = useState({ data: null, loading: false, error: null })
+  const latest = useRef(0)
+
+  const loadFundamentals = async (product, run) => {
+    setFund({ data: null, loading: true, error: null })
+    try {
+      const r = await api.fundamentals(product.id, product.isin)
+      if (latest.current === run) setFund({ data: r.fundamentals, loading: false, error: null })
+    } catch (e) {
+      if (latest.current === run) setFund({ data: null, loading: false, error: e.message })
+    }
+  }
 
   const analyze = async (query, candidate) => {
+    const run = ++latest.current
     setBusy(true)
     setError(null)
     try {
       const r = await api.analyze(query, candidate?.id, candidate?.isin)
-      if (r.status === 'ok') setResult(r)
-      else setError(r.message)
+      if (latest.current !== run) return  // une recherche plus récente a été lancée
+      if (r.status === 'ok') {
+        setResult(r)
+        loadFundamentals(r.product, run)
+      } else setError(r.message)
     } catch (e) {
-      setError(e.message)
+      if (latest.current === run) setError(e.message)
     } finally {
-      setBusy(false)
+      if (latest.current === run) setBusy(false)
     }
   }
 
@@ -123,7 +140,7 @@ export default function MainArea({ watchlist }) {
         <div className="card border-bear/40 p-4 text-sm text-bear" role="alert">{error}</div>
       )}
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+        <div className="min-w-0 space-y-4 lg:col-span-2">
           {busy && !result && (
             <div className="card flex items-center justify-center gap-3 p-8 text-sm text-muted">
               <Spinner className="h-5 w-5" /> Recherche du produit et des cours…
@@ -134,10 +151,11 @@ export default function MainArea({ watchlist }) {
               <ProductCard result={result} />
             </div>
           )}
-          <DecisionTabs product={result?.product} />
+          {result && <FundamentalsCard {...fund} />}
+          <DecisionTabs product={result?.product} scores={{ fundamental: fund.data?.score }} />
           {result && <Alternatives items={result.alternatives} query={result.query} onPick={(c) => analyze(result.query, c)} />}
         </div>
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <WatchlistPanel watchlist={watchlist} />
           <BackendStatus />
         </div>

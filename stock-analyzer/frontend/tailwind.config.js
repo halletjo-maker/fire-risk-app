@@ -1,6 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  // classes construites dynamiquement (anneau de score)
+  safelist: ['stroke-bull', 'stroke-warn', 'stroke-bear', 'stroke-muted'],
   theme: {
     extend: {
       colors: {

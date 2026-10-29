@@ -189,6 +189,12 @@ def parse_quote_page(html: str, path: str = "") -> dict | None:
     if kind == "DERIVE" or fields.get("barrier") or fields.get("leverage"):
         kind = derivative_type(name, fields.get("nature"))
         derivative = _derivative(fields)
+        bid = fr_number(_clean(face.select_one("[data-ist-bid-price]")))
+        ask = fr_number(_clean(face.select_one("[data-ist-ask-price]")))
+        derivative["bid"], derivative["ask"] = bid, ask
+        derivative["spread_pct"] = (
+            round((ask - bid) / ((ask + bid) / 2) * 100, 2) if bid and ask and ask >= bid else None
+        )
 
     volume = inst("totalvolume")
     return {
@@ -252,4 +258,136 @@ def _derivative(fields: dict[str, str]) -> dict:
         "parity": fr_number(fields.get("parity")),
         "maturity": fields.get("maturity"),
         "status": fields.get("status"),
+    }
+
+
+# ---------------------------------------------------------------- fondamentaux
+def find_listing(symbol: str, kinds: tuple[str, ...] = ("ACTION",)) -> dict | None:
+    """Retrouve la fiche Boursorama d'un symbole Yahoo (ex. SOLB.BR → /cours/FF11-SOLB/)."""
+    base = symbol.split(".")[0].lstrip("^").upper()
+    for c in search(base, limit=8):
+        if c["type"] in kinds and (c.get("symbol") or "").upper() == base:
+            return c
+    return None
+
+
+def _cells(tr) -> list[str]:
+    return [" ".join(c.get_text(" ", strip=True).split()) for c in tr.find_all(["th", "td"])]
+
+
+def consensus(path: str) -> dict | None:
+    """Page « consensus » d'une action : avis des analystes, objectif, prévisions."""
+    m = re.search(r"/cours/(?:[^/]+/)*([^/]+)/?$", path)
+    if not m:
+        return None
+    html = fetch_text(f"{BASE}/cours/consensus/{m.group(1)}/")
+    if not html:
+        return None
+    try:
+        return parse_consensus(html)
+    except Exception:
+        logger.exception("Consensus Boursorama illisible : %s", path)
+        return None
+
+
+def parse_consensus(html: str) -> dict | None:
+    soup = BeautifulSoup(html, "lxml")
+    rows: dict[str, list[str]] = {}
+    for tb in soup.select("table.c-table--generic"):
+        for tr in tb.find_all("tr"):
+            cells = _cells(tr)
+            if len(cells) >= 2 and cells[0]:
+                rows.setdefault(_norm(re.sub(r"\(\d\)|⁽\d⁾", "", cells[0])).strip(), cells[1:])
+    if not rows:
+        return None
+
+    def last(label):  # dernière colonne (situation actuelle)
+        return rows.get(label, [None])[-1]
+
+    def current_year(label):  # colonne « Estimation année en cours » = 2e colonne
+        vals = rows.get(label)
+        return vals[1] if vals and len(vals) > 1 else None
+
+    def pair(text):
+        """« 4 262 -9% » → (4262.0, -9.0)."""
+        if not text:
+            return None, None
+        m2 = re.match(r"^(.*?)\s+([-+]?\d+(?:,\d+)?)\s?%$", text)
+        if m2:
+            return fr_number(m2.group(1)), fr_number(m2.group(2))
+        return fr_number(text), None
+
+    target_text = last("historique des objectifs de cours median (en eur)") or next(
+        (v[-1] for k, v in rows.items() if k.startswith("historique des objectifs de cours")), None
+    )
+    target = fr_number(target_text.split("Potentiel")[0]) if target_text else None
+    potential = re.search(r"Potentiel\s*:\s*([-+]?\d+(?:,\d+)?)\s*%", target_text or "")
+    opinions = {
+        k.split(". ", 1)[-1]: int(fr_number(last(k)) or 0)
+        for k in rows if re.match(r"^\d\. ", k)
+    }
+    revenue, revenue_growth = pair(current_year("chiffre d'affaires (en millions)"))
+    ebit, _ = pair(current_year("ebit"))
+    ebitda, _ = pair(current_year("ebitda"))
+    net_debt, _ = pair(current_year("dette financiere nette"))
+    eps, _ = pair(current_year("benefice net par action"))
+    dividend, _ = pair(current_year("dividende par action"))
+    yield_pct, _ = pair(current_year("rendement"))
+    cfps, _ = pair(current_year("cash flow par action"))
+    analysts = fr_number(last("nombre d'analystes"))
+    return {
+        "analysts": int(analysts) if analysts else None,
+        "median_rating": fr_number(last("note mediane")),  # 1 = Acheter … 5 = Vendre
+        "opinions": opinions or None,
+        "target_median": target,
+        "upside_pct": fr_number(potential.group(1)) if potential else None,
+        "eps_est": eps,
+        "dividend_est": dividend,
+        "dividend_yield_pct": yield_pct,
+        "revenue_est": revenue,
+        "revenue_growth_pct": revenue_growth,
+        "ebit_margin_pct": round(ebit / revenue * 100, 2) if ebit is not None and revenue else None,
+        "net_debt_to_ebitda": round(net_debt / ebitda, 2) if net_debt is not None and ebitda and ebitda > 0 else None,
+        "cash_flow_per_share": cfps,
+        "source": SOURCE,
+    }
+
+
+def etf_details(path: str) -> dict | None:
+    """Fiche tracker Boursorama : indice, actif net, frais de gestion, réplication."""
+    html = fetch_text(BASE + path)
+    if not html:
+        return None
+    soup = BeautifulSoup(html, "lxml")
+    fields: dict[str, str] = {}
+    for li in soup.select("li.c-list-info__item"):
+        text = _clean(li)
+        for label in ("indice de reference", "actif net", "frais de gestion maximum", "replication",
+                      "affectation des resultats", "date de creation"):
+            if _norm(text).startswith(label) and label not in fields:
+                fields[label] = text
+    if not fields:
+        return None
+    size = fields.get("actif net", "")
+    size_cur = re.search(r"\(([A-Z]{3})\)", size)
+    size_val = re.search(r"\)\s*([\d\s,]+)\s*M", size)
+    isin_text = _clean(soup.select_one(".c-faceplate__isin"))
+    isin = next((t for t in isin_text.split() if re.fullmatch(r"[A-Z]{2}[A-Z0-9]{9}\d", t)), None)
+
+    def value(label):
+        t = fields.get(label)
+        return " ".join(t.split()[len(label.split()):]) if t else None
+
+    return {
+        "isin": isin,
+        "index": value("indice de reference"),
+        "ter_pct": fr_number(value("frais de gestion maximum")),
+        "fund_size": fr_number(size_val.group(1)) * 1e6 if size_val else None,
+        "fund_size_currency": size_cur.group(1) if size_cur else None,
+        "replication": value("replication"),
+        "distribution": value("affectation des resultats"),
+        "inception": value("date de creation"),
+        "holdings": None,
+        "ytd_pct": None,
+        "source": SOURCE,
     }
