@@ -57,9 +57,7 @@ class Settings:
     app_public_url: str = field(
         default_factory=lambda: os.getenv("APP_PUBLIC_URL", "http://localhost:8000")
     )
-    database_path: Path = field(
-        default_factory=lambda: _resolve(os.getenv("DATABASE_PATH", "data/stock_analyzer.db"))
-    )
+    database_path: Path = field(default_factory=lambda: _database_path())
     scheduler_enabled: bool = field(default_factory=lambda: _bool("SCHEDULER_ENABLED", True))
     refresh_interval_minutes: int = field(
         default_factory=lambda: max(1, _int("REFRESH_INTERVAL_MINUTES", 15))
@@ -82,6 +80,27 @@ class Settings:
     @property
     def smtp_configured(self) -> bool:
         return bool(self.smtp_host and self.smtp_user and self.smtp_password)
+
+
+# Ancien emplacement (dans le dossier de l'application) : perdu à chaque mise à jour par ZIP.
+IS_WINDOWS = os.name == "nt"
+LEGACY_DB = "data/stock_analyzer.db"
+LEGACY_DB_PATH = BACKEND_DIR / LEGACY_DB
+
+
+def default_database_path() -> Path:
+    """Windows : %LOCALAPPDATA%\\AnalyseBoursiere (hors du dossier de l'app, hors OneDrive)."""
+    local = os.getenv("LOCALAPPDATA")
+    if IS_WINDOWS and local:
+        return Path(local) / "AnalyseBoursiere" / "stock_analyzer.db"
+    return LEGACY_DB_PATH
+
+
+def _database_path() -> Path:
+    value = (os.getenv("DATABASE_PATH") or "").strip()
+    if not value or value.replace("\\", "/").removeprefix("./") == LEGACY_DB:
+        return default_database_path()
+    return _resolve(value)
 
 
 def _resolve(path: str) -> Path:

@@ -49,6 +49,11 @@ et servie par le backend sur le port **8000** (pas besoin de Node.js).
 3. Double-clique sur **`start.bat`** : le navigateur s'ouvre sur http://localhost:8000.
    Téléphone (même Wi-Fi) : `http://IP-DU-PC:8000`.
 
+Tes données (comptes, watchlists, alertes) sont rangées dans
+`%LOCALAPPDATA%\AnalyseBoursiere\` (tape ce chemin dans l'Explorateur), **hors du dossier de
+l'application** : une mise à jour par ZIP ne les touche pas. Une base laissée par une ancienne
+version dans `backend\data\` est reprise automatiquement au premier démarrage.
+
 Après une modification du frontend, régénère `backend/web/` avec `cd frontend && npm run build`.
 Node.js reste utile uniquement pour développer l'interface (`npm run dev`, port 3000).
 

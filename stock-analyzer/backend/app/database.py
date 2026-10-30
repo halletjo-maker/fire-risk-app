@@ -1,12 +1,16 @@
 """Connexion SQLite et schéma complet de l'application."""
 from __future__ import annotations
 
+import logging
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+from . import config
 from .config import ALERT_FREQUENCIES, ALERT_TYPES, PRODUCT_TYPES, get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def _in(values: list[str]) -> str:
@@ -164,8 +168,30 @@ MIGRATIONS = [
 ]
 
 
+def _import_legacy(path: Path) -> None:
+    """Première utilisation du nouvel emplacement : reprend la base de l'ancien dossier data/."""
+    legacy = config.LEGACY_DB_PATH
+    if path.exists() or path.resolve() == legacy.resolve() or not legacy.is_file():
+        return
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        src = sqlite3.connect(legacy.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
+        dst = sqlite3.connect(path)
+        with dst:
+            src.backup(dst)
+        src.close()
+        dst.close()
+        logger.info("Données reprises de %s vers %s", legacy, path)
+    except sqlite3.Error as exc:
+        path.unlink(missing_ok=True)
+        logger.warning("Ancienne base illisible (%s) : démarrage avec une base neuve. Détail : %s", legacy, exc)
+
+
 def init_db() -> None:
-    with _connect(get_settings().database_path) as conn:
+    path = get_settings().database_path
+    _import_legacy(path)
+    logger.info("Base de données : %s", path)
+    with _connect(path) as conn:
         for table, column, kind in MIGRATIONS:
             exists = conn.execute(f"SELECT 1 FROM sqlite_master WHERE type='table' AND name='{table}'").fetchone()
             if exists:
