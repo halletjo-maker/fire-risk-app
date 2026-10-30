@@ -139,7 +139,12 @@ certificat https automatique sur `https://IP.sslip.io`, pare-feu (22/80/443), fa
    après avoir rempli `EMAIL` et `GITHUB_TOKEN`.
 3. Environ 10 minutes plus tard : `https://IP-DU-SERVEUR.sslip.io` → « Crée ton accès ».
 
-Mise à jour : `sudo /opt/analyse-boursiere/update.sh` · Journal : `journalctl -u analyse-boursiere -f` ·
+Mises à jour : automatiques **chaque nuit vers 04:30**, ou bouton **Profil → Application →
+« Mettre à jour maintenant »** (administrateur). Le bouton dépose `update.request` dans le dossier
+de données ; une unité systemd `.path` (root) lance alors `update.sh`. Installation sur un serveur
+créé avant cette fonction : `bash /opt/analyse-boursiere/update.sh; bash
+/opt/analyse-boursiere/stock-analyzer/deploy/enable-autoupdate.sh` · Journal des mises à jour :
+`/var/log/analyse-boursiere-update.log` · Journal : `journalctl -u analyse-boursiere -f` ·
 Rapport d'installation : `/root/INSTALLATION.txt` et `/var/log/analyse-boursiere-install.log`.
 
 ## 🔐 Mot de passe et sécurité
@@ -243,6 +248,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET | `/users/members` | Membres et invitations en attente (admin) |
 | POST / DELETE | `/users/invitations[/{id}]` | Inviter un ami (lien 7 jours, mail si SMTP) / annuler (admin) |
 | DELETE | `/users/members/{id}` | Retirer l'accès d'un membre et ses données (admin) |
+| GET / POST | `/admin/version`, `/admin/update` | Version installée / mise à jour à la demande (admin, serveur) |
 | GET / POST | `/watchlists` | Lister / créer |
 | PATCH / DELETE | `/watchlists/{id}` | Renommer, changer la couleur / supprimer (produits + alertes) |
 | POST | `/watchlists/{id}/duplicate` | Dupliquer (produits copiés, alertes non copiées) |

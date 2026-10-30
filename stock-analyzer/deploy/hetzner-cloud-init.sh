@@ -110,18 +110,8 @@ ${DOMAIN} {
 }
 EOF
 
-# --- Script de mise à jour : sudo /opt/analyse-boursiere/update.sh ---
-cat > "$APP_DIR/update.sh" <<EOF
-#!/bin/bash
-set -euo pipefail
-cd ${APP_DIR}
-git fetch --depth 1 "https://x-access-token:\$(cat /root/.github-token)@github.com/${REPO}.git" ${BRANCH}
-git reset --hard FETCH_HEAD
-${APP_DIR}/venv/bin/pip install -q -r stock-analyzer/backend/requirements.txt
-systemctl restart analyse-boursiere
-echo "Mise à jour terminée."
-EOF
-chmod 700 "$APP_DIR/update.sh"
+# --- Mises à jour automatiques : chaque nuit + bouton « Mettre à jour » de l'application ---
+bash "$APP_DIR/stock-analyzer/deploy/enable-autoupdate.sh"
 
 # --- Pare-feu : seulement SSH, http (redirigé) et https ---
 ufw allow OpenSSH
@@ -146,7 +136,7 @@ Application : ${STATUS}
 Adresse     : https://${DOMAIN}
 Compte      : ${EMAIL} (crée ton mot de passe à la première ouverture)
 Données     : ${DATA_DIR}
-Mise à jour : sudo ${APP_DIR}/update.sh
+Mise à jour : automatique chaque nuit, ou bouton dans l'application (sudo ${APP_DIR}/update.sh)
 Journal     : journalctl -u analyse-boursiere -f
 EOF
 cat /root/INSTALLATION.txt

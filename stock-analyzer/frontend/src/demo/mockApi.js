@@ -172,6 +172,7 @@ export async function mockRequest(path, { method = 'GET', body, headers = {} } =
   if ((m = p.match(/^\/watchlists\/(\d+)\/suggestions$/))) {
     return { status: 'ready', items: [], message: 'Démo hors ligne : les suggestions sont calculées sur la vraie application.' }
   }
+  if (p === '/admin/version') return { version: null, auto_update: false, update_pending: false }
   if (p === '/users/members') {
     const u = currentUser()
     return { members: [{ ...u, is_admin: true, active: true, is_me: true }], invitations: db.invitations || [] }

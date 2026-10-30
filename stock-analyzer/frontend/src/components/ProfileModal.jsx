@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 import { Spinner } from './ui'
 import AlertsSection from './AlertsSection'
 import PasswordChange from './PasswordChange'
+import ServerUpdate from './ServerUpdate'
 
 const fmt = (iso) => {
   if (!iso) return '—'
@@ -77,6 +78,7 @@ export default function ProfileModal({ onClose, onLogout }) {
               installation, même après une déconnexion.
             </p>
             <PasswordChange />
+            {data.user.is_admin && <ServerUpdate />}
           </>
         )}
 

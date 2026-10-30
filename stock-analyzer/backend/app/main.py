@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import APP_NAME, APP_VERSION, get_settings
 from .database import init_db
-from .routers import alerts, analyze, health, users, watchlists
+from .routers import admin, alerts, analyze, health, users, watchlists
 from .scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -40,7 +40,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for router in (health.router, users.router, watchlists.router, analyze.router, alerts.router):
+for router in (health.router, users.router, watchlists.router, analyze.router, alerts.router, admin.router):
     app.include_router(router)
 
 
