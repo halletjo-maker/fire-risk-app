@@ -244,7 +244,7 @@ export default function WatchlistPanel() {
         <p className="mt-3 flex gap-2 rounded-lg bg-bg px-3 py-2 text-xs text-muted">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            Les plus grosses sociétés introduites en Bourse aux USA depuis 10 ans (source Nasdaq). Mise à jour
+            Les {list.length || ''} plus grosses sociétés introduites en Bourse aux USA depuis {watchlist.kind === 'screen:ipo5' ? 5 : 10} ans (source Nasdaq). Mise à jour
             1×/jour après la clôture américaine, <b>score technique</b> uniquement : touche une société pour son
             analyse complète. Composition revue chaque semaine.
           </span>

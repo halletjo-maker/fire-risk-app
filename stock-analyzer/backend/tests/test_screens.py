@@ -48,7 +48,7 @@ def test_create_and_daily_refresh(client, monkeypatch):
     from app.services import watchlist as wl_service
     from app.services.sources import yahoo
 
-    monkeypatch.setattr(screens, "fetch_recent_ipos", lambda: screens.select_recent_ipos(ROWS, year=2026))
+    monkeypatch.setattr(screens, "fetch_universe", lambda: ROWS)
     calls = []
 
     def many(symbols, period="1y"):
@@ -59,11 +59,12 @@ def test_create_and_daily_refresh(client, monkeypatch):
     monkeypatch.setattr(screens, "BATCH", 2)
     monkeypatch.setattr(screens.time, "sleep", lambda s: None)
 
-    r = client.post("/watchlists/presets/ipo", headers=H)
+    r = client.post("/watchlists/presets/ipo10", headers=H)
     assert r.status_code == 201
     w = r.json()["watchlist"]
     assert w["kind"] == "screen:ipo10" and w["item_count"] == 5 and w["name"] == "IPO 10 ans"
-    assert client.post("/watchlists/presets/ipo", headers=H).status_code == 409
+    assert client.post("/watchlists/presets/ipo10", headers=H).status_code == 409
+    assert client.post("/watchlists/presets/inconnue", headers=H).status_code == 404
 
     items = client.get(f"/watchlists/{w['id']}/items", headers=H).json()["items"]
     assert [(i["symbol"], i["ipo_year"]) for i in items][:2] == [("CRWD", 2019), ("ARM", 2023)]
@@ -93,12 +94,11 @@ def test_weekly_resync_updates_membership(client, monkeypatch):
     from app.database import get_conn
     from app.services.sources import yahoo
 
-    members = screens.select_recent_ipos(ROWS, year=2026)
-    monkeypatch.setattr(screens, "fetch_recent_ipos", lambda: members)
+    monkeypatch.setattr(screens, "fetch_universe", lambda: ROWS)
     monkeypatch.setattr(yahoo, "history_many", lambda symbols, period="1y": {})
-    w = client.post("/watchlists/presets/ipo", headers=H).json()["watchlist"]
+    w = client.post("/watchlists/presets/ipo10", headers=H).json()["watchlist"]
     # Composition récente : pas de nouvelle lecture Nasdaq
-    monkeypatch.setattr(screens, "fetch_recent_ipos", lambda: [members[0]])
+    monkeypatch.setattr(screens, "fetch_universe", lambda: [ROWS[1]])
     screens.refresh(resync=True)
     assert len(client.get(f"/watchlists/{w['id']}/items", headers=H).json()["items"]) == 5
     with get_conn() as conn:
@@ -110,5 +110,23 @@ def test_weekly_resync_updates_membership(client, monkeypatch):
 def test_nasdaq_unavailable(client, monkeypatch):
     def boom():
         raise RuntimeError("Liste Nasdaq indisponible")
-    monkeypatch.setattr(screens, "fetch_recent_ipos", boom)
-    assert client.post("/watchlists/presets/ipo", headers=H).status_code == 503
+    monkeypatch.setattr(screens, "fetch_universe", boom)
+    assert client.post("/watchlists/presets/ipo10", headers=H).status_code == 503
+
+
+def test_second_preset_ipo5(client, monkeypatch):
+    """Liste « IPO 5 ans » : 100 sociétés, en plus de la liste sur 10 ans."""
+    from app.services.sources import yahoo
+
+    monkeypatch.setattr(screens, "fetch_universe", lambda: ROWS)
+    monkeypatch.setattr(yahoo, "history_many", lambda symbols, period="1y": {})
+    a = client.post("/watchlists/presets/ipo10", headers=H).json()["watchlist"]
+    b = client.post("/watchlists/presets/ipo5", headers=H)
+    assert b.status_code == 201
+    b = b.json()["watchlist"]
+    assert (b["kind"], b["name"]) == ("screen:ipo5", "IPO 5 ans") and a["id"] != b["id"]
+    year = __import__("datetime").datetime.now().year
+    syms = [i["symbol"] for i in client.get(f"/watchlists/{b['id']}/items", headers=H).json()["items"]]
+    assert syms == [m["symbol"] for m in screens.select_recent_ipos(ROWS, year=year, years=5, size=100)]
+    assert all(i["ipo_year"] >= year - 5 for i in client.get(f"/watchlists/{b['id']}/items", headers=H).json()["items"])
+    assert screens.PRESETS["ipo5"]["size"] == 100

@@ -172,7 +172,7 @@ export async function mockRequest(path, { method = 'GET', body, headers = {} } =
   if ((m = p.match(/^\/watchlists\/(\d+)\/suggestions$/))) {
     return { status: 'ready', items: [], message: 'Démo hors ligne : les suggestions sont calculées sur la vraie application.' }
   }
-  if (p === '/watchlists/presets/ipo') fail('Démo hors ligne : la liste « IPO 10 ans » est disponible sur la vraie application.')
+  if (p.startsWith('/watchlists/presets/')) fail('Démo hors ligne : les listes thématiques sont disponibles sur la vraie application.')
   if (p === '/admin/version') return { version: null, auto_update: false, update_pending: false }
   if (p === '/users/members') {
     const u = currentUser()

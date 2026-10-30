@@ -85,23 +85,33 @@ function WatchlistItems({ id, onOpen }) {
 
 const SIDEBAR_MAX = 20
 
-function IpoPreset({ onDone }) {
+// Listes thématiques proposées (créées une seule fois chacune)
+export const PRESETS = [
+  { key: 'ipo10', kind: 'screen:ipo10', label: 'IPO des 10 dernières années (500 sociétés)' },
+  { key: 'ipo5', kind: 'screen:ipo5', label: 'IPO des 5 dernières années (100 sociétés)' },
+]
+
+function Presets({ onDone }) {
   const wl = useWatchlists()
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
-  if (wl.watchlists.some((w) => w.kind === 'screen:ipo10')) return null
-  const create = async () => {
-    setBusy(true)
+  const missing = PRESETS.filter((p) => !wl.watchlists.some((w) => w.kind === p.kind))
+  if (!missing.length) return null
+  const create = async (key) => {
+    setBusy(key)
     setError(null)
-    try { await wl.createIpo(); onDone?.() } catch (e) { setError(e.message) } finally { setBusy(false) }
+    try { await wl.createPreset(key); onDone?.() } catch (e) { setError(e.message) } finally { setBusy(null) }
   }
   return (
     <div className="mx-2 mt-3 rounded-lg border border-dashed border-line p-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted">Liste thématique</p>
-      <button className="mt-2 flex w-full items-center gap-2 text-left text-sm hover:text-bull disabled:opacity-50" onClick={create} disabled={busy}>
-        {busy ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4 text-warn" />}
-        <span>{busy ? 'Création (liste Nasdaq)…' : 'IPO des 10 dernières années (500 sociétés)'}</span>
-      </button>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted">Listes thématiques</p>
+      {missing.map((p) => (
+        <button key={p.key} className="mt-2 flex w-full items-center gap-2 text-left text-sm hover:text-bull disabled:opacity-50"
+          onClick={() => create(p.key)} disabled={!!busy}>
+          {busy === p.key ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4 shrink-0 text-warn" />}
+          <span>{busy === p.key ? 'Création (liste Nasdaq)…' : p.label}</span>
+        </button>
+      ))}
       {error && <p className="mt-1 text-xs text-bear">{error}</p>}
     </div>
   )
@@ -190,7 +200,7 @@ export default function Sidebar({ user, onLogout, onProfile, onInvite, onClose, 
             )
           })}
         </ul>
-        {!loading && !error && <IpoPreset onDone={onNavigate} />}
+        {!loading && !error && <Presets onDone={onNavigate} />}
       </nav>
 
       {/* Profil : mail actif + changement d'utilisateur */}

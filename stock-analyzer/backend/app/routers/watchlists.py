@@ -290,17 +290,21 @@ def suggestions(watchlist_id: int, user: dict = Depends(current_user)) -> dict:
     return suggestions_service.get_or_start(watchlist_id)
 
 
-@router.post("/presets/ipo", status_code=201)
-def create_ipo_preset(background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
-    """Liste « IPO 10 ans » : les 500 plus grosses sociétés introduites en Bourse aux USA depuis 10 ans."""
+@router.post("/presets/{key}", status_code=201)
+def create_preset(key: str, background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
+    """Listes thématiques : « ipo10 » (500 IPO US sur 10 ans) ou « ipo5 » (100 IPO US sur 5 ans)."""
+    preset = screens.PRESETS.get(key)
+    if preset is None:
+        raise HTTPException(status_code=404, detail="Liste thématique inconnue")
     with get_conn() as conn:
         if conn.execute("SELECT 1 FROM watchlists WHERE user_id = ? AND kind = ?",
-                        (user["id"], screens.IPO_KIND)).fetchone():
-            raise HTTPException(status_code=409, detail="Tu as déjà la liste « IPO 10 ans ».")
+                        (user["id"], preset["kind"])).fetchone():
+            raise HTTPException(status_code=409, detail=f"Tu as déjà la liste « {preset['name']} ».")
     try:
-        wl_id = screens.create_ipo_watchlist(user["id"], WATCHLIST_COLORS[5])
+        wl_id = screens.create_preset_watchlist(user["id"], key)
     except RuntimeError:
         raise HTTPException(status_code=503, detail="Liste Nasdaq momentanément indisponible. Réessaie plus tard.")
     background.add_task(screens.refresh, wl_id)
     with get_conn() as conn:
         return {"watchlist": _summary(conn, wl_id)}
+

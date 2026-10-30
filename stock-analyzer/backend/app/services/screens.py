@@ -25,10 +25,15 @@ from .sources.http import fetch_text
 
 logger = logging.getLogger(__name__)
 
-IPO_KIND = "screen:ipo10"
+# Listes proposées : clé d'URL → réglages
+PRESETS = {
+    "ipo10": {"kind": "screen:ipo10", "name": "IPO 10 ans", "years": 10, "size": 500, "color": "#06B6D4"},
+    "ipo5": {"kind": "screen:ipo5", "name": "IPO 5 ans", "years": 5, "size": 100, "color": "#EC4899"},
+}
+BY_KIND = {v["kind"]: v for v in PRESETS.values()}
+IPO_KIND = PRESETS["ipo10"]["kind"]
 IPO_YEARS = 10
 IPO_SIZE = 500
-IPO_NAME = "IPO 10 ans"
 NASDAQ_URL = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true"
 BATCH = 100
 RESYNC_DAYS = 7
@@ -82,7 +87,8 @@ def select_recent_ipos(rows: list[dict], year: int | None = None, years: int = I
     } for r in chosen]
 
 
-def fetch_recent_ipos() -> list[dict]:
+def fetch_universe() -> list[dict]:
+    """Toutes les actions cotées aux USA avec leur année d'IPO (un seul appel Nasdaq)."""
     text = fetch_text(NASDAQ_URL, headers={"Accept": "application/json"}, timeout=40)
     try:
         rows = json.loads(text)["data"]["rows"]
@@ -90,7 +96,12 @@ def fetch_recent_ipos() -> list[dict]:
         rows = None
     if not rows:
         raise RuntimeError("Liste Nasdaq indisponible")
-    return select_recent_ipos(rows)
+    return rows
+
+
+def members_for(kind: str, rows: list[dict]) -> list[dict]:
+    preset = BY_KIND[kind]
+    return select_recent_ipos(rows, years=preset["years"], size=preset["size"])
 
 
 def _write_members(conn, watchlist_id: int, members: list[dict]) -> None:
@@ -115,17 +126,18 @@ def _write_members(conn, watchlist_id: int, members: list[dict]) -> None:
                  "WHERE id = ?", (watchlist_id,))
 
 
-def create_ipo_watchlist(user_id: int, color: str) -> int:
-    members = fetch_recent_ipos()
+def create_preset_watchlist(user_id: int, key: str) -> int:
+    preset = PRESETS[key]
+    members = members_for(preset["kind"], fetch_universe())
     with get_conn() as conn:
         names = {r["name"] for r in conn.execute("SELECT name FROM watchlists WHERE user_id = ?", (user_id,))}
-        name, n = IPO_NAME, 2
+        name, n = preset["name"], 2
         while name in names:
-            name, n = f"{IPO_NAME} {n}", n + 1
+            name, n = f"{preset['name']} {n}", n + 1
         pos = conn.execute("SELECT COALESCE(MAX(position), -1) + 1 FROM watchlists WHERE user_id = ?",
                            (user_id,)).fetchone()[0]
         wl_id = conn.execute("INSERT INTO watchlists (user_id, name, color, position, kind) VALUES (?, ?, ?, ?, ?)",
-                             (user_id, name, color, pos, IPO_KIND)).lastrowid
+                             (user_id, name, preset["color"], pos, preset["kind"])).lastrowid
         _write_members(conn, wl_id, members)
     return wl_id
 
@@ -204,20 +216,20 @@ def _update(conn, ids: list[int], sym: str, v: dict) -> None:
 def _resync(ids: list[int]) -> None:
     """Composition revue au plus une fois par semaine (nouvelles IPO, sociétés retirées de la cote)."""
     with get_conn() as conn:
-        due = [r["id"] for r in conn.execute(
-            f"SELECT id FROM watchlists WHERE id IN ({','.join('?' * len(ids))}) AND kind = ? AND "
-            f"(screen_synced_at IS NULL OR screen_synced_at < datetime('now', '-{RESYNC_DAYS} days'))",
-            (*ids, IPO_KIND))]
+        due = [(r["id"], r["kind"]) for r in conn.execute(
+            f"SELECT id, kind FROM watchlists WHERE id IN ({','.join('?' * len(ids))}) AND "
+            f"(screen_synced_at IS NULL OR screen_synced_at < datetime('now', '-{RESYNC_DAYS} days'))", ids)
+            if r["kind"] in BY_KIND]
     if not due:
         return
     try:
-        members = fetch_recent_ipos()
+        rows = fetch_universe()
     except Exception as exc:
         logger.warning("Composition des listes IPO non mise à jour : %s", exc)
         return
     with get_conn() as conn:
-        for wl_id in due:
-            _write_members(conn, wl_id, members)
+        for wl_id, kind in due:
+            _write_members(conn, wl_id, members_for(kind, rows))
 
 
 def refresh_in_background(watchlist_id: int) -> None:

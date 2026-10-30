@@ -256,7 +256,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | DELETE | `/watchlists/{id}/items/{item}` | Retirer un produit (ses alertes sont supprimées) |
 | PUT | `/watchlists/{id}/items/order` | Nouvel ordre (glisser-déposer) |
 | POST | `/watchlists/{id}/refresh` | Rafraîchissement immédiat |
-| POST | `/watchlists/presets/ipo` | Crée la liste « IPO 10 ans » (500 sociétés, mise à jour 1×/jour) |
+| POST | `/watchlists/presets/{ipo10\|ipo5}` | Crée la liste « IPO 10 ans » (500 sociétés) ou « IPO 5 ans » (100), mises à jour 1×/jour |
 | GET | `/watchlists/{id}/suggestions` | Suggestions d'achat inspirées de la watchlist (`pending` puis `ready`) |
 | GET / PUT | `/alerts/item/{item}` | Alertes d'un produit (5 types, activée, fréquence) |
 | GET | `/alerts/history` | Dernières alertes déclenchées |
@@ -313,12 +313,12 @@ les valeurs similaires selon Yahoo Finance, écarte celles déjà suivies et gar
 score technique est ≥ 5,5/10 (4 au maximum) ; un ETF monde est proposé si la watchlist n'en
 contient aucun. Calcul en arrière-plan, mis en cache 6 h (`services/suggestions.py`).
 
-## 📋 Liste « IPO 10 ans » (500 sociétés)
+## 📋 Listes « IPO 10 ans » (500 sociétés) et « IPO 5 ans » (100 sociétés)
 
-Menu → **Liste thématique → IPO des 10 dernières années**. Composition : outil de filtrage public
+Menu → **Listes thématiques** → IPO des 10 dernières années (500) ou des 5 dernières années (100). Composition : outil de filtrage public
 de Nasdaq (actions NYSE / Nasdaq / AMEX avec leur année d'IPO) → introductions depuis 10 ans, hors
 obligations, actions préférentielles, warrants, droits et unités de SPAC, une classe d'actions par
-société, les **500 plus fortes capitalisations**. L'année est celle de la première cotation aux USA
+société, les **500** (10 ans) ou **100** (5 ans) **plus fortes capitalisations**. L'année est celle de la première cotation aux USA
 (elle inclut donc des scissions et des cotations d'ADR, ex. GE Vernova, Shell).
 
 Mise à jour **1×/jour** (22 h 45, Bruxelles, du lundi au vendredi) : historiques téléchargés par

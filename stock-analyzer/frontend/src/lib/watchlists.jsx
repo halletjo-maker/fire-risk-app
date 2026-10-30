@@ -91,8 +91,8 @@ export function WatchlistProvider({ email, children }) {
     select: setSelectedId,
     reload,
     loadItems,
-    createIpo: async () => {
-      const { watchlist } = await api.createIpoWatchlist()
+    createPreset: async (key) => {
+      const { watchlist } = await api.createPresetWatchlist(key)
       setWatchlists((l) => [...l, watchlist])
       setSelectedId(watchlist.id)
       await loadItems(watchlist.id)
