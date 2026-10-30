@@ -38,6 +38,13 @@ node --version
 
 ---
 
+## 🪟 Installation rapide sous Windows
+
+1. Installe **Python 3.13** (https://www.python.org/downloads/windows/ — coche
+   « Add python.exe to PATH ») et **Node.js LTS** (https://nodejs.org).
+2. Dans le dossier `stock-analyzer`, double-clique sur **`install.bat`** (5 à 10 minutes).
+3. Double-clique sur **`start.bat`** : le navigateur s'ouvre sur http://localhost:3000.
+
 ## 🚀 Installation (une seule fois)
 
 ### 1. Configuration
