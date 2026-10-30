@@ -5,6 +5,7 @@ const BASE = '/api'
 // Session expirée ou révoquée : App revient à l'écran de connexion.
 export const SESSION_EXPIRED = 'ab:session-expired'
 const AUTH_PATHS = ['/users/login', '/users/register', '/users/current']
+const isAuthPath = (path) => AUTH_PATHS.includes(path) || path.startsWith('/users/invitation/')
 
 // Mode démo (VITE_DEMO=1) : API simulée dans la page, sans serveur
 export const DEMO = import.meta.env.VITE_DEMO === '1'
@@ -25,7 +26,7 @@ async function request(path, { method = 'GET', body, signal } = {}) {
     throw new Error('Serveur injoignable. Le backend est-il lancé ?')
   }
   const data = await res.json().catch(() => ({}))
-  if (res.status === 401 && !AUTH_PATHS.includes(path)) {
+  if (res.status === 401 && !isAuthPath(path)) {
     window.dispatchEvent(new Event(SESSION_EXPIRED))
   }
   if (!res.ok) {
@@ -39,7 +40,12 @@ export const api = {
   health: () => request('/health'),
   currentUser: () => request('/users/current'),
   login: (email, password) => request('/users/login', { method: 'POST', body: { email, password } }),
-  register: (email, password) => request('/users/register', { method: 'POST', body: { email, password } }),
+  register: (email, password, invitation) => request('/users/register', { method: 'POST', body: { email, password, invitation } }),
+  invitationInfo: (token) => request(`/users/invitation/${encodeURIComponent(token)}`),
+  members: () => request('/users/members'),
+  invite: (email) => request('/users/invitations', { method: 'POST', body: { email, app_url: window.location.origin } }),
+  cancelInvitation: (id) => request(`/users/invitations/${id}`, { method: 'DELETE' }),
+  removeMember: (id) => request(`/users/members/${id}`, { method: 'DELETE' }),
   logout: () => request('/users/logout', { method: 'POST' }),
   changePassword: (current, next) => request('/users/password', { method: 'POST', body: { current_password: current, new_password: next } }),
   me: () => request('/users/me'),

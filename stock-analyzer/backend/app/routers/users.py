@@ -5,8 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr, Field
 
 from ..database import get_conn
-from ..deps import current_user
+from ..deps import admin_user, current_user
 from ..services import auth
+from ..services.mail import sender
 
 router = APIRouter(prefix="/users", tags=["utilisateur"])
 
@@ -18,6 +19,15 @@ class Credentials(BaseModel):
     password: str = Field(min_length=1, max_length=auth.PASSWORD_MAX)
 
 
+class RegisterIn(Credentials):
+    invitation: str | None = Field(default=None, max_length=200)
+
+
+class InvitationIn(BaseModel):
+    email: EmailStr
+    app_url: str | None = Field(default=None, max_length=200)  # adresse vue par l'invitant (lien du mail)
+
+
 class PasswordChange(BaseModel):
     current_password: str = Field(min_length=1, max_length=auth.PASSWORD_MAX)
     new_password: str = Field(min_length=1, max_length=auth.PASSWORD_MAX)
@@ -25,9 +35,9 @@ class PasswordChange(BaseModel):
 
 def _user(conn, user_id: int) -> dict:
     row = conn.execute(
-        "SELECT id, email, created_at, last_login_at FROM users WHERE id = ?", (user_id,)
+        "SELECT id, email, is_admin, created_at, last_login_at FROM users WHERE id = ?", (user_id,)
     ).fetchone()
-    return dict(row)
+    return {**dict(row), "is_admin": bool(row["is_admin"])}
 
 
 def _client_ip(request: Request) -> str:
@@ -44,15 +54,32 @@ def current(request: Request) -> dict:
     }
 
 
+@router.get("/invitation/{token}")
+def invitation(token: str) -> dict:
+    """Écran « tu es invité » : adresse concernée (public, jeton secret à usage unique)."""
+    with get_conn() as conn:
+        inv = auth.invitation_for_token(conn, token)
+    if inv is None:
+        raise HTTPException(status_code=404, detail="Invitation invalide, déjà utilisée ou expirée.")
+    return {"email": inv["email"], "invited_by": inv["invited_by"], "expires_at": inv["expires_at"]}
+
+
 @router.post("/register")
-def register(payload: Credentials, request: Request, response: Response) -> dict:
-    """Création du mot de passe (premier compte, ou adresse listée dans ALLOWED_EMAILS)."""
+def register(payload: RegisterIn, request: Request, response: Response) -> dict:
+    """Création du mot de passe : premier compte, adresse de ALLOWED_EMAILS, ou invitation."""
     email = payload.email.strip().lower()
-    if not auth.registration_allowed(email):
-        raise HTTPException(status_code=403, detail="La création de compte est fermée sur cette installation.")
     problem = auth.password_problem(payload.password)
+    with get_conn() as conn:
+        inv = auth.invitation_for_token(conn, payload.invitation) if payload.invitation else None
+    if payload.invitation:
+        if inv is None or inv["email"].lower() != email:
+            raise HTTPException(status_code=403, detail="Invitation invalide, déjà utilisée ou expirée.")
+    elif not auth.registration_allowed(email):
+        raise HTTPException(status_code=403, detail="La création de compte est fermée sur cette installation.")
     if problem:
         raise HTTPException(status_code=422, detail=problem)
+    # Compte créé sans invitation (premier compte ou ALLOWED_EMAILS) = administrateur
+    is_admin = inv is None
     with get_conn() as conn:
         row = conn.execute("SELECT id, password_hash FROM users WHERE email = ?", (email,)).fetchone()
         if row and row["password_hash"]:
@@ -62,7 +89,10 @@ def register(payload: Credentials, request: Request, response: Response) -> dict
         else:
             user_id = conn.execute("INSERT INTO users (email) VALUES (?)", (email,)).lastrowid
         auth.set_password(conn, user_id, payload.password)
-        conn.execute("UPDATE users SET last_login_at = datetime('now') WHERE id = ?", (user_id,))
+        conn.execute("UPDATE users SET last_login_at = datetime('now'), is_admin = MAX(is_admin, ?) WHERE id = ?",
+                     (int(is_admin), user_id))
+        if inv:
+            conn.execute("UPDATE invitations SET used_at = datetime('now') WHERE id = ?", (inv["id"],))
         token = auth.create_session(conn, user_id)
         user = _user(conn, user_id)
     auth.set_cookie(response, request, token)
@@ -132,3 +162,74 @@ def me(user: dict = Depends(current_user)) -> dict:
             {"u": uid},
         ).fetchone()
     return {"user": user, "stats": dict(stats)}
+
+
+# ── Administration : inviter des amis, gérer les membres ───────────────────
+
+def _app_url(payload_url: str | None, request: Request) -> str:
+    url = (payload_url or "").strip().rstrip("/")
+    if url.startswith(("http://", "https://")) and " " not in url:
+        return url
+    return str(request.base_url).rstrip("/")
+
+
+@router.get("/members")
+def members(admin: dict = Depends(admin_user)) -> dict:
+    with get_conn() as conn:
+        users = conn.execute(
+            "SELECT id, email, is_admin, created_at, last_login_at, password_hash IS NOT NULL AS active "
+            "FROM users ORDER BY is_admin DESC, created_at"
+        ).fetchall()
+        invitations = conn.execute(
+            "SELECT id, email, created_at, expires_at FROM invitations "
+            "WHERE used_at IS NULL AND expires_at > datetime('now') ORDER BY created_at DESC"
+        ).fetchall()
+    return {
+        "members": [{**dict(u), "is_admin": bool(u["is_admin"]), "active": bool(u["active"]),
+                     "is_me": u["id"] == admin["id"]} for u in users],
+        "invitations": [dict(i) for i in invitations],
+    }
+
+
+@router.post("/invitations", status_code=201)
+def invite(payload: InvitationIn, request: Request, admin: dict = Depends(admin_user)) -> dict:
+    """Crée un lien d'invitation (7 jours, usage unique) et l'envoie par mail si le SMTP est configuré."""
+    email = payload.email.strip().lower()
+    with get_conn() as conn:
+        existing = conn.execute("SELECT password_hash FROM users WHERE email = ?", (email,)).fetchone()
+        if existing and existing["password_hash"]:
+            raise HTTPException(status_code=409, detail="Cette personne a déjà un compte.")
+        token, inv = auth.create_invitation(conn, email, admin["id"])
+    link = f"{_app_url(payload.app_url, request)}/?invitation={token}"
+    text = (
+        f"Bonjour,\n\n{admin['email']} t'invite à utiliser Analyse Boursière, une application d'aide "
+        "à la décision pour tes placements (analyse technique, fondamentale, actualités, alertes).\n\n"
+        f"Crée ton mot de passe ici (lien personnel, valable {auth.INVITATION_DAYS} jours) :\n{link}\n\n"
+        "Aide à la décision automatisée, pas un conseil en investissement (MiFID II)."
+    )
+    mail = sender.send(email, "Invitation : Analyse Boursière", text)
+    return {"invitation": inv, "link": link, "mail": {"sent": mail["delivered"], "status": mail["status"]}}
+
+
+@router.delete("/invitations/{inv_id}")
+def cancel_invitation(inv_id: int, admin: dict = Depends(admin_user)) -> dict:
+    with get_conn() as conn:
+        n = conn.execute("DELETE FROM invitations WHERE id = ? AND used_at IS NULL", (inv_id,)).rowcount
+    if not n:
+        raise HTTPException(status_code=404, detail="Invitation introuvable")
+    return {"ok": True}
+
+
+@router.delete("/members/{user_id}")
+def remove_member(user_id: int, admin: dict = Depends(admin_user)) -> dict:
+    """Retire l'accès d'un membre : compte, sessions, watchlists et alertes supprimés."""
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="Tu ne peux pas supprimer ton propre compte.")
+    with get_conn() as conn:
+        row = conn.execute("SELECT is_admin FROM users WHERE id = ?", (user_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Membre introuvable")
+        if row["is_admin"]:
+            raise HTTPException(status_code=400, detail="Un administrateur ne peut pas être supprimé ici.")
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    return {"ok": True}

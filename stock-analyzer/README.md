@@ -151,6 +151,11 @@ Rapport d'installation : `/root/INSTALLATION.txt` et `/var/log/analyse-boursiere
   renseigne `ALLOWED_EMAILS=ton@mail.be` dans `.env` **avant** le premier lancement.
 - Le mot de passe est haché (scrypt) ; la session est un cookie HttpOnly valable 30 jours
   (prolongé à chaque utilisation). Après 5 essais ratés, la connexion est bloquée 15 minutes.
+- **Inviter un ami** (administrateur uniquement : le premier compte, ou une adresse de
+  `ALLOWED_EMAILS`) : menu → « Inviter un ami » → son adresse mail → lien personnel à usage unique,
+  valable 7 jours, envoyé par mail si le SMTP est configuré, sinon à copier / partager (WhatsApp…).
+  Chaque ami a son propre compte, ses watchlists et alertes, invisibles des autres. La même fenêtre
+  liste les membres (retirer un accès supprime son compte et ses données) et les invitations en attente.
 - **Changer le mot de passe** : Profil → « Changer le mot de passe » (les autres appareils sont déconnectés).
 - **Mot de passe oublié** : sur la machine qui fait tourner l'application, double-clique sur
   `reset_password.bat` (Windows) ou lance `cd backend && python -m app.reset_password ton@mail.be`.
@@ -234,6 +239,10 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | POST | `/users/logout` | Déconnexion (session supprimée) |
 | POST | `/users/password` | Changer le mot de passe (déconnecte les autres appareils) |
 | GET | `/users/me` | Profil + statistiques |
+| GET | `/users/invitation/{jeton}` | Adresse liée à un lien d'invitation — public |
+| GET | `/users/members` | Membres et invitations en attente (admin) |
+| POST / DELETE | `/users/invitations[/{id}]` | Inviter un ami (lien 7 jours, mail si SMTP) / annuler (admin) |
+| DELETE | `/users/members/{id}` | Retirer l'accès d'un membre et ses données (admin) |
 | GET / POST | `/watchlists` | Lister / créer |
 | PATCH / DELETE | `/watchlists/{id}` | Renommer, changer la couleur / supprimer (produits + alertes) |
 | POST | `/watchlists/{id}/duplicate` | Dupliquer (produits copiés, alertes non copiées) |

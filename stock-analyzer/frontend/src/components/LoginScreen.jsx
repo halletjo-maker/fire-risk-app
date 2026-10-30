@@ -6,15 +6,17 @@ import PasswordInput from './PasswordInput'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 export const PASSWORD_MIN = 10
 
-export default function LoginScreen({ setupRequired, registrationOpen, notice, onSubmit }) {
-  // Première utilisation : création du mot de passe ; ensuite : connexion
-  const [mode, setMode] = useState(setupRequired ? 'register' : 'login')
-  const [email, setEmail] = useState('')
+export default function LoginScreen({ setupRequired, registrationOpen, invitation, notice, onSubmit }) {
+  // Invitation : création du mot de passe pour l'adresse invitée ;
+  // première utilisation : création du compte administrateur ; ensuite : connexion
+  const [mode, setMode] = useState(invitation ? 'invite' : setupRequired ? 'register' : 'login')
+  const [email, setEmail] = useState(invitation?.email || '')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
-  const register = mode === 'register'
+  const invited = mode === 'invite'
+  const register = mode === 'register' || invited
 
   const switchMode = (m) => {
     setMode(m)
@@ -47,11 +49,13 @@ export default function LoginScreen({ setupRequired, registrationOpen, notice, o
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center"><Logo /></div>
         <form onSubmit={submit} noValidate className="card p-6 sm:p-8">
-          <h1 className="text-xl font-bold">{register ? 'Crée ton accès 🔐' : 'Bienvenue 👋'}</h1>
+          <h1 className="text-xl font-bold">{invited ? 'Tu es invité 🎉' : register ? 'Crée ton accès 🔐' : 'Bienvenue 👋'}</h1>
           <p className="mt-1 text-sm text-muted">
-            {register
-              ? 'Choisis ton adresse mail et un mot de passe. Si tu utilisais déjà l\'application avec cette adresse, tu retrouves tes watchlists.'
-              : 'Connecte-toi pour retrouver tes watchlists, ton historique et tes alertes.'}
+            {invited
+              ? `${invitation.invited_by || 'Un membre'} t'invite à utiliser Analyse Boursière. Choisis ton mot de passe pour créer ton compte personnel : tes watchlists et alertes ne sont visibles que par toi.`
+              : register
+                ? 'Choisis ton adresse mail et un mot de passe. Si tu utilisais déjà l\'application avec cette adresse, tu retrouves tes watchlists.'
+                : 'Connecte-toi pour retrouver tes watchlists, ton historique et tes alertes.'}
           </p>
           {notice && <p className="mt-4 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-sm text-warn" role="status">{notice}</p>}
 
@@ -64,9 +68,11 @@ export default function LoginScreen({ setupRequired, registrationOpen, notice, o
               inputMode="email"
               autoComplete={register ? 'email' : 'username'}
               autoCapitalize="none"
-              className="input pl-9"
+              className={`input pl-9 ${invited ? 'opacity-70' : ''}`}
               placeholder="prenom.nom@exemple.be"
               value={email}
+              readOnly={invited}
+              aria-readonly={invited}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
@@ -91,7 +97,7 @@ export default function LoginScreen({ setupRequired, registrationOpen, notice, o
             {busy ? 'Connexion…' : register ? 'Créer mon accès' : 'Se connecter'} <ArrowRight className="h-4 w-4" />
           </button>
 
-          {registrationOpen && !setupRequired && (
+          {registrationOpen && !setupRequired && !invited && (
             <p className="mt-4 text-center text-sm">
               {register ? (
                 <button type="button" className="text-muted underline-offset-2 hover:underline" onClick={() => switchMode('login')}>

@@ -5,7 +5,7 @@
 #
 #  Remplis les 2 lignes ci-dessous, rien d'autre.
 # =============================================================================
-EMAIL="ton.adresse@exemple.be"      # ton adresse mail (seule autorisée à créer le compte)
+EMAIL="ton.adresse@exemple.be"      # ton adresse mail (compte administrateur ; tes amis : bouton « Inviter un ami »)
 GITHUB_TOKEN="colle_ici_ton_jeton"  # jeton GitHub en lecture seule (voir le guide)
 # =============================================================================
 

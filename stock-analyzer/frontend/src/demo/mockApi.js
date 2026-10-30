@@ -162,13 +162,26 @@ export async function mockRequest(path, { method = 'GET', body, headers = {} } =
     const email = (body.email || '').trim().toLowerCase()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) fail('Adresse mail invalide')
     let u = db.users.find((x) => x.email === email)
-    if (!u) { u = { id: nextId(), email, created_at: sqlNow(), last_login_at: sqlNow() }; db.users.push(u) }
+    if (!u) { u = { id: nextId(), email, is_admin: true, created_at: sqlNow(), last_login_at: sqlNow() }; db.users.push(u) }
     u.last_login_at = sqlNow()
     db.active = u.id; save()
     return { user: u }
   }
   if (p === '/users/current') return { user: db.users.find((u) => u.id === db.active) || null, setup_required: false, registration_open: true }
   if (p === '/users/password') return { ok: true }
+  if (p === '/users/members') {
+    const u = currentUser()
+    return { members: [{ ...u, is_admin: true, active: true, is_me: true }], invitations: db.invitations || [] }
+  }
+  if (p === '/users/invitations' && method === 'POST') {
+    const inv = { id: nextId(), email: (body.email || '').toLowerCase(), created_at: sqlNow(), expires_at: sqlNow() }
+    db.invitations = [inv, ...(db.invitations || []).filter((i) => i.email !== inv.email)]; save()
+    return { invitation: inv, link: `${location.origin}/?invitation=demo`, mail: { sent: false, status: 'Démo : aucun mail envoyé' } }
+  }
+  if ((m = p.match(/^\/users\/invitations\/(\d+)$/)) && method === 'DELETE') {
+    db.invitations = (db.invitations || []).filter((i) => i.id !== Number(m[1])); save()
+    return { ok: true }
+  }
   if (p === '/users/logout') { db.active = null; save(); return { user: null } }
   if (p === '/users/me') {
     const u = currentUser(headers)

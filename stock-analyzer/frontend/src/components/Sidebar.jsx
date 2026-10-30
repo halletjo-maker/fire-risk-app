@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, LogOut, Plus, Settings, X } from 'lucide-react'
+import { ChevronDown, LogOut, Plus, Settings, UserPlus, X } from 'lucide-react'
 import { WATCHLIST_COLORS } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { fmtScore, scoreColor } from '../lib/format'
@@ -80,7 +80,7 @@ function WatchlistItems({ id, onOpen }) {
   )
 }
 
-export default function Sidebar({ user, onLogout, onProfile, onClose, onNavigate }) {
+export default function Sidebar({ user, onLogout, onProfile, onInvite, onClose, onNavigate }) {
   const wl = useWatchlists()
   const { watchlists, loading, error, selectedId } = wl
   const [creating, setCreating] = useState(false)
@@ -167,6 +167,11 @@ export default function Sidebar({ user, onLogout, onProfile, onClose, onNavigate
 
       {/* Profil : mail actif + changement d'utilisateur */}
       <div className="border-t border-line p-3">
+        {user.is_admin && (
+          <button className="btn-ghost mb-2 w-full justify-center border border-line" onClick={onInvite}>
+            <UserPlus className="h-4 w-4" /> Inviter un ami
+          </button>
+        )}
         <button
           onClick={onProfile}
           className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-panel2"

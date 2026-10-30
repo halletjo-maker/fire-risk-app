@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     email           TEXT    NOT NULL UNIQUE COLLATE NOCASE,
     password_hash   TEXT,       -- scrypt ; NULL = mot de passe pas encore créé
+    is_admin        INTEGER NOT NULL DEFAULT 0,   -- peut inviter des amis et gérer les membres
     created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
     last_login_at   TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -34,6 +35,17 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
     last_seen_at    TEXT    NOT NULL DEFAULT (datetime('now')),
     expires_at      TEXT    NOT NULL
+);
+
+-- Invitations à créer un compte (lien à usage unique, valable 7 jours)
+CREATE TABLE IF NOT EXISTS invitations (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_hash      TEXT    NOT NULL UNIQUE,
+    email           TEXT    NOT NULL COLLATE NOCASE,
+    invited_by      INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+    expires_at      TEXT    NOT NULL,
+    used_at         TEXT
 );
 
 -- Réglages globaux de l'application (ex. utilisateur actif)
@@ -142,6 +154,7 @@ CREATE INDEX IF NOT EXISTS idx_history_user_date     ON analysis_history(user_id
 TABLES = [
     "users",
     "sessions",
+    "invitations",
     "alert_events",
     "app_settings",
     "watchlists",
@@ -165,6 +178,7 @@ def _connect(path: Path) -> sqlite3.Connection:
 MIGRATIONS = [
     ("watchlist_items", "product_id", "TEXT"),
     ("users", "password_hash", "TEXT"),
+    ("users", "is_admin", "INTEGER NOT NULL DEFAULT 0"),
 ]
 
 
@@ -199,6 +213,11 @@ def init_db() -> None:
                 if column not in cols:
                     conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {kind}")
         conn.executescript(SCHEMA)
+        # Bases créées avant les invitations : le premier compte avec mot de passe devient administrateur
+        conn.execute(
+            "UPDATE users SET is_admin = 1 WHERE id = (SELECT id FROM users WHERE password_hash IS NOT NULL "
+            "ORDER BY id LIMIT 1) AND NOT EXISTS (SELECT 1 FROM users WHERE is_admin = 1)"
+        )
 
 
 @contextmanager

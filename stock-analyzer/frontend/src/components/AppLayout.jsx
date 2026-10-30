@@ -4,14 +4,17 @@ import Sidebar from './Sidebar'
 import MobileHeader from './MobileHeader'
 import MainArea from './MainArea'
 import ProfileModal from './ProfileModal'
+import InviteModal from './InviteModal'
 
 export default function AppLayout({ user, onLogout }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const sidebarProps = {
     user,
     onLogout,
     onProfile: () => { setDrawerOpen(false); setProfileOpen(true) },
+    onInvite: () => { setDrawerOpen(false); setInviteOpen(true) },
     onNavigate: () => setDrawerOpen(false),
   }
 
@@ -34,6 +37,7 @@ export default function AppLayout({ user, onLogout }) {
         )}
 
         {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} onLogout={onLogout} />}
+        {inviteOpen && <InviteModal onClose={() => setInviteOpen(false)} />}
 
         <div className="flex min-w-0 flex-1 flex-col">
           <MobileHeader onMenu={() => setDrawerOpen(true)} />

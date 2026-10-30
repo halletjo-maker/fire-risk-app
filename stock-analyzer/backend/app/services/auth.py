@@ -19,6 +19,7 @@ from ..database import get_conn
 
 COOKIE_NAME = "ab_session"
 SESSION_DAYS = 30
+INVITATION_DAYS = 7
 PASSWORD_MIN = 10
 PASSWORD_MAX = 128
 
@@ -106,7 +107,7 @@ def user_for_token(token: str | None) -> dict | None:
     h = _digest(token)
     with get_conn() as conn:
         row = conn.execute(
-            "SELECT u.id, u.email, u.created_at, u.last_login_at, s.last_seen_at "
+            "SELECT u.id, u.email, u.is_admin, u.created_at, u.last_login_at, s.last_seen_at "
             "FROM sessions s JOIN users u ON u.id = s.user_id "
             "WHERE s.token_hash = ? AND s.expires_at > datetime('now')",
             (h,),
@@ -122,6 +123,7 @@ def user_for_token(token: str | None) -> dict | None:
             )
     user = dict(row)
     user.pop("last_seen_at")
+    user["is_admin"] = bool(user["is_admin"])
     return user
 
 
@@ -152,6 +154,34 @@ def set_cookie(response, request, token: str) -> None:
 
 def clear_cookie(response) -> None:
     response.delete_cookie(COOKIE_NAME, path="/")
+
+
+# ── Invitations ────────────────────────────────────────────────────────────
+
+def create_invitation(conn, email: str, invited_by: int) -> tuple[str, dict]:
+    """Remplace l'invitation en attente pour cette adresse ; renvoie (jeton, invitation)."""
+    conn.execute("DELETE FROM invitations WHERE email = ? AND used_at IS NULL", (email,))
+    token = secrets.token_urlsafe(32)
+    inv_id = conn.execute(
+        "INSERT INTO invitations (token_hash, email, invited_by, expires_at) "
+        f"VALUES (?, ?, ?, datetime('now', '+{INVITATION_DAYS} days'))",
+        (_digest(token), email, invited_by),
+    ).lastrowid
+    row = conn.execute("SELECT id, email, created_at, expires_at FROM invitations WHERE id = ?", (inv_id,)).fetchone()
+    return token, dict(row)
+
+
+def invitation_for_token(conn, token: str | None) -> dict | None:
+    """Invitation valide (ni utilisée, ni expirée) correspondant au jeton."""
+    if not token:
+        return None
+    row = conn.execute(
+        "SELECT i.id, i.email, i.expires_at, u.email AS invited_by FROM invitations i "
+        "LEFT JOIN users u ON u.id = i.invited_by "
+        "WHERE i.token_hash = ? AND i.used_at IS NULL AND i.expires_at > datetime('now')",
+        (_digest(token),),
+    ).fetchone()
+    return dict(row) if row else None
 
 
 # ── Limitation des essais ──────────────────────────────────────────────────
