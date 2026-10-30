@@ -30,6 +30,17 @@ def refresh_watchlists() -> None:
         logger.info("Rafraîchissement watchlists : %s produit(s) mis à jour", done)
     except Exception:  # une tâche de fond ne doit jamais faire tomber l'app
         logger.exception("Échec du rafraîchissement des watchlists")
+    run_portfolios()
+
+
+def run_portfolios() -> None:
+    """Portefeuilles fictifs : achats / ventes sur les cours tout juste mis à jour."""
+    from .services import paper
+
+    try:
+        paper.run_all()
+    except Exception:
+        logger.exception("Échec de la simulation des portefeuilles fictifs")
 
 
 def check_alerts() -> None:
@@ -51,6 +62,7 @@ def refresh_screens() -> None:
         screens.refresh(resync=True)
     except Exception:
         logger.exception("Échec de la mise à jour des listes larges")
+    run_portfolios()
 
 
 def start_scheduler() -> None:

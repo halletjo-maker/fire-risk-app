@@ -118,8 +118,8 @@ def _write_members(conn, watchlist_id: int, members: list[dict]) -> None:
                          (rank, m["name"], m["ipo_year"], existing[m["symbol"]]))
         else:
             conn.execute(
-                "INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, product_type, position, ipo_year) "
-                "VALUES (?, ?, ?, ?, 'ACTION', ?, ?)",
+                "INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, product_type, position, ipo_year, "
+                "currency) VALUES (?, ?, ?, ?, 'ACTION', ?, ?, 'USD')",
                 (watchlist_id, m["symbol"], f"yf:{m['symbol']}", m["name"], rank, m["ipo_year"]),
             )
     conn.execute("UPDATE watchlists SET screen_synced_at = datetime('now'), updated_at = datetime('now') "
@@ -151,7 +151,7 @@ def evaluate(df) -> dict | None:
     full = {"product": {"type": "ACTION"}, "quote": {"price": t["price"]}, "technical": t}
     lv = targets.compute(full) or {}
     return {"price": t["price"], "change": t["change_pct"], "score": t["score"], "signal": signal_for(t["score"]),
-            **{k: lv.get(k) for k in ("buy_price", "buy_kind", "buy_note", "sell_price", "sell_note")}}
+            **{k: lv.get(k) for k in ("buy_price", "buy_kind", "buy_note", "sell_price", "sell_note", "stop_price")}}
 
 
 def _screen_ids(watchlist_id: int | None) -> list[int]:
@@ -206,10 +206,11 @@ def _update(conn, ids: list[int], sym: str, v: dict) -> None:
     marks = ",".join("?" * len(ids))
     conn.execute(
         "UPDATE watchlist_items SET last_price = ?, last_change_pct = ?, last_score = ?, last_signal = ?, "
-        "buy_price = ?, buy_kind = ?, buy_note = ?, sell_price = ?, sell_note = ?, last_refresh_at = datetime('now') "
+        "buy_price = ?, buy_kind = ?, buy_note = ?, sell_price = ?, sell_note = ?, stop_price = ?, "
+        "last_refresh_at = datetime('now') "
         f"WHERE symbol = ? AND watchlist_id IN ({marks})",
         (v["price"], v["change"], v["score"], v["signal"], v["buy_price"], v["buy_kind"], v["buy_note"],
-         v["sell_price"], v["sell_note"], sym, *ids),
+         v["sell_price"], v["sell_note"], v["stop_price"], sym, *ids),
     )
 
 

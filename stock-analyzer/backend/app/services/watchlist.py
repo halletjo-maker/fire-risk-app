@@ -30,13 +30,15 @@ def refresh_product(product_id: str) -> dict | None:
     except Exception:
         logger.exception("Cours cibles impossibles : %s", product_id)
         levels = {}
-    for k in ("buy_price", "buy_kind", "buy_note", "sell_price", "sell_note"):
+    for k in ("buy_price", "buy_kind", "buy_note", "sell_price", "sell_note", "stop_price"):
         values[k] = levels.get(k)
+    values["currency"] = (full.get("product") or {}).get("currency")
     with get_conn() as conn:
         conn.execute(
             "UPDATE watchlist_items SET last_price = :price, last_change_pct = :change, last_score = :score, "
             "last_signal = :signal, buy_price = :buy_price, buy_kind = :buy_kind, buy_note = :buy_note, "
-            "sell_price = :sell_price, sell_note = :sell_note, last_refresh_at = datetime('now') "
+            "sell_price = :sell_price, sell_note = :sell_note, stop_price = :stop_price, "
+            "currency = COALESCE(:currency, currency), last_refresh_at = datetime('now') "
             "WHERE product_id = :pid",
             {**values, "pid": product_id},
         )

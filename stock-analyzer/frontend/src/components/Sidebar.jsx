@@ -1,10 +1,12 @@
-import { useState } from 'react'
-import { ChevronDown, LogOut, Plus, Settings, Sparkles, UserPlus, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ChevronDown, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
 import { WATCHLIST_COLORS } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { fmtScore, scoreColor } from '../lib/format'
 import { ColorDot, Logo, Spinner } from './ui'
 import WatchlistSettings from './WatchlistSettings'
+import { PORTFOLIOS_CHANGED } from './PortfolioModals'
+import { api } from '../lib/api'
 import { SIGNAL } from './WatchlistPanel'
 
 function NewWatchlistForm({ onCreate, onDone }) {
@@ -117,7 +119,48 @@ function Presets({ onDone }) {
   )
 }
 
-export default function Sidebar({ user, onLogout, onProfile, onInvite, onClose, onNavigate }) {
+// Portefeuilles fictifs : valeur et performance, accès rapide
+function Portfolios({ onOpen, onNew }) {
+  const [list, setList] = useState(null)
+  useEffect(() => {
+    const load = () => api.portfolios().then((r) => setList(r.portfolios)).catch(() => setList([]))
+    load()
+    window.addEventListener(PORTFOLIOS_CHANGED, load)
+    const t = setInterval(load, 5 * 60 * 1000)
+    return () => { window.removeEventListener(PORTFOLIOS_CHANGED, load); clearInterval(t) }
+  }, [])
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between px-2 pb-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Portefeuilles fictifs</h2>
+        <button className="btn-ghost p-1.5" onClick={onNew} aria-label="Nouveau portefeuille fictif" title="Nouveau portefeuille fictif">
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+      {list?.length === 0 && (
+        <button className="mx-2 w-[calc(100%-1rem)] rounded-lg border border-dashed border-line p-3 text-left text-sm text-muted hover:text-gray-100" onClick={onNew}>
+          <Wallet className="mb-1 h-4 w-4 text-bull" />
+          Teste les signaux avec 5 000 € virtuels : le programme achète et vend seul.
+        </button>
+      )}
+      <ul className="space-y-0.5">
+        {(list || []).map((p) => (
+          <li key={p.id}>
+            <button onClick={() => onOpen(p.id)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted hover:bg-panel2 hover:text-gray-100">
+              <Wallet className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{p.name}</span>
+              <span className={`shrink-0 text-xs font-semibold ${p.pnl_pct > 0 ? 'text-bull' : p.pnl_pct < 0 ? 'text-bear' : 'text-muted'}`}>
+                {p.pnl_pct > 0 ? '+' : ''}{new Intl.NumberFormat('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(p.pnl_pct)} %
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfolio, onNewPortfolio, onClose, onNavigate }) {
   const wl = useWatchlists()
   const { watchlists, loading, error, selectedId } = wl
   const [creating, setCreating] = useState(false)
@@ -201,6 +244,7 @@ export default function Sidebar({ user, onLogout, onProfile, onInvite, onClose, 
           })}
         </ul>
         {!loading && !error && <Presets onDone={onNavigate} />}
+        {!loading && !error && <Portfolios onOpen={onPortfolio} onNew={onNewPortfolio} />}
       </nav>
 
       {/* Profil : mail actif + changement d'utilisateur */}

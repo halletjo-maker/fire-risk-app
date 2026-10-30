@@ -327,6 +327,20 @@ composition revue chaque semaine. Ces lignes sont exclues du rafraîchissement �
 Affichage : recherche, filtres par signal, tri (score, variation, capitalisation, IPO, nom),
 50 lignes à la fois. Touche une société pour son analyse complète.
 
+## 💼 Portefeuilles fictifs (simulation)
+
+Menu → **Portefeuilles fictifs → +** : capital virtuel (5 000 € par défaut) et une watchlist. Après
+chaque mise à jour des cours (15 min, ou 1×/jour pour les listes IPO), `services/paper.py` :
+- **vend** d'abord : stop-loss touché (stop suiveur : il monte avec le plus haut depuis l'achat),
+  objectif de vente atteint, ou signal passé à 🔴 VENTE ;
+- **achète** ensuite les produits au signal 🟢 ACHAT dont le cours est dans la zone d'achat
+  (≈ / ≤ / ≥), meilleur score d'abord, 10 lignes maximum d'≈ 10 % du portefeuille, actions
+  entières, pas de rachat d'un titre vendu depuis moins de 5 jours ;
+- frais estimés 0,1 % (1 € minimum) par ordre, conversion des devises en euros (Yahoo `EURUSD=X`…) ;
+- enregistre la valeur du jour (historique).
+Aucun ordre réel n'est passé. API : `GET/POST /portfolios`, `GET/DELETE /portfolios/{id}`,
+`POST /portfolios/{id}/run`.
+
 ## 🗺️ Avancement
 
 - [x] **Étape 0** — Structure, backend FastAPI, SQLite, APScheduler, layout React

@@ -91,8 +91,61 @@ CREATE TABLE IF NOT EXISTS watchlist_items (
     sell_price        REAL,       -- cours de vente potentiel (objectif)
     sell_note         TEXT,
     ipo_year          INTEGER,    -- listes « IPO » : année d'introduction en Bourse
+    stop_price        REAL,       -- stop-loss conseillé (portefeuille fictif)
+    currency          TEXT,
     added_at          TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (watchlist_id, symbol)
+);
+
+-- Portefeuilles fictifs (simulation d'achats / ventes, aucun argent réel)
+CREATE TABLE IF NOT EXISTS portfolios (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    watchlist_id    INTEGER REFERENCES watchlists(id) ON DELETE SET NULL,
+    name            TEXT    NOT NULL,
+    initial_cash    REAL    NOT NULL,
+    cash            REAL    NOT NULL,
+    fees_paid       REAL    NOT NULL DEFAULT 0,
+    max_positions   INTEGER NOT NULL DEFAULT 10,
+    last_run_at     TEXT,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Lignes achetées (ouvertes puis clôturées) ; montants en devise du titre, change EUR mémorisé
+CREATE TABLE IF NOT EXISTS portfolio_positions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    portfolio_id    INTEGER NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+    symbol          TEXT    NOT NULL,
+    product_id      TEXT,
+    name            TEXT,
+    currency        TEXT    NOT NULL DEFAULT 'EUR',
+    qty             INTEGER NOT NULL,
+    entry_price     REAL    NOT NULL,
+    entry_fx        REAL    NOT NULL DEFAULT 1,   -- unités de devise pour 1 €
+    entry_fee       REAL    NOT NULL DEFAULT 0,   -- en €
+    entry_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+    entry_score     REAL,
+    target          REAL,
+    stop            REAL,
+    stop_pct        REAL,
+    high            REAL,
+    last_price      REAL,
+    last_fx         REAL,
+    status          TEXT    NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'CLOSED')),
+    exit_price      REAL,
+    exit_fx         REAL,
+    exit_fee        REAL,
+    exit_at         TEXT,
+    exit_reason     TEXT,
+    pnl_eur         REAL
+);
+
+-- Valeur du portefeuille, une ligne par jour (courbe d'évolution)
+CREATE TABLE IF NOT EXISTS portfolio_values (
+    portfolio_id    INTEGER NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+    day             TEXT    NOT NULL,
+    value_eur       REAL    NOT NULL,
+    PRIMARY KEY (portfolio_id, day)
 );
 
 -- Alertes mail configurées par produit (supprimées avec le produit)
@@ -155,6 +208,8 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user         ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_watchlists_user       ON watchlists(user_id, position);
 CREATE INDEX IF NOT EXISTS idx_items_watchlist       ON watchlist_items(watchlist_id, position);
 CREATE INDEX IF NOT EXISTS idx_items_product         ON watchlist_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_portfolios_user        ON portfolios(user_id);
+CREATE INDEX IF NOT EXISTS idx_positions_portfolio   ON portfolio_positions(portfolio_id, status);
 CREATE INDEX IF NOT EXISTS idx_alerts_item           ON alerts(item_id);
 CREATE INDEX IF NOT EXISTS idx_history_user_date     ON analysis_history(user_id, created_at);
 """
@@ -163,6 +218,9 @@ TABLES = [
     "users",
     "sessions",
     "invitations",
+    "portfolios",
+    "portfolio_positions",
+    "portfolio_values",
     "alert_events",
     "app_settings",
     "watchlists",
@@ -194,6 +252,8 @@ MIGRATIONS = [
     ("watchlist_items", "sell_note", "TEXT"),
     ("watchlist_items", "ipo_year", "INTEGER"),
     ("watchlists", "kind", "TEXT NOT NULL DEFAULT 'manual'"),
+    ("watchlist_items", "stop_price", "REAL"),
+    ("watchlist_items", "currency", "TEXT"),
     ("watchlists", "screen_synced_at", "TEXT"),
 ]
 

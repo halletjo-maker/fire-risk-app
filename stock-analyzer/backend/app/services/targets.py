@@ -7,6 +7,8 @@ Règles simples, lisibles et fondées sur l'analyse technique (MM100 = critère 
   de la MM100 (seuil = MM100 + 1 % pour confirmer).
 - Vente potentielle (objectif) : la prochaine résistance si elle laisse au moins 2 % de marge,
   sinon un objectif tiré de la volatilité (3 × la variation moyenne quotidienne, 5 % minimum).
+- Stop-loss : 1 % sous le support s'il est entre −3 % et −12 %, sinon 2 × la volatilité
+  quotidienne (entre −3 % et −12 %, −8 % sans historique).
 Non calculé pour les turbos et warrants (le levier et la barrière changent tout).
 """
 from __future__ import annotations
@@ -15,6 +17,7 @@ NEAR_PCT = 1.5        # écart sous lequel on considère la zone d'achat atteint
 CONFIRM_PCT = 1.0     # marge au-dessus de la MM100 pour confirmer un retour haussier
 MIN_MARGIN_PCT = 2.0  # marge minimale entre l'achat et une résistance
 MIN_TARGET_PCT = 5.0
+STOP_MIN_PCT, STOP_MAX_PCT = 3.0, 12.0  # stop entre −3 % et −12 % du cours d'achat
 
 
 def _atr_pct(chart: list[dict], n: int = 14) -> float | None:
@@ -50,14 +53,23 @@ def compute(full: dict) -> dict | None:
 
     # ── Vente (objectif) ───────────────────────────────────────────────────
     ref = max(price, buy)
+    atr = _atr_pct(t.get("chart") or [])
     if resistance and resistance > ref * (1 + MIN_MARGIN_PCT / 100):
         sell, sell_note = resistance, "Objectif : la prochaine résistance"
     else:
-        atr = _atr_pct(t.get("chart") or [])
         gain = max(MIN_TARGET_PCT, 3 * atr) if atr else 8.0
         sell, sell_note = ref * (1 + gain / 100), f"Objectif estimé d'après la volatilité (+{gain:.0f} %)"
+
+    # ── Stop-loss (sous le cours d'achat) ──────────────────────────────────
+    stop_pct = min(STOP_MAX_PCT, max(STOP_MIN_PCT, 2 * atr)) if atr else 8.0
+    sup_stop = support * 0.99 if support and support < ref else None
+    if sup_stop and STOP_MIN_PCT <= (1 - sup_stop / ref) * 100 <= STOP_MAX_PCT:
+        stop, stop_note = sup_stop, "Stop 1 % sous le support"
+    else:
+        stop, stop_note = ref * (1 - stop_pct / 100), f"Stop à −{stop_pct:.0f} % (selon la volatilité)"
 
     return {
         "buy_price": round(buy, 4), "buy_kind": kind, "buy_note": buy_note,
         "sell_price": round(sell, 4), "sell_note": sell_note,
+        "stop_price": round(stop, 4), "stop_note": stop_note,
     }
