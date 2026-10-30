@@ -7,6 +7,14 @@ echo.
 echo  === Installation - Analyse Boursiere ===
 echo.
 
+if not exist backend\requirements.txt (
+  echo  [ERREUR] Fichiers introuvables. Extrais d'abord le ZIP :
+  echo  clic droit sur le fichier ZIP, puis "Extraire tout...", puis relance install.bat
+  echo  depuis le dossier extrait.
+  pause
+  exit /b 1
+)
+
 REM Python 3.12 ou 3.13 obligatoire (une bibliotheque d'indicateurs ne supporte pas encore 3.14)
 set "PY="
 py -3.13 --version >nul 2>nul && set "PY=py -3.13"
@@ -14,7 +22,7 @@ if not defined PY py -3.12 --version >nul 2>nul && set "PY=py -3.12"
 if not defined PY python -c "import sys; sys.exit(0 if sys.version_info[:2] in ((3,12),(3,13)) else 1)" >nul 2>nul && set "PY=python"
 if not defined PY (
   echo  [ERREUR] Python 3.12 ou 3.13 est introuvable.
-  echo  Version(s) detectee(s) :
+  echo  Versions detectees :
   py --list 2>nul
   python --version 2>nul
   echo.
