@@ -57,7 +57,7 @@ def _price(v, cur):
 def _atr_pct(chart: list[dict], n: int = 14) -> float | None:
     """Volatilité moyenne quotidienne (ATR 14) en % du dernier cours."""
     rows = [r for r in chart if None not in (r.get("high"), r.get("low"), r.get("close"))]
-    if len(rows) < n + 1:
+    if len(rows) < n + 1 or not rows[-1]["close"]:
         return None
     trs = []
     for prev, cur in zip(rows[-n - 1:-1], rows[-n:]):

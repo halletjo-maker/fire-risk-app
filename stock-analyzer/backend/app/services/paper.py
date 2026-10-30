@@ -8,7 +8,8 @@ Règles (appliquées après chaque mise à jour des cours de la watchlist choisi
 - Achats : produits au signal 🟢 ACHAT dont le cours est dans la zone d'achat affichée
   (≈ : tout de suite ; ≤ : cours au niveau du repli ; ≥ : cours repassé au-dessus du seuil),
   meilleur score d'abord, au plus `max_positions` lignes d'environ 1/`max_positions` du
-  portefeuille chacune, en actions entières. Pas de rachat d'un titre vendu depuis moins de 5 jours.
+  portefeuille chacune, en actions entières (cryptos : quantités fractionnées). Pas de rachat d'un
+  titre vendu depuis moins de 5 jours.
 - Frais estimés : 0,1 % du montant, 1 € minimum par ordre. Cours en devise convertis en euros.
 Aucun ordre réel n'est passé : c'est une simulation.
 """
@@ -22,6 +23,7 @@ from zoneinfo import ZoneInfo
 
 from ..database import get_conn
 from .sources import cache, yahoo
+from .targets import rnd
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +98,7 @@ def run(portfolio_id: int) -> dict:
             return {"buys": 0, "sells": 0}
         cash, fees = pf["cash"], pf["fees_paid"]
         items = [dict(r) for r in conn.execute(
-            "SELECT symbol, product_id, name, last_price, last_score, last_signal, buy_price, buy_kind, "
+            "SELECT symbol, product_id, name, product_type, last_price, last_score, last_signal, buy_price, buy_kind, "
             "sell_price, stop_price, currency FROM watchlist_items WHERE watchlist_id = ?",
             (pf["watchlist_id"],))] if pf["watchlist_id"] else []
         by_sym = {i["symbol"]: i for i in items}
@@ -165,8 +167,10 @@ def run(portfolio_id: int) -> dict:
             if not fx:
                 continue
             price = it["last_price"]
-            qty = math.floor((budget - fee(budget)) * fx / price)
-            if qty < 1:
+            raw_qty = (budget - fee(budget)) * fx / price
+            # Cryptos : achat fractionné (un bitcoin coûte bien plus qu'une ligne) ; actions : entières
+            qty = math.floor(raw_qty * 1e6) / 1e6 if it.get("product_type") == "CRYPTO" else math.floor(raw_qty)
+            if qty <= 0 or qty * price / fx < MIN_ORDER_EUR / 2:
                 continue
             cost = qty * price / fx
             f = fee(cost)
@@ -180,7 +184,7 @@ def run(portfolio_id: int) -> dict:
                 "entry_fx, entry_fee, entry_score, target, stop, stop_pct, high, last_price, last_fx) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (portfolio_id, it["symbol"], it["product_id"], it["name"], it["currency"] or "EUR", qty, price, fx, f,
-                 it["last_score"], round(target, 4), round(price * (1 - stop_pct / 100), 4), round(stop_pct, 2),
+                 it["last_score"], rnd(target), rnd(price * (1 - stop_pct / 100)), round(stop_pct, 2),
                  price, price, fx))
             cash -= cost + f
             fees += f

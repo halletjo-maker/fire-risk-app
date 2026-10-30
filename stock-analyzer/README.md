@@ -256,7 +256,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | DELETE | `/watchlists/{id}/items/{item}` | Retirer un produit (ses alertes sont supprimées) |
 | PUT | `/watchlists/{id}/items/order` | Nouvel ordre (glisser-déposer) |
 | POST | `/watchlists/{id}/refresh` | Rafraîchissement immédiat |
-| POST | `/watchlists/presets/{ipo10\|ipo5}` | Crée la liste « IPO 10 ans » (500 sociétés) ou « IPO 5 ans » (100), mises à jour 1×/jour |
+| POST | `/watchlists/presets/{ipo10\|ipo5\|world}` | Listes thématiques : IPO 10 ans (500), IPO 5 ans (100), Monde 500 + 20 cryptos |
 | GET | `/watchlists/{id}/suggestions` | Suggestions d'achat inspirées de la watchlist (`pending` puis `ready`) |
 | GET / PUT | `/alerts/item/{item}` | Alertes d'un produit (5 types, activée, fréquence) |
 | GET | `/alerts/history` | Dernières alertes déclenchées |
@@ -326,6 +326,18 @@ lots de 100, puis score **technique**, signal, cours Achat / Vente (≈ 1 min po
 composition revue chaque semaine. Ces lignes sont exclues du rafraîchissement « 15 minutes ».
 Affichage : recherche, filtres par signal, tri (score, variation, capitalisation, IPO, nom),
 50 lignes à la fois. Touche une société pour son analyse complète.
+
+## 🌍 Liste « Monde 500 + cryptos » (24 h/24 en semaine)
+
+Menu → Listes thématiques → **Monde**. ≈ 1/3 Amériques (USA, Canada), 1/3 Europe (Pays-Bas,
+Belgique, France, Espagne, Italie, Suisse, Royaume-Uni, Suède, Danemark, Finlande, Allemagne),
+1/3 Asie-Pacifique (Japon, Hong Kong, Australie, Singapour) + 20 grandes cryptos en euros.
+Composition (`services/world.py`) : sociétés américaines d'après Nasdaq (pays « United States »),
+puis filtre d'actions Yahoo pays par pays (Bourse principale, devise locale, sans CDR/SDR,
+obligations ni doubles cotations) ; liste de référence `app/data/world500.json` si Yahoo ne
+répond pas. Mise à jour **toutes les 30 min des zones dont la Bourse est ouverte** (Asie 0 h–10 h 30,
+Europe 8 h 45–18 h, Amériques 14 h 15–22 h 30, heure de Bruxelles ; cryptos 7 j/7), puis
+simulation des portefeuilles fictifs. Cryptos achetées en quantités fractionnées.
 
 ## 💼 Portefeuilles fictifs (simulation)
 

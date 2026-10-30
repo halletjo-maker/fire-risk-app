@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
 PRESETS = {
     "ipo10": {"kind": "screen:ipo10", "name": "IPO 10 ans", "years": 10, "size": 500, "color": "#06B6D4"},
     "ipo5": {"kind": "screen:ipo5", "name": "IPO 5 ans", "years": 5, "size": 100, "color": "#EC4899"},
+    "world": {"kind": "screen:world", "name": "Monde 500 + cryptos", "years": None, "size": 520, "color": "#A855F7"},
 }
+WORLD_KIND = PRESETS["world"]["kind"]
 BY_KIND = {v["kind"]: v for v in PRESETS.values()}
 IPO_KIND = PRESETS["ipo10"]["kind"]
 IPO_YEARS = 10
@@ -99,9 +101,12 @@ def fetch_universe() -> list[dict]:
     return rows
 
 
-def members_for(kind: str, rows: list[dict]) -> list[dict]:
+def members_for(kind: str, rows: list[dict] | None) -> list[dict]:
+    if kind == WORLD_KIND:
+        from . import world
+        return world.members()
     preset = BY_KIND[kind]
-    return select_recent_ipos(rows, years=preset["years"], size=preset["size"])
+    return select_recent_ipos(rows if rows is not None else fetch_universe(), years=preset["years"], size=preset["size"])
 
 
 def _write_members(conn, watchlist_id: int, members: list[dict]) -> None:
@@ -113,14 +118,15 @@ def _write_members(conn, watchlist_id: int, members: list[dict]) -> None:
         if sym not in keep:
             conn.execute("DELETE FROM watchlist_items WHERE id = ?", (item_id,))
     for rank, m in enumerate(members):
+        extra = (m.get("ipo_year"), m.get("currency") or "USD", m.get("region"), m.get("zone"))
         if m["symbol"] in existing:
-            conn.execute("UPDATE watchlist_items SET position = ?, name = ?, ipo_year = ? WHERE id = ?",
-                         (rank, m["name"], m["ipo_year"], existing[m["symbol"]]))
+            conn.execute("UPDATE watchlist_items SET position = ?, name = ?, ipo_year = ?, currency = ?, region = ?, "
+                         "zone = ? WHERE id = ?", (rank, m["name"], *extra, existing[m["symbol"]]))
         else:
             conn.execute(
                 "INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, product_type, position, ipo_year, "
-                "currency) VALUES (?, ?, ?, ?, 'ACTION', ?, ?, 'USD')",
-                (watchlist_id, m["symbol"], f"yf:{m['symbol']}", m["name"], rank, m["ipo_year"]),
+                "currency, region, zone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (watchlist_id, m["symbol"], f"yf:{m['symbol']}", m["name"], m.get("type") or "ACTION", rank, *extra),
             )
     conn.execute("UPDATE watchlists SET screen_synced_at = datetime('now'), updated_at = datetime('now') "
                  "WHERE id = ?", (watchlist_id,))
@@ -128,7 +134,7 @@ def _write_members(conn, watchlist_id: int, members: list[dict]) -> None:
 
 def create_preset_watchlist(user_id: int, key: str) -> int:
     preset = PRESETS[key]
-    members = members_for(preset["kind"], fetch_universe())
+    members = members_for(preset["kind"], None)
     with get_conn() as conn:
         names = {r["name"] for r in conn.execute("SELECT name FROM watchlists WHERE user_id = ?", (user_id,))}
         name, n = preset["name"], 2
@@ -154,30 +160,35 @@ def evaluate(df) -> dict | None:
             **{k: lv.get(k) for k in ("buy_price", "buy_kind", "buy_note", "sell_price", "sell_note", "stop_price")}}
 
 
-def _screen_ids(watchlist_id: int | None) -> list[int]:
+def _screen_ids(watchlist_id: int | None, kind: str | None = None) -> list[int]:
     with get_conn() as conn:
         if watchlist_id is not None:
             rows = conn.execute("SELECT id FROM watchlists WHERE id = ? AND kind LIKE 'screen:%'", (watchlist_id,))
+        elif kind:
+            rows = conn.execute("SELECT id FROM watchlists WHERE kind = ?", (kind,))
         else:
             rows = conn.execute("SELECT id FROM watchlists WHERE kind LIKE 'screen:%'")
         return [r["id"] for r in rows]
 
 
-def refresh(watchlist_id: int | None = None, resync: bool = False) -> int:
-    """Met à jour les listes larges (toutes, ou une seule). Renvoie le nombre de titres calculés."""
+def refresh(watchlist_id: int | None = None, resync: bool = False, zones: set[str] | None = None) -> int:
+    """Met à jour les listes larges (toutes, ou une seule). Avec `zones` : seulement les titres de la
+    liste mondiale dont la Bourse est ouverte. Renvoie le nombre de titres calculés."""
     if not _lock.acquire(blocking=False):
         logger.info("Mise à jour des listes larges déjà en cours")
         return 0
     try:
-        ids = _screen_ids(watchlist_id)
+        ids = _screen_ids(watchlist_id, kind=WORLD_KIND if zones is not None else None)
         if not ids:
             return 0
         if resync:
             _resync(ids)
         marks = ",".join("?" * len(ids))
         with get_conn() as conn:
+            zone_filter = f" AND zone IN ({','.join('?' * len(zones))})" if zones else ""
             symbols = [r["symbol"] for r in conn.execute(
-                f"SELECT DISTINCT symbol FROM watchlist_items WHERE watchlist_id IN ({marks})", ids)]
+                f"SELECT DISTINCT symbol FROM watchlist_items WHERE watchlist_id IN ({marks}){zone_filter}",
+                (*ids, *(zones or ())))]
         done = 0
         delay = get_settings().scraping_delay_seconds
         for start in range(0, len(symbols), BATCH):

@@ -65,6 +65,18 @@ def refresh_screens() -> None:
     run_portfolios()
 
 
+def refresh_world_zones() -> None:
+    """Liste mondiale : toutes les 30 min, les titres dont la Bourse est ouverte (+ cryptos 7 j/7)."""
+    from .services import screens, world
+
+    try:
+        if screens._screen_ids(None, kind=screens.WORLD_KIND):
+            screens.refresh(zones=world.open_zones())
+            run_portfolios()
+    except Exception:
+        logger.exception("Échec de la mise à jour de la liste mondiale")
+
+
 def start_scheduler() -> None:
     settings = get_settings()
     if not settings.scheduler_enabled or scheduler.running:
@@ -84,6 +96,10 @@ def start_scheduler() -> None:
     scheduler.add_job(
         refresh_screens, "cron", day_of_week="mon-fri", hour=22, minute=45, id="refresh_screens",
         name="Listes larges (1×/jour)", replace_existing=True,
+    )
+    scheduler.add_job(
+        refresh_world_zones, "cron", minute="5,35", id="refresh_world_zones",
+        name="Liste mondiale (Bourses ouvertes, toutes les 30 min)", replace_existing=True,
     )
     scheduler.start()
     logger.info("Planificateur démarré (toutes les %s min)", minutes)

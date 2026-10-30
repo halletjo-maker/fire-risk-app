@@ -35,13 +35,13 @@ function RowBody({ item, onOpen, onRemove, onAlerts, handle }) {
             {sig ? sig.dot : <Spinner className="h-3 w-3" />}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium">{item.name}</span>
+            <span className="block truncate text-sm font-medium">{item.region && <span className="mr-1" aria-hidden="true">{FLAGS[item.region] || '🏳️'}</span>}{item.name}</span>
             <span className="flex items-center gap-1.5 truncate text-xs text-muted">
               {item.symbol}{item.ipo_year && <span className="text-muted/80">· IPO {item.ipo_year}</span>}
             </span>
           </span>
           <span className="shrink-0 text-right">
-            <span className="block text-sm">{fmtPrice(item.last_price)}</span>
+            <span className="block text-sm">{fmtPrice(item.last_price, item.region ? item.currency : undefined)}</span>
             <span className={`block text-xs ${changeColor(item.last_change_pct)}`}>{fmtPct(item.last_change_pct)}</span>
           </span>
           <span className={`w-11 shrink-0 text-right text-sm font-bold ${scoreColor(item.last_score)}`}>
@@ -101,6 +101,24 @@ function ItemRow({ item, index, ...actions }) {
   )
 }
 
+const FLAGS = {
+  us: '🇺🇸', ca: '🇨🇦', jp: '🇯🇵', hk: '🇭🇰', au: '🇦🇺', sg: '🇸🇬', nl: '🇳🇱', be: '🇧🇪', fr: '🇫🇷', es: '🇪🇸',
+  it: '🇮🇹', ch: '🇨🇭', gb: '🇬🇧', se: '🇸🇪', dk: '🇩🇰', fi: '🇫🇮', de: '🇩🇪', crypto: '🪙',
+}
+const ZONES = [['ALL', 'Toutes zones'], ['asia', '🌏 Asie-Pacifique'], ['europe', '🌍 Europe'], ['americas', '🌎 Amériques'], ['crypto', '🪙 Cryptos']]
+// Mêmes horaires que le serveur (heure de Bruxelles, marges incluses)
+const ZONE_HOURS = { asia: [0, 630], europe: [525, 1080], americas: [855, 1350] }
+function openZones() {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Brussels', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    .formatToParts(new Date()).reduce((o, p) => ({ ...o, [p.type]: p.value }), {})
+  const open = new Set(['crypto'])
+  if (!['Sat', 'Sun'].includes(parts.weekday)) {
+    const m = Number(parts.hour) * 60 + Number(parts.minute)
+    Object.entries(ZONE_HOURS).forEach(([z, [a, b]]) => { if (m >= a && m <= b) open.add(z) })
+  }
+  return open
+}
+
 // Liste large (ex. IPO 10 ans, 500 sociétés) : recherche, filtres, tri, affichage par tranches
 const SORTS = {
   rank: { label: 'Capitalisation', fn: (a, b) => a.position - b.position },
@@ -115,7 +133,10 @@ function ScreenList({ list, actions }) {
   const [query, setQuery] = useState('')
   const [signal, setSignal] = useState('ALL')
   const [sort, setSort] = useState('score')
+  const [zone, setZone] = useState('ALL')
   const [shown, setShown] = useState(PAGE)
+  const hasZones = list.some((i) => i.zone)
+  const open = useMemo(() => openZones(), [list])
 
   const counts = useMemo(() => {
     const c = { ALL: list.length, ACHAT: 0, NEUTRE: 0, VENTE: 0 }
@@ -127,11 +148,12 @@ function ScreenList({ list, actions }) {
     const q = query.trim().toLowerCase()
     return list
       .filter((i) => signal === 'ALL' || i.last_signal === signal)
+      .filter((i) => zone === 'ALL' || i.zone === zone)
       .filter((i) => !q || i.name.toLowerCase().includes(q) || i.symbol.toLowerCase().includes(q))
       .sort(SORTS[sort].fn)
-  }, [list, query, signal, sort])
+  }, [list, query, signal, sort, zone])
 
-  useEffect(() => setShown(PAGE), [query, signal, sort])
+  useEffect(() => setShown(PAGE), [query, signal, sort, zone])
 
   const chips = [['ALL', 'Tous'], ['ACHAT', '🟢 Achat'], ['NEUTRE', '🟡 Neutre'], ['VENTE', '🔴 Vente']]
   return (
@@ -159,6 +181,20 @@ function ScreenList({ list, actions }) {
             </button>
           ))}
         </div>
+        {hasZones && (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par zone">
+            {ZONES.map(([k, label]) => (
+              <button
+                key={k}
+                onClick={() => setZone(k)}
+                aria-pressed={zone === k}
+                className={`rounded-full border px-2.5 py-1 text-xs transition ${zone === k ? 'border-bull/60 bg-bull/10 text-gray-100' : 'border-line text-muted hover:text-gray-100'}`}
+              >
+                {label}{k !== 'ALL' && open.has(k) && <span className="ml-1 text-bull" title="Bourse ouverte">●</span>}
+              </button>
+            ))}
+          </div>
+        )}
         <label className="flex items-center gap-2 text-xs text-muted">
           Trier par
           <select className="input w-auto py-1.5 text-xs" value={sort} onChange={(e) => setSort(e.target.value)}>
@@ -244,9 +280,12 @@ export default function WatchlistPanel() {
         <p className="mt-3 flex gap-2 rounded-lg bg-bg px-3 py-2 text-xs text-muted">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            Les {list.length || ''} plus grosses sociétés introduites en Bourse aux USA depuis {watchlist.kind === 'screen:ipo5' ? 5 : 10} ans (source Nasdaq). Mise à jour
-            1×/jour après la clôture américaine, <b>score technique</b> uniquement : touche une société pour son
-            analyse complète. Composition revue chaque semaine.
+            {watchlist.kind === 'screen:world' ? (
+              <>Les plus grosses sociétés des marchés accessibles en Belgique (≈ 1/3 Amériques, 1/3 Europe, 1/3 Asie-Pacifique) et 20 cryptos. Chaque zone est mise à jour <b>toutes les 30 min pendant ses heures d'ouverture</b> (● = ouverte), les cryptos 24 h/24. </>
+            ) : (
+              <>Les {list.length || ''} plus grosses sociétés introduites en Bourse aux USA depuis {watchlist.kind === 'screen:ipo5' ? 5 : 10} ans (source Nasdaq). Mise à jour 1×/jour après la clôture américaine. </>
+            )}
+            <b>Score technique</b> uniquement : touche une société pour son analyse complète. Composition revue chaque semaine.
           </span>
         </p>
       )}
@@ -283,7 +322,7 @@ export default function WatchlistPanel() {
       )}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span className="flex gap-3"><span>🟢 Achat</span><span>🟡 Neutre</span><span>🔴 Vente</span></span>
-        {lastRefresh && <span>Mis à jour {since(lastRefresh)} · {isScreen ? 'auto 1×/jour' : 'auto 15 min'}</span>}
+        {lastRefresh && <span>Mis à jour {since(lastRefresh)} · {watchlist.kind === 'screen:world' ? 'auto 30 min (Bourses ouvertes)' : isScreen ? 'auto 1×/jour' : 'auto 15 min'}</span>}
       </div>
 
       {alertsFor && (

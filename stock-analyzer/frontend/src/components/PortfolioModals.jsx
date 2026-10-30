@@ -73,11 +73,12 @@ function Rules() {
       <summary className="cursor-pointer select-none">Règles du programme</summary>
       <ul className="mt-2 list-disc space-y-1 pl-4">
         <li><b className="text-gray-200">Achat</b> : produits au signal 🟢 ACHAT dont le cours est dans la zone d'achat affichée, meilleur score d'abord.</li>
-        <li><b className="text-gray-200">Répartition</b> : jusqu'à 10 lignes d'environ 10 % du portefeuille, en actions entières.</li>
+        <li><b className="text-gray-200">Répartition</b> : jusqu'à 10 lignes d'environ 10 % du portefeuille, en actions entières (cryptos : quantités fractionnées).</li>
         <li><b className="text-gray-200">Vente</b> : objectif atteint, stop-loss touché (le stop monte avec le cours pour protéger les gains), ou signal passé à 🔴 VENTE.</li>
         <li>Pas de rachat d'un titre vendu depuis moins de 5 jours.</li>
         <li>Frais estimés : 0,1 % par ordre (1 € minimum). Cours en dollars convertis en euros.</li>
-        <li>Décisions prises à chaque mise à jour des cours (15 min, ou 1×/jour pour les listes IPO).</li>
+        <li>Décisions prises à chaque mise à jour des cours : 15 min, toutes les 30 min selon les Bourses ouvertes pour la liste Monde, 1×/jour pour les listes IPO.</li>
+        <li>Simplification : la simulation ignore les lots minimums (100 actions au Japon et à Hong Kong).</li>
       </ul>
     </details>
   )

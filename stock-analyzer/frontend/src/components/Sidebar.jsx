@@ -91,6 +91,7 @@ const SIDEBAR_MAX = 20
 export const PRESETS = [
   { key: 'ipo10', kind: 'screen:ipo10', label: 'IPO des 10 dernières années (500 sociétés)' },
   { key: 'ipo5', kind: 'screen:ipo5', label: 'IPO des 5 dernières années (100 sociétés)' },
+  { key: 'world', kind: 'screen:world', label: 'Monde : 500 sociétés + 20 cryptos (24 h/24)' },
 ]
 
 function Presets({ onDone }) {

@@ -93,6 +93,8 @@ CREATE TABLE IF NOT EXISTS watchlist_items (
     ipo_year          INTEGER,    -- listes « IPO » : année d'introduction en Bourse
     stop_price        REAL,       -- stop-loss conseillé (portefeuille fictif)
     currency          TEXT,
+    region            TEXT,       -- liste mondiale : pays (us, jp, fr…) ou crypto
+    zone              TEXT,       -- liste mondiale : asia | europe | americas | crypto (calendrier)
     added_at          TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (watchlist_id, symbol)
 );
@@ -254,6 +256,8 @@ MIGRATIONS = [
     ("watchlists", "kind", "TEXT NOT NULL DEFAULT 'manual'"),
     ("watchlist_items", "stop_price", "REAL"),
     ("watchlist_items", "currency", "TEXT"),
+    ("watchlist_items", "region", "TEXT"),
+    ("watchlist_items", "zone", "TEXT"),
     ("watchlists", "screen_synced_at", "TEXT"),
 ]
 

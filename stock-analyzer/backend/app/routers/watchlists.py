@@ -19,7 +19,7 @@ router = APIRouter(prefix="/watchlists", tags=["watchlists"])
 ITEM_COLUMNS = (
     "i.id, i.watchlist_id, i.symbol, i.product_id, i.name, i.isin, i.exchange, i.product_type, i.position, "
     "i.last_price, i.last_change_pct, i.last_score, i.last_signal, i.last_refresh_at, i.added_at, "
-    "i.buy_price, i.buy_kind, i.buy_note, i.sell_price, i.sell_note, i.ipo_year, "
+    "i.buy_price, i.buy_kind, i.buy_note, i.sell_price, i.sell_note, i.ipo_year, i.region, i.zone, i.currency, "
     "(SELECT COUNT(*) FROM alerts a WHERE a.item_id = i.id AND a.enabled = 1) AS alert_count"
 )
 
@@ -195,10 +195,10 @@ def duplicate_watchlist(watchlist_id: int, payload: DuplicateIn | None = None, u
         conn.execute(
             "INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, isin, exchange, product_type, "
             "position, last_price, last_change_pct, last_score, last_signal, last_refresh_at, "
-            "buy_price, buy_kind, buy_note, sell_price, sell_note, ipo_year) "
+            "buy_price, buy_kind, buy_note, sell_price, sell_note, ipo_year, stop_price, currency, region, zone) "
             "SELECT ?, symbol, product_id, name, isin, exchange, product_type, position, last_price, "
-            "last_change_pct, last_score, last_signal, last_refresh_at, "
-            "buy_price, buy_kind, buy_note, sell_price, sell_note, ipo_year FROM watchlist_items WHERE watchlist_id = ?",
+            "last_change_pct, last_score, last_signal, last_refresh_at, buy_price, buy_kind, buy_note, sell_price, "
+            "sell_note, ipo_year, stop_price, currency, region, zone FROM watchlist_items WHERE watchlist_id = ?",
             (new_id, watchlist_id),
         )
         return {"watchlist": _summary(conn, new_id)}
@@ -292,7 +292,8 @@ def suggestions(watchlist_id: int, user: dict = Depends(current_user)) -> dict:
 
 @router.post("/presets/{key}", status_code=201)
 def create_preset(key: str, background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
-    """Listes thématiques : « ipo10 » (500 IPO US sur 10 ans) ou « ipo5 » (100 IPO US sur 5 ans)."""
+    """Listes thématiques : « ipo10 » (500 IPO US sur 10 ans), « ipo5 » (100 IPO US sur 5 ans),
+    « world » (500 sociétés mondiales + 20 cryptos, mises à jour selon les heures d'ouverture)."""
     preset = screens.PRESETS.get(key)
     if preset is None:
         raise HTTPException(status_code=404, detail="Liste thématique inconnue")

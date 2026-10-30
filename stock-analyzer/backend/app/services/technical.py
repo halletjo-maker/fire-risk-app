@@ -242,7 +242,7 @@ def quick_summary(df: pd.DataFrame) -> dict | None:
     return {
         "applicable": True,
         "score": round(score, 1) if score is not None else None,
-        "price": round(price, 4),
+        "price": round(price, 4) if price >= 1 else float(f"{price:.6g}"),
         "change_pct": round(change, 2) if change is not None else None,
         "mm100": mm,
         "levels": supports_resistances(d, price),
@@ -258,7 +258,8 @@ def chart_series(d: pd.DataFrame, bars: int = CHART_BARS) -> list[dict]:
         item = {"t": ts.strftime("%Y-%m-%d")}
         for c in cols:
             v = _val(row.get(c))
-            item[c] = round(v, 4) if v is not None else None
+            # Très petits prix (certaines cryptos) : chiffres significatifs plutôt que 4 décimales
+            item[c] = (round(v, 4) if abs(v) >= 1 or v == 0 else float(f"{v:.6g}")) if v is not None else None
         out.append(item)
     return out
 

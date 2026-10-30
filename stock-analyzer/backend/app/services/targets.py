@@ -20,6 +20,11 @@ MIN_TARGET_PCT = 5.0
 STOP_MIN_PCT, STOP_MAX_PCT = 3.0, 12.0  # stop entre −3 % et −12 % du cours d'achat
 
 
+def rnd(x: float) -> float:
+    """Arrondi lisible qui garde les très petits prix (ex. 0,000004 € pour certaines cryptos)."""
+    return round(x, 4) if abs(x) >= 1 else float(f"{x:.6g}")
+
+
 def _atr_pct(chart: list[dict], n: int = 14) -> float | None:
     from .report import _atr_pct  # import local : report importe beaucoup de sources
 
@@ -69,7 +74,7 @@ def compute(full: dict) -> dict | None:
         stop, stop_note = ref * (1 - stop_pct / 100), f"Stop à −{stop_pct:.0f} % (selon la volatilité)"
 
     return {
-        "buy_price": round(buy, 4), "buy_kind": kind, "buy_note": buy_note,
-        "sell_price": round(sell, 4), "sell_note": sell_note,
-        "stop_price": round(stop, 4), "stop_note": stop_note,
+        "buy_price": rnd(buy), "buy_kind": kind, "buy_note": buy_note,
+        "sell_price": rnd(sell), "sell_note": sell_note,
+        "stop_price": rnd(stop), "stop_note": stop_note,
     }
