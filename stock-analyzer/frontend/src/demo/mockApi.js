@@ -61,11 +61,10 @@ function kind(q) {
 }
 const suggestions = () => catalog().slice(0, 8).map((c) => c.symbol || c.name).join(', ')
 
-function currentUser(headers) {
+function currentUser() {
   const db = load()
-  const email = headers['X-User-Email']
-  const u = db.users.find((x) => x.email === (email || '').toLowerCase())
-  if (!u) { const e = new ApiError('Utilisateur non identifié'); e.status = 401; throw e }
+  const u = db.users.find((x) => x.id === db.active)
+  if (!u) { const e = new ApiError('Session expirée : reconnecte-toi.'); e.status = 401; throw e }
   return u
 }
 function ownWatchlist(u, id) {
@@ -158,7 +157,8 @@ export async function mockRequest(path, { method = 'GET', body, headers = {} } =
   }
 
   // ---- utilisateur
-  if (p === '/users/login' && method === 'POST') {
+  // Démo : n'importe quel mot de passe est accepté (aucune donnée réelle)
+  if ((p === '/users/login' || p === '/users/register') && method === 'POST') {
     const email = (body.email || '').trim().toLowerCase()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) fail('Adresse mail invalide')
     let u = db.users.find((x) => x.email === email)
@@ -167,9 +167,9 @@ export async function mockRequest(path, { method = 'GET', body, headers = {} } =
     db.active = u.id; save()
     return { user: u }
   }
-  if (p === '/users/current') return { user: db.users.find((u) => u.id === db.active) || null }
+  if (p === '/users/current') return { user: db.users.find((u) => u.id === db.active) || null, setup_required: false, registration_open: true }
+  if (p === '/users/password') return { ok: true }
   if (p === '/users/logout') { db.active = null; save(); return { user: null } }
-  if (p === '/users/known') return { users: [...db.users].sort((a, b) => b.last_login_at.localeCompare(a.last_login_at)).slice(0, 10) }
   if (p === '/users/me') {
     const u = currentUser(headers)
     const wls = db.watchlists.filter((w) => w.user_id === u.id)
@@ -190,7 +190,7 @@ export async function mockRequest(path, { method = 'GET', body, headers = {} } =
       return { query: q.q, query_kind: kind(q.q || ''), status: 'not_found', sources: [],
                message: `Démo : ce produit n'est pas enregistré. Essaie par exemple : ${suggestions()}.` }
     }
-    const u = db.users.find((x) => x.email === (headers['X-User-Email'] || '').toLowerCase())
+    const u = db.users.find((x) => x.id === db.active)
     if (u) { db.analyses[u.id] = (db.analyses[u.id] || 0) + 1; save() }
     const rec = product(pid).analyze
     const alternatives = findProducts(q.q || '').filter((c) => c.id !== pid).slice(0, 5)

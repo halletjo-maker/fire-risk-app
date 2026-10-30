@@ -123,6 +123,19 @@ d'alerte fonctionnent depuis le téléphone.
 
 ---
 
+## 🔐 Mot de passe et sécurité
+
+- **Première ouverture** : l'écran « Crée ton accès » demande ton adresse mail et un mot de passe
+  (10 caractères minimum). Si tu utilisais déjà l'application avec cette adresse, tes watchlists
+  sont conservées. Ensuite, **la création de compte est fermée** : personne d'autre ne peut s'inscrire.
+- Pour autoriser d'autres adresses (ou réserver l'inscription à la tienne sur un serveur Internet),
+  renseigne `ALLOWED_EMAILS=ton@mail.be` dans `.env` **avant** le premier lancement.
+- Le mot de passe est haché (scrypt) ; la session est un cookie HttpOnly valable 30 jours
+  (prolongé à chaque utilisation). Après 5 essais ratés, la connexion est bloquée 15 minutes.
+- **Changer le mot de passe** : Profil → « Changer le mot de passe » (les autres appareils sont déconnectés).
+- **Mot de passe oublié** : sur la machine qui fait tourner l'application, double-clique sur
+  `reset_password.bat` (Windows) ou lance `cd backend && python -m app.reset_password ton@mail.be`.
+
 ## ✉️ Configurer l'envoi de mails (Gmail)
 
 1. Active la **validation en 2 étapes** sur ton compte Google.
@@ -159,7 +172,7 @@ stock-analyzer/
 │   │   ├── config.py       Lecture du .env + constantes
 │   │   ├── database.py     Connexion SQLite + schéma complet
 │   │   ├── scheduler.py    Tâches de fond APScheduler (toutes les 15 min)
-│   │   ├── deps.py         Identification de l'utilisateur (en-tête X-User-Email)
+│   │   ├── deps.py         Utilisateur de la session (cookie HttpOnly)
 │   │   ├── routers/        health · users · watchlists · analyze
 │   │   └── services/
 │   │       ├── sources/    yfinance, scraping, actualités (Modules 2-5)
@@ -195,13 +208,14 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 
 | Méthode | Route | Rôle |
 |---|---|---|
-| GET | `/health` | État : base, tâches de fond, configuration |
-| POST | `/users/login` | Identification par mail (création si nouveau) |
-| GET | `/users/current` | Utilisateur mémorisé |
-| POST | `/users/logout` | Changer d'utilisateur |
-| GET | `/users/known` | Comptes déjà utilisés (choix rapide) |
-| GET | `/users/me` | Profil + statistiques (en-tête `X-User-Email`) |
-| GET / POST | `/watchlists` | Lister / créer (en-tête `X-User-Email`) |
+| GET | `/health` | État : base, tâches de fond, configuration — public |
+| GET | `/users/current` | Session en cours + état (première utilisation, inscription ouverte) — public |
+| POST | `/users/register` | Création du mot de passe (premier compte ou `ALLOWED_EMAILS`) — public |
+| POST | `/users/login` | Connexion mail + mot de passe → cookie de session — public |
+| POST | `/users/logout` | Déconnexion (session supprimée) |
+| POST | `/users/password` | Changer le mot de passe (déconnecte les autres appareils) |
+| GET | `/users/me` | Profil + statistiques |
+| GET / POST | `/watchlists` | Lister / créer |
 | PATCH / DELETE | `/watchlists/{id}` | Renommer, changer la couleur / supprimer (produits + alertes) |
 | POST | `/watchlists/{id}/duplicate` | Dupliquer (produits copiés, alertes non copiées) |
 | GET / POST | `/watchlists/{id}/items` | Produits suivis / ajouter un produit (score calculé en arrière-plan) |
@@ -212,7 +226,9 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | GET | `/alerts/history` | Dernières alertes déclenchées |
 | POST | `/alerts/test` | Envoie un mail de test (vérifie le SMTP) |
 | POST | `/alerts/check` | Vérifie les alertes tout de suite |
-| GET | `/alerts/unsubscribe/{jeton}` | Lien de désinscription (pied de mail) |
+| GET | `/alerts/unsubscribe/{jeton}` | Lien de désinscription (pied de mail) — public |
+
+Toutes les autres routes exigent une session (cookie `ab_session`, ou en-tête `Authorization: Bearer`).
 | GET | `/search?q=...` | Propositions (nom, ticker, ISIN, mot-clé) avec type détecté |
 | GET | `/quote?id=...` | Cours d'un produit (`yf:NOW`, `bo:/bourse/...`) avec fallback |
 | GET | `/fundamentals?id=...` | Module 3 — analyse fondamentale et score /10 |
@@ -249,7 +265,7 @@ python -m pytest -q
 ## 🗺️ Avancement
 
 - [x] **Étape 0** — Structure, backend FastAPI, SQLite, APScheduler, layout React
-- [x] **Module 1** — Identification utilisateur (profil, comptes récents)
+- [x] **Module 1** — Compte utilisateur : mail + mot de passe, sessions, profil
 - [x] **Module 2** — Recherche et identification du produit
 - [x] **Module 3** — Analyse fondamentale
 - [x] **Module 4** — Analyse technique (MM100)

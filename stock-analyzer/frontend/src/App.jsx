@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react'
-import { api, storedEmail } from './lib/api'
+import { api, SESSION_EXPIRED } from './lib/api'
 import LoginScreen from './components/LoginScreen'
 import AppLayout from './components/AppLayout'
 import { Spinner } from './components/ui'
 
 export default function App() {
-  // undefined = chargement, null = pas d'utilisateur, objet = utilisateur actif
+  // undefined = chargement, null = pas connecté, objet = utilisateur connecté
   const [user, setUser] = useState(undefined)
+  const [auth, setAuth] = useState({ setup_required: false, registration_open: false })
+  const [notice, setNotice] = useState(null)
   const [bootError, setBootError] = useState(null)
 
   const boot = () => {
     setBootError(null)
     setUser(undefined)
     api.currentUser()
-      .then(({ user }) => {
-        if (user) storedEmail.set(user.email)
+      .then(({ user, setup_required, registration_open }) => {
+        setAuth({ setup_required, registration_open })
         setUser(user)
       })
       .catch((e) => setBootError(e.message))
@@ -22,15 +24,28 @@ export default function App() {
 
   useEffect(boot, [])
 
-  const handleLogin = async (email) => {
-    const { user } = await api.login(email)
-    storedEmail.set(user.email)
+  // Une requête refusée (session expirée, mot de passe changé ailleurs) ramène à la connexion
+  useEffect(() => {
+    const expired = () => {
+      setUser((u) => {
+        if (u) setNotice('Ta session a expiré : reconnecte-toi.')
+        return null
+      })
+    }
+    window.addEventListener(SESSION_EXPIRED, expired)
+    return () => window.removeEventListener(SESSION_EXPIRED, expired)
+  }, [])
+
+  const handleAuth = async (mode, email, password) => {
+    const { user } = mode === 'register' ? await api.register(email, password) : await api.login(email, password)
+    setNotice(null)
+    setAuth({ setup_required: false, registration_open: auth.registration_open && mode !== 'register' })
     setUser(user)
   }
 
   const handleLogout = async () => {
     try { await api.logout() } catch { /* serveur injoignable : on déconnecte quand même */ } finally {
-      storedEmail.clear()
+      setNotice(null)
       setUser(null)
     }
   }
@@ -49,6 +64,15 @@ export default function App() {
   if (user === undefined) {
     return <div className="flex min-h-full items-center justify-center"><Spinner /></div>
   }
-  if (!user) return <LoginScreen onLogin={handleLogin} />
+  if (!user) {
+    return (
+      <LoginScreen
+        setupRequired={auth.setup_required}
+        registrationOpen={auth.registration_open}
+        notice={notice}
+        onSubmit={handleAuth}
+      />
+    )
+  }
   return <AppLayout user={user} onLogout={handleLogout} />
 }

@@ -3,6 +3,7 @@ import { LogOut, UserRound, X } from 'lucide-react'
 import { api } from '../lib/api'
 import { Spinner } from './ui'
 import AlertsSection from './AlertsSection'
+import PasswordChange from './PasswordChange'
 
 const fmt = (iso) => {
   if (!iso) return '—'
@@ -73,8 +74,9 @@ export default function ProfileModal({ onClose, onLogout }) {
             <AlertsSection />
             <p className="mt-4 text-xs text-muted">
               Les alertes mail sont envoyées à cette adresse. Tes données restent sur cette
-              installation, même si tu changes d'utilisateur.
+              installation, même après une déconnexion.
             </p>
+            <PasswordChange />
           </>
         )}
 

@@ -181,7 +181,7 @@ export default function Sidebar({ user, onLogout, onProfile, onClose, onNavigate
           </div>
         </button>
         <button className="btn-ghost mt-2 w-full justify-center" onClick={onLogout}>
-          <LogOut className="h-4 w-4" /> Changer d'utilisateur
+          <LogOut className="h-4 w-4" /> Se déconnecter
         </button>
       </div>
       {settingsFor && <WatchlistSettings watchlist={watchlists.find((w) => w.id === settingsFor.id) || settingsFor} onClose={() => setSettingsFor(null)} />}

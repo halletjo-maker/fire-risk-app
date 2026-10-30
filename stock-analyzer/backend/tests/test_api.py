@@ -8,25 +8,7 @@ def test_health(client):
 
 
 def test_analyze_requires_query(client):
-    assert client.get("/analyze").status_code == 422
-
-
-def test_login_remember_logout(client):
-    assert client.get("/users/current").json()["user"] is None
-
-    r = client.post("/users/login", json={"email": "Jean@Exemple.be"})
-    assert r.status_code == 200
-    assert r.json()["user"]["email"] == "jean@exemple.be"
-
-    # Reconnu au lancement suivant
-    assert client.get("/users/current").json()["user"]["email"] == "jean@exemple.be"
-
-    client.post("/users/logout")
-    assert client.get("/users/current").json()["user"] is None
-
-
-def test_login_rejects_invalid_email(client):
-    assert client.post("/users/login", json={"email": "pas-un-mail"}).status_code == 422
+    assert client.get("/analyze", headers={"X-User-Email": "a@exemple.be"}).status_code == 422
 
 
 def test_watchlists_scoped_to_user(client):
@@ -71,7 +53,7 @@ def test_alerts_deleted_with_item(client):
         assert conn.execute("SELECT COUNT(*) FROM alerts").fetchone()[0] == 0
 
 
-def test_profile_and_known_users(client):
+def test_profile(client):
     client.post("/users/login", json={"email": "a@exemple.be"})
     client.post("/users/login", json={"email": "b@exemple.be"})
     h = {"X-User-Email": "A@Exemple.be"}  # casse indifférente
@@ -82,21 +64,6 @@ def test_profile_and_known_users(client):
     assert r.json()["user"]["email"] == "a@exemple.be"
     assert r.json()["stats"] == {"watchlists": 1, "products": 0, "active_alerts": 0, "analyses": 0}
     assert client.get("/users/me").status_code == 401
-
-    known = [u["email"] for u in client.get("/users/known").json()["users"]]
-    assert set(known) == {"a@exemple.be", "b@exemple.be"}
-
-
-def test_data_kept_after_switching_user(client):
-    """Changer d'utilisateur ne supprime rien : on retrouve ses watchlists en revenant."""
-    client.post("/users/login", json={"email": "a@exemple.be"})
-    client.post("/watchlists", json={"name": "Long terme"}, headers={"X-User-Email": "a@exemple.be"})
-    client.post("/users/logout")
-    client.post("/users/login", json={"email": "b@exemple.be"})
-    client.post("/users/logout")
-    client.post("/users/login", json={"email": "a@exemple.be"})
-    names = [w["name"] for w in client.get("/watchlists", headers={"X-User-Email": "a@exemple.be"}).json()["watchlists"]]
-    assert names == ["Long terme"]
 
 
 def test_analyze_saves_history(client, monkeypatch):
@@ -118,7 +85,7 @@ def test_quote_unavailable(client, monkeypatch):
     from app.services import market
 
     monkeypatch.setattr(market, "get_quote", lambda *a, **k: None)
-    assert client.get("/quote", params={"id": "yf:XYZ"}).status_code == 503
+    assert client.get("/quote", params={"id": "yf:XYZ"}, headers={"X-User-Email": "a@exemple.be"}).status_code == 503
 
 
 def test_decision_saves_scores(client, monkeypatch):

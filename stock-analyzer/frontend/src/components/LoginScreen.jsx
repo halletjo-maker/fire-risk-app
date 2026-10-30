@@ -1,42 +1,41 @@
-import { useEffect, useState } from 'react'
-import { ArrowRight, Mail } from 'lucide-react'
-import { api } from '../lib/api'
+import { useState } from 'react'
+import { ArrowRight, Mail, ShieldCheck } from 'lucide-react'
 import { Logo } from './ui'
+import PasswordInput from './PasswordInput'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+export const PASSWORD_MIN = 10
 
-export default function LoginScreen({ onLogin, defaultEmail = '' }) {
-  const [email, setEmail] = useState(defaultEmail)
+export default function LoginScreen({ setupRequired, registrationOpen, notice, onSubmit }) {
+  // Première utilisation : création du mot de passe ; ensuite : connexion
+  const [mode, setMode] = useState(setupRequired ? 'register' : 'login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [known, setKnown] = useState([])
+  const register = mode === 'register'
 
-  useEffect(() => {
-    api.knownUsers().then((d) => setKnown(d.users)).catch(() => {})
-  }, [])
-
-  const quickLogin = async (value) => {
-    setBusy(true)
+  const switchMode = (m) => {
+    setMode(m)
     setError(null)
-    try {
-      await onLogin(value)
-    } catch (err) {
-      setError(err.message)
-      setBusy(false)
-    }
+    setPassword('')
+    setConfirm('')
   }
 
   const submit = async (e) => {
     e.preventDefault()
     const value = email.trim()
-    if (!EMAIL_RE.test(value)) {
-      setError('Adresse mail invalide')
-      return
+    if (!EMAIL_RE.test(value)) return setError('Adresse mail invalide.')
+    if (!password) return setError('Indique ton mot de passe.')
+    if (register) {
+      if (password.length < PASSWORD_MIN) return setError(`Le mot de passe doit contenir au moins ${PASSWORD_MIN} caractères.`)
+      if (password !== confirm) return setError('Les deux mots de passe sont différents.')
     }
     setBusy(true)
     setError(null)
     try {
-      await onLogin(value)
+      await onSubmit(mode, value, password)
     } catch (err) {
       setError(err.message)
       setBusy(false)
@@ -48,54 +47,68 @@ export default function LoginScreen({ onLogin, defaultEmail = '' }) {
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center"><Logo /></div>
         <form onSubmit={submit} noValidate className="card p-6 sm:p-8">
-          <h1 className="text-xl font-bold">Bienvenue 👋</h1>
+          <h1 className="text-xl font-bold">{register ? 'Crée ton accès 🔐' : 'Bienvenue 👋'}</h1>
           <p className="mt-1 text-sm text-muted">
-            Indique ton adresse mail pour retrouver tes watchlists, ton historique et tes alertes.
+            {register
+              ? 'Choisis ton adresse mail et un mot de passe. Si tu utilisais déjà l\'application avec cette adresse, tu retrouves tes watchlists.'
+              : 'Connecte-toi pour retrouver tes watchlists, ton historique et tes alertes.'}
           </p>
-          {known.length > 0 && (
-            <div className="mt-6">
-              <p className="text-sm font-medium">Comptes récents</p>
-              <ul className="mt-2 space-y-2">
-                {known.map((u) => (
-                  <li key={u.email}>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => quickLogin(u.email)}
-                      className="flex w-full items-center gap-3 rounded-lg border border-line bg-bg px-3 py-2.5 text-left transition hover:border-bull/60 disabled:opacity-50"
-                    >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bull/15 font-semibold text-bull">
-                        {u.email[0].toUpperCase()}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm">{u.email}</span>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-muted" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-4 text-center text-xs text-muted">— ou une autre adresse —</p>
-            </div>
-          )}
-          <label htmlFor="email" className={`${known.length ? 'mt-3' : 'mt-6'} block text-sm font-medium`}>Adresse mail</label>
+          {notice && <p className="mt-4 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-sm text-warn" role="status">{notice}</p>}
+
+          <label htmlFor="email" className="mt-6 block text-sm font-medium">Adresse mail</label>
           <div className="relative mt-2">
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <input
               id="email"
               type="email"
               inputMode="email"
-              autoComplete="email"
+              autoComplete={register ? 'email' : 'username'}
+              autoCapitalize="none"
               className="input pl-9"
               placeholder="prenom.nom@exemple.be"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          {error && <p className="mt-2 text-sm text-bear">{error}</p>}
+
+          <label htmlFor="password" className="mt-4 block text-sm font-medium">Mot de passe</label>
+          <PasswordInput
+            id="password"
+            value={password}
+            onChange={setPassword}
+            autoComplete={register ? 'new-password' : 'current-password'}
+            placeholder={register ? `${PASSWORD_MIN} caractères minimum` : ''}
+          />
+          {register && (
+            <>
+              <label htmlFor="confirm" className="mt-4 block text-sm font-medium">Confirme le mot de passe</label>
+              <PasswordInput id="confirm" value={confirm} onChange={setConfirm} autoComplete="new-password" />
+            </>
+          )}
+
+          {error && <p className="mt-3 text-sm text-bear" role="alert">{error}</p>}
           <button type="submit" className="btn-primary mt-6 w-full" disabled={busy}>
-            {busy ? 'Connexion…' : 'Commencer'} <ArrowRight className="h-4 w-4" />
+            {busy ? 'Connexion…' : register ? 'Créer mon accès' : 'Se connecter'} <ArrowRight className="h-4 w-4" />
           </button>
-          <p className="mt-4 text-xs text-muted">
-            Pas de mot de passe : l'application tourne sur ton réseau local et se souviendra de toi.
+
+          {registrationOpen && !setupRequired && (
+            <p className="mt-4 text-center text-sm">
+              {register ? (
+                <button type="button" className="text-muted underline-offset-2 hover:underline" onClick={() => switchMode('login')}>
+                  J'ai déjà un mot de passe
+                </button>
+              ) : (
+                <button type="button" className="text-muted underline-offset-2 hover:underline" onClick={() => switchMode('register')}>
+                  Première connexion ? Crée ton mot de passe
+                </button>
+              )}
+            </p>
+          )}
+          <p className="mt-4 flex gap-2 text-xs text-muted">
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            {register
+              ? 'Ton mot de passe est chiffré et ne quitte jamais cette installation. Tu resteras connecté 30 jours sur cet appareil.'
+              : 'Mot de passe oublié ? Lance reset_password.bat sur le PC qui fait tourner l\'application.'}
           </p>
         </form>
       </div>

@@ -1,20 +1,14 @@
 """Dépendances FastAPI partagées."""
 from __future__ import annotations
 
-from fastapi import Header, HTTPException
+from fastapi import HTTPException, Request
 
-from .database import get_conn
+from .services import auth
 
 
-def current_user(x_user_email: str | None = Header(default=None)) -> dict:
-    """Utilisateur identifié par l'en-tête X-User-Email (envoyé par le frontend)."""
-    if not x_user_email:
-        raise HTTPException(status_code=401, detail="Utilisateur non identifié")
-    with get_conn() as conn:
-        row = conn.execute(
-            "SELECT id, email, created_at, last_login_at FROM users WHERE email = ?",
-            (x_user_email.strip(),),
-        ).fetchone()
-    if row is None:
-        raise HTTPException(status_code=401, detail="Utilisateur inconnu")
-    return dict(row)
+def current_user(request: Request) -> dict:
+    """Utilisateur de la session (cookie HttpOnly, ou en-tête Authorization: Bearer)."""
+    user = auth.user_for_token(auth.token_from_request(request))
+    if user is None:
+        raise HTTPException(status_code=401, detail="Session expirée : reconnecte-toi.")
+    return user

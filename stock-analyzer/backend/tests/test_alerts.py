@@ -106,7 +106,7 @@ def test_configure_alerts_api(setup):
     assert enabled == {"SIGNAL_FORT": "daily", "MM100_CROISEMENT": "immediate"}
     bad = client.put(f"/alerts/item/{item}", headers=H, json={"alerts": [{"type": "X", "enabled": True}]})
     assert bad.status_code == 422
-    assert client.get(f"/alerts/item/{item}", headers={"X-User-Email": "b@x.be"}).status_code == 401
+    assert client.get(f"/alerts/item/{item}", headers={"X-User-Email": "b@x.be"}).status_code == 404
 
 
 def test_check_all_sends_to_outbox_and_respects_frequency(setup, monkeypatch, tmp_path):

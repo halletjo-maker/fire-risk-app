@@ -70,6 +70,13 @@ class Settings:
             o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()
         ]
     )
+    # Adresses autorisées à créer un compte (séparées par des virgules).
+    # Vide = seul le tout premier compte peut être créé.
+    allowed_emails: list[str] = field(
+        default_factory=lambda: [
+            e.strip().lower() for e in os.getenv("ALLOWED_EMAILS", "").split(",") if e.strip()
+        ]
+    )
     log_level: str = field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO").upper())
 
     @property

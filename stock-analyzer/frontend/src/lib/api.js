@@ -1,32 +1,33 @@
-// Client HTTP : toutes les requêtes passent par /api (relayé vers le backend par Vite).
+// Client HTTP : toutes les requêtes passent par /api (servi par le backend, ou relayé par Vite en dev).
+// La session est un cookie HttpOnly envoyé automatiquement par le navigateur.
 const BASE = '/api'
-const STORAGE_KEY = 'ab_user_email'
 
-export const storedEmail = {
-  get: () => { try { return localStorage.getItem(STORAGE_KEY) } catch { return null } },
-  set: (v) => { try { localStorage.setItem(STORAGE_KEY, v) } catch { /* navigation privée */ } },
-  clear: () => { try { localStorage.removeItem(STORAGE_KEY) } catch { /* idem */ } },
-}
+// Session expirée ou révoquée : App revient à l'écran de connexion.
+export const SESSION_EXPIRED = 'ab:session-expired'
+const AUTH_PATHS = ['/users/login', '/users/register', '/users/current']
 
 // Mode démo (VITE_DEMO=1) : API simulée dans la page, sans serveur
 export const DEMO = import.meta.env.VITE_DEMO === '1'
 
 async function request(path, { method = 'GET', body, signal } = {}) {
   const headers = { 'Content-Type': 'application/json' }
-  const email = storedEmail.get()
-  if (email) headers['X-User-Email'] = email
   if (DEMO) {
     const { mockRequest } = await import('../demo/mockApi.js')
     return mockRequest(path, { method, body, headers })
   }
   let res
   try {
-    res = await fetch(BASE + path, { method, headers, signal, body: body ? JSON.stringify(body) : undefined })
+    res = await fetch(BASE + path, {
+      method, headers, signal, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined,
+    })
   } catch (e) {
     if (e.name === 'AbortError') throw e
     throw new Error('Serveur injoignable. Le backend est-il lancé ?')
   }
   const data = await res.json().catch(() => ({}))
+  if (res.status === 401 && !AUTH_PATHS.includes(path)) {
+    window.dispatchEvent(new Event(SESSION_EXPIRED))
+  }
   if (!res.ok) {
     const detail = Array.isArray(data.detail) ? 'Données invalides' : data.detail
     throw new Error(detail || `Erreur ${res.status}`)
@@ -37,9 +38,10 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 export const api = {
   health: () => request('/health'),
   currentUser: () => request('/users/current'),
-  login: (email) => request('/users/login', { method: 'POST', body: { email } }),
+  login: (email, password) => request('/users/login', { method: 'POST', body: { email, password } }),
+  register: (email, password) => request('/users/register', { method: 'POST', body: { email, password } }),
   logout: () => request('/users/logout', { method: 'POST' }),
-  knownUsers: () => request('/users/known'),
+  changePassword: (current, next) => request('/users/password', { method: 'POST', body: { current_password: current, new_password: next } }),
   me: () => request('/users/me'),
   watchlists: () => request('/watchlists'),
   createWatchlist: (name, color) => request('/watchlists', { method: 'POST', body: { name, color } }),

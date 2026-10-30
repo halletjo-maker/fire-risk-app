@@ -18,8 +18,18 @@ SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS users (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     email           TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash   TEXT,       -- scrypt ; NULL = mot de passe pas encore créé
     created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
     last_login_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Sessions de connexion (seule l'empreinte SHA-256 du jeton est stockée)
+CREATE TABLE IF NOT EXISTS sessions (
+    token_hash      TEXT PRIMARY KEY,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+    last_seen_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+    expires_at      TEXT    NOT NULL
 );
 
 -- Réglages globaux de l'application (ex. utilisateur actif)
@@ -117,6 +127,7 @@ CREATE TABLE IF NOT EXISTS data_cache (
     fetched_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE INDEX IF NOT EXISTS idx_sessions_user         ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_watchlists_user       ON watchlists(user_id, position);
 CREATE INDEX IF NOT EXISTS idx_items_watchlist       ON watchlist_items(watchlist_id, position);
 CREATE INDEX IF NOT EXISTS idx_items_product         ON watchlist_items(product_id);
@@ -126,6 +137,7 @@ CREATE INDEX IF NOT EXISTS idx_history_user_date     ON analysis_history(user_id
 
 TABLES = [
     "users",
+    "sessions",
     "alert_events",
     "app_settings",
     "watchlists",
@@ -148,6 +160,7 @@ def _connect(path: Path) -> sqlite3.Connection:
 # Colonnes ajoutées après la première version (bases déjà créées)
 MIGRATIONS = [
     ("watchlist_items", "product_id", "TEXT"),
+    ("users", "password_hash", "TEXT"),
 ]
 
 
