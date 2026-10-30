@@ -169,6 +169,9 @@ export async function mockRequest(path, { method = 'GET', body, headers = {} } =
   }
   if (p === '/users/current') return { user: db.users.find((u) => u.id === db.active) || null, setup_required: false, registration_open: true }
   if (p === '/users/password') return { ok: true }
+  if ((m = p.match(/^\/watchlists\/(\d+)\/suggestions$/))) {
+    return { status: 'ready', items: [], message: 'Démo hors ligne : les suggestions sont calculées sur la vraie application.' }
+  }
   if (p === '/users/members') {
     const u = currentUser()
     return { members: [{ ...u, is_admin: true, active: true, is_me: true }], invitations: db.invitations || [] }

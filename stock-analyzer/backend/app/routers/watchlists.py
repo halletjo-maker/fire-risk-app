@@ -10,6 +10,7 @@ from ..config import WATCHLIST_COLORS
 from ..database import get_conn
 from ..deps import current_user
 from ..services import market
+from ..services import suggestions as suggestions_service
 from ..services import watchlist as watchlist_service
 
 router = APIRouter(prefix="/watchlists", tags=["watchlists"])
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/watchlists", tags=["watchlists"])
 ITEM_COLUMNS = (
     "i.id, i.watchlist_id, i.symbol, i.product_id, i.name, i.isin, i.exchange, i.product_type, i.position, "
     "i.last_price, i.last_change_pct, i.last_score, i.last_signal, i.last_refresh_at, i.added_at, "
+    "i.buy_price, i.buy_kind, i.buy_note, i.sell_price, i.sell_note, "
     "(SELECT COUNT(*) FROM alerts a WHERE a.item_id = i.id AND a.enabled = 1) AS alert_count"
 )
 
@@ -190,9 +192,11 @@ def duplicate_watchlist(watchlist_id: int, payload: DuplicateIn | None = None, u
                               (user["id"], name, wl["color"], pos)).lastrowid
         conn.execute(
             "INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, isin, exchange, product_type, "
-            "position, last_price, last_change_pct, last_score, last_signal, last_refresh_at) "
+            "position, last_price, last_change_pct, last_score, last_signal, last_refresh_at, "
+            "buy_price, buy_kind, buy_note, sell_price, sell_note) "
             "SELECT ?, symbol, product_id, name, isin, exchange, product_type, position, last_price, "
-            "last_change_pct, last_score, last_signal, last_refresh_at FROM watchlist_items WHERE watchlist_id = ?",
+            "last_change_pct, last_score, last_signal, last_refresh_at, "
+            "buy_price, buy_kind, buy_note, sell_price, sell_note FROM watchlist_items WHERE watchlist_id = ?",
             (new_id, watchlist_id),
         )
         return {"watchlist": _summary(conn, new_id)}
@@ -271,3 +275,11 @@ def refresh(watchlist_id: int, background: BackgroundTasks, user: dict = Depends
         _own(conn, watchlist_id, user["id"])
     background.add_task(watchlist_service.refresh_all, watchlist_id)
     return {"scheduled": True}
+
+
+@router.get("/{watchlist_id}/suggestions")
+def suggestions(watchlist_id: int, user: dict = Depends(current_user)) -> dict:
+    """Produits à étudier, inspirés de la watchlist (calcul en arrière-plan : status pending puis ready)."""
+    with get_conn() as conn:
+        _own(conn, watchlist_id, user["id"])
+    return suggestions_service.get_or_start(watchlist_id)

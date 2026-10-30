@@ -59,6 +59,7 @@ export const api = {
   removeItem: (id, itemId) => request(`/watchlists/${id}/items/${itemId}`, { method: 'DELETE' }),
   reorderItems: (id, ids) => request(`/watchlists/${id}/items/order`, { method: 'PUT', body: { ids } }),
   refreshWatchlist: (id) => request(`/watchlists/${id}/refresh`, { method: 'POST' }),
+  watchlistSuggestions: (id) => request(`/watchlists/${id}/suggestions`),
   itemAlerts: (itemId) => request(`/alerts/item/${itemId}`),
   saveItemAlerts: (itemId, alerts) => request(`/alerts/item/${itemId}`, { method: 'PUT', body: { alerts } }),
   alertHistory: (limit = 10) => request(`/alerts/history?limit=${limit}`),

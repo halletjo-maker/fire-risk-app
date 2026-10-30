@@ -4,6 +4,7 @@ import { changeColor, fmtPct } from '../lib/format'
 import { Spinner } from './ui'
 import { useWatchlists } from '../lib/watchlists'
 import WatchlistPanel from './WatchlistPanel'
+import WatchlistSuggestions from './WatchlistSuggestions'
 import BackendStatus from './BackendStatus'
 import SearchBar from './SearchBar'
 import ProductCard from './ProductCard'
@@ -178,6 +179,7 @@ export default function MainArea() {
         {/* Sur mobile, sans analyse en cours, la watchlist passe en premier */}
         <div className={`min-w-0 space-y-4 ${result ? '' : 'order-first lg:order-none'}`}>
           <WatchlistPanel />
+          <WatchlistSuggestions />
           <BackendStatus />
         </div>
       </div>

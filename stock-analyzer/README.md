@@ -250,6 +250,7 @@ Supprimer une watchlist supprime ses produits ; supprimer un produit supprime se
 | DELETE | `/watchlists/{id}/items/{item}` | Retirer un produit (ses alertes sont supprimées) |
 | PUT | `/watchlists/{id}/items/order` | Nouvel ordre (glisser-déposer) |
 | POST | `/watchlists/{id}/refresh` | Rafraîchissement immédiat |
+| GET | `/watchlists/{id}/suggestions` | Suggestions d'achat inspirées de la watchlist (`pending` puis `ready`) |
 | GET / PUT | `/alerts/item/{item}` | Alertes d'un produit (5 types, activée, fréquence) |
 | GET | `/alerts/history` | Dernières alertes déclenchées |
 | POST | `/alerts/test` | Envoie un mail de test (vérifie le SMTP) |
@@ -289,6 +290,21 @@ python -m pytest -q
 ```
 
 ---
+
+## 🎯 Cours d'achat / de vente et suggestions
+
+Chaque produit d'une watchlist affiche, recalculés toutes les 15 min (actions, ETF, cryptos ;
+pas les turbos) :
+- **Achat ≤ X** : tendance haussière (au-dessus de la MM100) → achat sur repli vers le plus
+  proche appui sous le cours (MM100 ou support) ; **Achat ≈** si le cours y est déjà (< 1,5 %).
+- **Achat ≥ X** : tendance baissière → attendre un retour au-dessus de la MM100 (+1 %).
+- **Vente Y** : prochaine résistance (si ≥ 2 % de marge), sinon objectif de volatilité
+  (3 × ATR quotidien, 5 % minimum).
+
+Le bloc **Suggestions d'achat** part des produits suivis (meilleurs signaux d'abord), récupère
+les valeurs similaires selon Yahoo Finance, écarte celles déjà suivies et garde celles dont le
+score technique est ≥ 5,5/10 (4 au maximum) ; un ETF monde est proposé si la watchlist n'en
+contient aucun. Calcul en arrière-plan, mis en cache 6 h (`services/suggestions.py`).
 
 ## 🗺️ Avancement
 

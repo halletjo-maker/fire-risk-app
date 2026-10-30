@@ -83,6 +83,11 @@ CREATE TABLE IF NOT EXISTS watchlist_items (
     last_score        REAL,
     last_signal       TEXT CHECK (last_signal IN ('ACHAT', 'VENTE', 'NEUTRE')),
     last_refresh_at   TEXT,
+    buy_price         REAL,       -- cours d'achat potentiel
+    buy_kind          TEXT,       -- '≤' repli, '≥' confirmation, '≈' au cours actuel
+    buy_note          TEXT,
+    sell_price        REAL,       -- cours de vente potentiel (objectif)
+    sell_note         TEXT,
     added_at          TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (watchlist_id, symbol)
 );
@@ -179,6 +184,11 @@ MIGRATIONS = [
     ("watchlist_items", "product_id", "TEXT"),
     ("users", "password_hash", "TEXT"),
     ("users", "is_admin", "INTEGER NOT NULL DEFAULT 0"),
+    ("watchlist_items", "buy_price", "REAL"),
+    ("watchlist_items", "buy_kind", "TEXT"),
+    ("watchlist_items", "buy_note", "TEXT"),
+    ("watchlist_items", "sell_price", "REAL"),
+    ("watchlist_items", "sell_note", "TEXT"),
 ]
 
 

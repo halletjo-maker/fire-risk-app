@@ -36,7 +36,8 @@ function ItemRow({ item, index, onOpen, onRemove, onAlerts }) {
           <span {...provided.dragHandleProps} className="cursor-grab touch-none p-1.5 text-muted active:cursor-grabbing" aria-label={`Déplacer ${item.name}`}>
             <GripVertical className="h-4 w-4" />
           </span>
-          <button onClick={() => onOpen(item)} className="flex min-w-0 flex-1 items-center gap-2 py-2.5 text-left" title={`Analyser ${item.name}`}>
+          <button onClick={() => onOpen(item)} className="min-w-0 flex-1 py-2.5 text-left" title={`Analyser ${item.name}`}>
+            <span className="flex items-center gap-2">
             <span className="w-5 shrink-0 text-center text-sm" title={sig?.label || 'Score en cours de calcul'} aria-label={sig?.label || 'Score en cours de calcul'}>
               {sig ? sig.dot : <Spinner className="h-3 w-3" />}
             </span>
@@ -54,6 +55,14 @@ function ItemRow({ item, index, onOpen, onRemove, onAlerts }) {
               {item.last_score != null ? fmtScore(item.last_score) : '–'}
               <span className="block text-[10px] font-normal text-muted">/10</span>
             </span>
+            </span>
+            {item.buy_price != null && (
+              <span className="mt-1 block pl-7 text-[11px]" title={[item.buy_note, item.sell_note].filter(Boolean).join(' · ')}>
+                <span className="whitespace-nowrap text-bull">Achat {item.buy_kind} {fmtPrice(item.buy_price)}</span>
+                <span className="text-muted"> · </span>
+                <span className="whitespace-nowrap text-warn">Vente {fmtPrice(item.sell_price)}</span>
+              </span>
+            )}
           </button>
           <button
             onClick={() => onAlerts(item)}
@@ -149,6 +158,18 @@ export default function WatchlistPanel() {
       )}
 
       {error && <p className="mt-2 text-xs text-bear">{error}</p>}
+      {list.some((i) => i.buy_price != null) && (
+        <details className="mt-3 rounded-lg bg-bg px-3 py-2 text-xs text-muted">
+          <summary className="cursor-pointer select-none">Comment lire « Achat » et « Vente » ?</summary>
+          <ul className="mt-2 space-y-1">
+            <li><span className="text-bull">Achat ≤</span> : tendance haussière, achat sur repli vers la MM100 ou le support.</li>
+            <li><span className="text-bull">Achat ≈</span> : le cours est déjà dans la zone d'achat.</li>
+            <li><span className="text-bull">Achat ≥</span> : tendance baissière, attendre que le cours repasse au-dessus de la MM100.</li>
+            <li><span className="text-warn">Vente</span> : objectif de prise de bénéfice (prochaine résistance, ou estimation selon la volatilité).</li>
+            <li>Niveaux recalculés toutes les 15 min. Indicatifs : pas un conseil en investissement.</li>
+          </ul>
+        </details>
+      )}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span className="flex gap-3"><span>🟢 Achat</span><span>🟡 Neutre</span><span>🔴 Vente</span></span>
         {lastRefresh && <span>Mis à jour {since(lastRefresh)} · auto 15 min</span>}

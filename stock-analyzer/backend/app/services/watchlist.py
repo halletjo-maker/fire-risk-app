@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 from ..database import get_conn
-from . import analysis
+from . import analysis, targets
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +25,19 @@ def refresh_product(product_id: str) -> dict | None:
         "score": d.get("score") if d.get("available") else None,
         "signal": d.get("signal") if d.get("available") else None,
     }
+    try:
+        levels = targets.compute(full) or {}
+    except Exception:
+        logger.exception("Cours cibles impossibles : %s", product_id)
+        levels = {}
+    for k in ("buy_price", "buy_kind", "buy_note", "sell_price", "sell_note"):
+        values[k] = levels.get(k)
     with get_conn() as conn:
         conn.execute(
             "UPDATE watchlist_items SET last_price = :price, last_change_pct = :change, last_score = :score, "
-            "last_signal = :signal, last_refresh_at = datetime('now') WHERE product_id = :pid",
+            "last_signal = :signal, buy_price = :buy_price, buy_kind = :buy_kind, buy_note = :buy_note, "
+            "sell_price = :sell_price, sell_note = :sell_note, last_refresh_at = datetime('now') "
+            "WHERE product_id = :pid",
             {**values, "pid": product_id},
         )
     return values
