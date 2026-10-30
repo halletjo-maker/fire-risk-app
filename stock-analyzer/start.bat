@@ -7,7 +7,7 @@ if not exist backend\requirements.txt goto :no_files
 REM Recherche d'un Python ou les bibliotheques sont installees
 set "RUNPY="
 set "CHECK=import uvicorn, fastapi, pandas_ta"
-if exist backend\.venv\Scripts\python.exe backend\.venv\Scripts\python.exe -c "%CHECK%" >nul 2>nul && set "RUNPY=%~dp0backend\.venv\Scripts\python.exe"
+if exist backend\.venv\Scripts\python.exe backend\.venv\Scripts\python.exe -c "%CHECK%" >nul 2>nul && set "RUNPY=.venv\Scripts\python.exe"
 if not defined RUNPY py -3.13 -c "%CHECK%" >nul 2>nul && set "RUNPY=py -3.13"
 if not defined RUNPY py -3.12 -c "%CHECK%" >nul 2>nul && set "RUNPY=py -3.12"
 if not defined RUNPY python -c "%CHECK%" >nul 2>nul && set "RUNPY=python"
