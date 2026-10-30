@@ -55,7 +55,7 @@ class Settings:
     smtp_use_tls: bool = field(default_factory=lambda: _bool("SMTP_USE_TLS", True))
 
     app_public_url: str = field(
-        default_factory=lambda: os.getenv("APP_PUBLIC_URL", "http://localhost:3000")
+        default_factory=lambda: os.getenv("APP_PUBLIC_URL", "http://localhost:8000")
     )
     database_path: Path = field(
         default_factory=lambda: _resolve(os.getenv("DATABASE_PATH", "data/stock_analyzer.db"))

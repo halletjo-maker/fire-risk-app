@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .config import APP_NAME, APP_VERSION, get_settings
 from .database import init_db
@@ -40,3 +42,23 @@ app.add_middleware(
 
 for router in (health.router, users.router, watchlists.router, analyze.router, alerts.router):
     app.include_router(router)
+
+
+# Interface prête à l'emploi (npm run build → backend/web) : l'app entière tient sur le port 8000,
+# sans Node.js. L'interface appelle "/api/..." : on retire ce préfixe avant le routage.
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+
+
+class StripApiPrefix:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and (scope["path"] == "/api" or scope["path"].startswith("/api/")):
+            scope = dict(scope, path=scope["path"][4:] or "/", raw_path=None)
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(StripApiPrefix)
+if (WEB_DIR / "index.html").exists():
+    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")

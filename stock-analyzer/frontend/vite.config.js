@@ -17,6 +17,8 @@ export default defineConfig(({ mode }) => {
   const allowedHosts = env.ALLOWED_HOSTS ? env.ALLOWED_HOSTS.split(',').map((h) => h.trim()).filter(Boolean) : undefined
   return {
     plugins: [react()],
+    // Version prête à l'emploi servie par le backend (plus besoin de Node.js sur le PC)
+    build: { outDir: '../backend/web', emptyOutDir: true },
     server: { host: true, port: 3000, strictPort: true, proxy, allowedHosts },
     preview: { host: true, port: 3000, strictPort: true, proxy, allowedHosts },
   }

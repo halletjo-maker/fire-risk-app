@@ -40,10 +40,17 @@ node --version
 
 ## 🪟 Installation rapide sous Windows
 
-1. Installe **Python 3.13** (https://www.python.org/downloads/windows/ — coche
-   « Add python.exe to PATH ») et **Node.js LTS** (https://nodejs.org).
-2. Dans le dossier `stock-analyzer`, double-clique sur **`install.bat`** (5 à 10 minutes).
-3. Double-clique sur **`start.bat`** : le navigateur s'ouvre sur http://localhost:3000.
+**Seul Python est nécessaire** : l'interface est livrée déjà fabriquée dans `backend/web/`
+et servie par le backend sur le port **8000** (pas besoin de Node.js).
+
+1. Installe **Python 3.13** ou 3.12 (https://www.python.org/downloads/windows/ — coche
+   « Add python.exe to PATH »). Python 3.14 n'est pas encore supporté (numba / pandas-ta).
+2. Dans le dossier `stock-analyzer`, double-clique sur **`install.bat`** (2 à 5 minutes).
+3. Double-clique sur **`start.bat`** : le navigateur s'ouvre sur http://localhost:8000.
+   Téléphone (même Wi-Fi) : `http://IP-DU-PC:8000`.
+
+Après une modification du frontend, régénère `backend/web/` avec `cd frontend && npm run build`.
+Node.js reste utile uniquement pour développer l'interface (`npm run dev`, port 3000).
 
 ## 🚀 Installation (une seule fois)
 

@@ -1,25 +1,23 @@
 @echo off
 chcp 65001 >nul
-REM Installation en un double-clic (Windows) : backend Python + frontend Node.js
+REM Installation en un double-clic (Windows) : seul Python est necessaire.
+REM L'interface est deja fabriquee dans backend\web (pas besoin de Node.js).
 cd /d "%~dp0"
 echo.
 echo  === Installation - Analyse Boursiere ===
 echo.
 
-where node >nul 2>nul
-if errorlevel 1 (
-  echo  [ERREUR] Node.js est introuvable.
-  echo  Installe la version LTS depuis https://nodejs.org puis relance install.bat
-  pause
-  exit /b 1
-)
-
+REM Python 3.12 ou 3.13 obligatoire (une bibliotheque d'indicateurs ne supporte pas encore 3.14)
 set "PY="
 py -3.13 --version >nul 2>nul && set "PY=py -3.13"
 if not defined PY py -3.12 --version >nul 2>nul && set "PY=py -3.12"
-if not defined PY py -3.11 --version >nul 2>nul && set "PY=py -3.11"
+if not defined PY python -c "import sys; sys.exit(0 if sys.version_info[:2] in ((3,12),(3,13)) else 1)" >nul 2>nul && set "PY=python"
 if not defined PY (
-  echo  [ERREUR] Python 3.11, 3.12 ou 3.13 est introuvable.
+  echo  [ERREUR] Python 3.12 ou 3.13 est introuvable.
+  echo  Version(s) detectee(s) :
+  py --list 2>nul
+  python --version 2>nul
+  echo.
   echo  Installe Python 3.13 depuis https://www.python.org/downloads/windows/
   echo  en cochant "Add python.exe to PATH", puis relance install.bat
   pause
@@ -27,7 +25,6 @@ if not defined PY (
 )
 echo  Python utilise :
 %PY% --version
-node --version
 
 if not exist .env (
   copy .env.example .env >nul
@@ -35,23 +32,14 @@ if not exist .env (
 )
 
 echo.
-echo  [1/2] Installation du backend (2 a 5 minutes)...
+echo  Installation des bibliotheques (2 a 5 minutes)...
 cd backend
-if not exist .venv %PY% -m venv .venv
+if not exist .venv\Scripts\python.exe %PY% -m venv .venv
 .venv\Scripts\python -m pip install --upgrade pip >nul
 .venv\Scripts\python -m pip install -r requirements.txt
 if errorlevel 1 (
-  echo  [ERREUR] Installation Python impossible. Copie le message ci-dessus a Claude.
-  pause
-  exit /b 1
-)
-
-echo.
-echo  [2/2] Installation du frontend (1 a 3 minutes)...
-cd ..\frontend
-call npm install --no-fund --no-audit
-if errorlevel 1 (
-  echo  [ERREUR] Installation Node.js impossible. Copie le message ci-dessus a Claude.
+  echo.
+  echo  [ERREUR] Installation impossible. Envoie une capture de cette fenetre a Claude.
   pause
   exit /b 1
 )
