@@ -19,3 +19,4 @@ frontend/dist/
 .idea/
 backend/data/outbox/
 dist-demo/
+backend/python_path.txt
