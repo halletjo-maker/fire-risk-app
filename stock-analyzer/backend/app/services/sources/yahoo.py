@@ -158,3 +158,29 @@ def history(symbol: str, period: str = "2y"):
     df = hist[["Open", "High", "Low", "Close", "Volume"]].rename(columns=str.lower).dropna(subset=["close"])
     df.index = df.index.tz_localize(None) if df.index.tz is not None else df.index
     return df if not df.empty else None
+
+
+def history_many(symbols: list[str], period: str = "1y") -> dict:
+    """Historiques journaliers de plusieurs titres en un seul appel {symbole: DataFrame}."""
+    if not symbols:
+        return {}
+    try:
+        raw = yf.download(symbols, period=period, interval="1d", group_by="ticker", auto_adjust=False,
+                          threads=True, progress=False)
+    except Exception as exc:
+        logger.info("Historique groupé Yahoo impossible (%s titres) : %s", len(symbols), exc)
+        return {}
+    if raw is None or raw.empty:
+        return {}
+    out = {}
+    for sym in symbols:
+        try:
+            sub = raw[sym] if len(symbols) > 1 else raw
+            df = sub[["Open", "High", "Low", "Close", "Volume"]].rename(columns=str.lower).dropna(subset=["close"])
+        except (KeyError, TypeError):
+            continue
+        if df.empty:
+            continue
+        df.index = df.index.tz_localize(None) if getattr(df.index, "tz", None) is not None else df.index
+        out[sym] = df
+    return out

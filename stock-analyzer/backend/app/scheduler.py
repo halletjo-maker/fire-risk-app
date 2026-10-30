@@ -43,6 +43,16 @@ def check_alerts() -> None:
         logger.exception("Échec de la vérification des alertes")
 
 
+def refresh_screens() -> None:
+    """Listes larges (IPO 10 ans…) : une fois par jour après la clôture américaine."""
+    from .services import screens
+
+    try:
+        screens.refresh(resync=True)
+    except Exception:
+        logger.exception("Échec de la mise à jour des listes larges")
+
+
 def start_scheduler() -> None:
     settings = get_settings()
     if not settings.scheduler_enabled or scheduler.running:
@@ -57,6 +67,11 @@ def start_scheduler() -> None:
         check_alerts, "interval", minutes=minutes, id="check_alerts",
         name="Vérification des alertes mail", replace_existing=True,
         next_run_time=datetime.now().astimezone() + timedelta(minutes=minutes + 3),
+    )
+    # Clôture US 22 h (Bruxelles) : calcul à 22 h 45 du lundi au vendredi
+    scheduler.add_job(
+        refresh_screens, "cron", day_of_week="mon-fri", hour=22, minute=45, id="refresh_screens",
+        name="Listes larges (1×/jour)", replace_existing=True,
     )
     scheduler.start()
     logger.info("Planificateur démarré (toutes les %s min)", minutes)

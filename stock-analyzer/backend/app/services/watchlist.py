@@ -47,7 +47,11 @@ def refresh_all(watchlist_id: int | None = None) -> int:
     """Rafraîchit chaque produit une seule fois, même s'il figure dans plusieurs watchlists."""
     with get_conn() as conn:
         if watchlist_id is None:
-            rows = conn.execute("SELECT DISTINCT product_id FROM watchlist_items WHERE product_id IS NOT NULL").fetchall()
+            # Les listes larges (« screen:… ») sont mises à jour une fois par jour par services/screens.py
+            rows = conn.execute(
+                "SELECT DISTINCT i.product_id FROM watchlist_items i JOIN watchlists w ON w.id = i.watchlist_id "
+                "WHERE i.product_id IS NOT NULL AND w.kind = 'manual'"
+            ).fetchall()
         else:
             rows = conn.execute(
                 "SELECT DISTINCT product_id FROM watchlist_items WHERE watchlist_id = ? AND product_id IS NOT NULL",

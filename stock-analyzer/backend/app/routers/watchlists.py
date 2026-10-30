@@ -10,6 +10,7 @@ from ..config import WATCHLIST_COLORS
 from ..database import get_conn
 from ..deps import current_user
 from ..services import market
+from ..services import screens
 from ..services import suggestions as suggestions_service
 from ..services import watchlist as watchlist_service
 
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/watchlists", tags=["watchlists"])
 ITEM_COLUMNS = (
     "i.id, i.watchlist_id, i.symbol, i.product_id, i.name, i.isin, i.exchange, i.product_type, i.position, "
     "i.last_price, i.last_change_pct, i.last_score, i.last_signal, i.last_refresh_at, i.added_at, "
-    "i.buy_price, i.buy_kind, i.buy_note, i.sell_price, i.sell_note, "
+    "i.buy_price, i.buy_kind, i.buy_note, i.sell_price, i.sell_note, i.ipo_year, "
     "(SELECT COUNT(*) FROM alerts a WHERE a.item_id = i.id AND a.enabled = 1) AS alert_count"
 )
 
@@ -83,7 +84,7 @@ class OrderIn(BaseModel):
 # ---------------------------------------------------------------- outils
 def _own(conn, watchlist_id: int, user_id: int):
     row = conn.execute(
-        "SELECT id, name, color, position, created_at FROM watchlists WHERE id = ? AND user_id = ?",
+        "SELECT id, name, color, position, kind, created_at FROM watchlists WHERE id = ? AND user_id = ?",
         (watchlist_id, user_id),
     ).fetchone()
     if row is None:
@@ -93,7 +94,7 @@ def _own(conn, watchlist_id: int, user_id: int):
 
 def _summary(conn, watchlist_id: int) -> dict:
     row = conn.execute(
-        "SELECT w.id, w.name, w.color, w.position, w.created_at, COUNT(i.id) AS item_count "
+        "SELECT w.id, w.name, w.color, w.position, w.kind, w.screen_synced_at, w.created_at, COUNT(i.id) AS item_count "
         "FROM watchlists w LEFT JOIN watchlist_items i ON i.watchlist_id = w.id WHERE w.id = ? GROUP BY w.id",
         (watchlist_id,),
     ).fetchone()
@@ -121,7 +122,8 @@ def list_watchlists(user: dict = Depends(current_user)) -> dict:
     with get_conn() as conn:
         rows = conn.execute(
             """
-            SELECT w.id, w.name, w.color, w.position, w.created_at, COUNT(i.id) AS item_count
+            SELECT w.id, w.name, w.color, w.position, w.kind, w.screen_synced_at, w.created_at,
+                   COUNT(i.id) AS item_count
             FROM watchlists w
             LEFT JOIN watchlist_items i ON i.watchlist_id = w.id
             WHERE w.user_id = ?
@@ -188,15 +190,15 @@ def duplicate_watchlist(watchlist_id: int, payload: DuplicateIn | None = None, u
         name = _unique_name(conn, user["id"], (payload.name if payload and payload.name else f"{wl['name']} (copie)"))
         pos = conn.execute("SELECT COALESCE(MAX(position), -1) + 1 FROM watchlists WHERE user_id = ?",
                            (user["id"],)).fetchone()[0]
-        new_id = conn.execute("INSERT INTO watchlists (user_id, name, color, position) VALUES (?, ?, ?, ?)",
-                              (user["id"], name, wl["color"], pos)).lastrowid
+        new_id = conn.execute("INSERT INTO watchlists (user_id, name, color, position, kind) VALUES (?, ?, ?, ?, ?)",
+                              (user["id"], name, wl["color"], pos, wl["kind"])).lastrowid
         conn.execute(
             "INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, isin, exchange, product_type, "
             "position, last_price, last_change_pct, last_score, last_signal, last_refresh_at, "
-            "buy_price, buy_kind, buy_note, sell_price, sell_note) "
+            "buy_price, buy_kind, buy_note, sell_price, sell_note, ipo_year) "
             "SELECT ?, symbol, product_id, name, isin, exchange, product_type, position, last_price, "
             "last_change_pct, last_score, last_signal, last_refresh_at, "
-            "buy_price, buy_kind, buy_note, sell_price, sell_note FROM watchlist_items WHERE watchlist_id = ?",
+            "buy_price, buy_kind, buy_note, sell_price, sell_note, ipo_year FROM watchlist_items WHERE watchlist_id = ?",
             (new_id, watchlist_id),
         )
         return {"watchlist": _summary(conn, new_id)}
@@ -272,8 +274,11 @@ def reorder_items(watchlist_id: int, payload: OrderIn, user: dict = Depends(curr
 def refresh(watchlist_id: int, background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
     """Rafraîchissement immédiat (en plus de celui toutes les 15 minutes)."""
     with get_conn() as conn:
-        _own(conn, watchlist_id, user["id"])
-    background.add_task(watchlist_service.refresh_all, watchlist_id)
+        wl = _own(conn, watchlist_id, user["id"])
+    if wl["kind"].startswith("screen:"):
+        background.add_task(screens.refresh, watchlist_id)
+    else:
+        background.add_task(watchlist_service.refresh_all, watchlist_id)
     return {"scheduled": True}
 
 
@@ -283,3 +288,19 @@ def suggestions(watchlist_id: int, user: dict = Depends(current_user)) -> dict:
     with get_conn() as conn:
         _own(conn, watchlist_id, user["id"])
     return suggestions_service.get_or_start(watchlist_id)
+
+
+@router.post("/presets/ipo", status_code=201)
+def create_ipo_preset(background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
+    """Liste « IPO 10 ans » : les 500 plus grosses sociétés introduites en Bourse aux USA depuis 10 ans."""
+    with get_conn() as conn:
+        if conn.execute("SELECT 1 FROM watchlists WHERE user_id = ? AND kind = ?",
+                        (user["id"], screens.IPO_KIND)).fetchone():
+            raise HTTPException(status_code=409, detail="Tu as déjà la liste « IPO 10 ans ».")
+    try:
+        wl_id = screens.create_ipo_watchlist(user["id"], WATCHLIST_COLORS[5])
+    except RuntimeError:
+        raise HTTPException(status_code=503, detail="Liste Nasdaq momentanément indisponible. Réessaie plus tard.")
+    background.add_task(screens.refresh, wl_id)
+    with get_conn() as conn:
+        return {"watchlist": _summary(conn, wl_id)}

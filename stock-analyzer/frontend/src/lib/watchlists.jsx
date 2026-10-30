@@ -91,6 +91,14 @@ export function WatchlistProvider({ email, children }) {
     select: setSelectedId,
     reload,
     loadItems,
+    createIpo: async () => {
+      const { watchlist } = await api.createIpoWatchlist()
+      setWatchlists((l) => [...l, watchlist])
+      setSelectedId(watchlist.id)
+      await loadItems(watchlist.id)
+      pollSoon(watchlist.id) // scores calculés en arrière-plan (≈ 1 min pour 500 sociétés)
+      return watchlist
+    },
     create: async (name, color) => {
       const { watchlist } = await api.createWatchlist(name, color)
       setWatchlists((l) => [...l, watchlist])

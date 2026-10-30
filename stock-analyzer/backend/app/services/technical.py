@@ -227,6 +227,29 @@ def score_criteria(d: pd.DataFrame, mm: dict | None) -> list[dict]:
     return criteria
 
 
+def quick_summary(df: pd.DataFrame) -> dict | None:
+    """Analyse technique à partir d'un historique déjà chargé (listes larges, sans cache ni sous-jacent)."""
+    if df is None or len(df) < 30:
+        return None
+    d = indicators(df)
+    price = float(d["close"].iloc[-1])
+    mm = mm100_status(d)
+    scored = [c for c in score_criteria(d, mm) if c["score"] is not None]
+    total_w = sum(c["weight"] for c in scored)
+    score = sum(c["score"] * c["weight"] for c in scored) / total_w if total_w else None
+    closes = d["close"].dropna()
+    change = float((closes.iloc[-1] / closes.iloc[-2] - 1) * 100) if len(closes) > 1 else None
+    return {
+        "applicable": True,
+        "score": round(score, 1) if score is not None else None,
+        "price": round(price, 4),
+        "change_pct": round(change, 2) if change is not None else None,
+        "mm100": mm,
+        "levels": supports_resistances(d, price),
+        "chart": chart_series(d, bars=40),  # suffisant pour la volatilité (ATR 14)
+    }
+
+
 # ---------------------------------------------------------------- graphique
 def chart_series(d: pd.DataFrame, bars: int = CHART_BARS) -> list[dict]:
     cols = ["open", "high", "low", "close", "volume", "m50", "m100", "m200", "bbu", "bbl", "rsi", "macd", "sig", "hist"]

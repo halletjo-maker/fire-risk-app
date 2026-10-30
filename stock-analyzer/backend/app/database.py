@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS watchlists (
     name        TEXT    NOT NULL,
     color       TEXT    NOT NULL DEFAULT '#00FF88',
     position    INTEGER NOT NULL DEFAULT 0,
+    kind        TEXT    NOT NULL DEFAULT 'manual',  -- 'manual' ou liste large 'screen:…' (1×/jour)
+    screen_synced_at TEXT,                          -- dernière mise à jour de la composition
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (user_id, name)
@@ -88,6 +90,7 @@ CREATE TABLE IF NOT EXISTS watchlist_items (
     buy_note          TEXT,
     sell_price        REAL,       -- cours de vente potentiel (objectif)
     sell_note         TEXT,
+    ipo_year          INTEGER,    -- listes « IPO » : année d'introduction en Bourse
     added_at          TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (watchlist_id, symbol)
 );
@@ -189,6 +192,9 @@ MIGRATIONS = [
     ("watchlist_items", "buy_note", "TEXT"),
     ("watchlist_items", "sell_price", "REAL"),
     ("watchlist_items", "sell_note", "TEXT"),
+    ("watchlist_items", "ipo_year", "INTEGER"),
+    ("watchlists", "kind", "TEXT NOT NULL DEFAULT 'manual'"),
+    ("watchlists", "screen_synced_at", "TEXT"),
 ]
 
 

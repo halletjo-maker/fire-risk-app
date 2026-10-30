@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, LogOut, Plus, Settings, UserPlus, X } from 'lucide-react'
+import { ChevronDown, LogOut, Plus, Settings, Sparkles, UserPlus, X } from 'lucide-react'
 import { WATCHLIST_COLORS } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { fmtScore, scoreColor } from '../lib/format'
@@ -67,7 +67,7 @@ function WatchlistItems({ id, onOpen }) {
   if (!state.list.length) return <p className="py-1.5 pl-9 text-xs text-muted">Aucun produit</p>
   return (
     <ul className="pb-1 pl-6">
-      {state.list.map((i) => (
+      {state.list.slice(0, SIDEBAR_MAX).map((i) => (
         <li key={i.id}>
           <button onClick={() => onOpen(i)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-muted hover:bg-panel2 hover:text-gray-100">
             <span className="w-4 text-center">{SIGNAL[i.last_signal]?.dot || '⚪'}</span>
@@ -76,7 +76,34 @@ function WatchlistItems({ id, onOpen }) {
           </button>
         </li>
       ))}
+      {state.list.length > SIDEBAR_MAX && (
+        <li className="px-2 py-1.5 text-xs text-muted">… et {state.list.length - SIDEBAR_MAX} autres (voir la watchlist)</li>
+      )}
     </ul>
+  )
+}
+
+const SIDEBAR_MAX = 20
+
+function IpoPreset({ onDone }) {
+  const wl = useWatchlists()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  if (wl.watchlists.some((w) => w.kind === 'screen:ipo10')) return null
+  const create = async () => {
+    setBusy(true)
+    setError(null)
+    try { await wl.createIpo(); onDone?.() } catch (e) { setError(e.message) } finally { setBusy(false) }
+  }
+  return (
+    <div className="mx-2 mt-3 rounded-lg border border-dashed border-line p-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted">Liste thématique</p>
+      <button className="mt-2 flex w-full items-center gap-2 text-left text-sm hover:text-bull disabled:opacity-50" onClick={create} disabled={busy}>
+        {busy ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4 text-warn" />}
+        <span>{busy ? 'Création (liste Nasdaq)…' : 'IPO des 10 dernières années (500 sociétés)'}</span>
+      </button>
+      {error && <p className="mt-1 text-xs text-bear">{error}</p>}
+    </div>
   )
 }
 
@@ -163,6 +190,7 @@ export default function Sidebar({ user, onLogout, onProfile, onInvite, onClose, 
             )
           })}
         </ul>
+        {!loading && !error && <IpoPreset onDone={onNavigate} />}
       </nav>
 
       {/* Profil : mail actif + changement d'utilisateur */}
