@@ -99,3 +99,15 @@ def test_google_codes():
     assert google_finance.google_code("NOW", "NYQ") == ["NOW:NYSE"]
     assert google_finance.google_code("BTC-EUR") == ["BTC-EUR"]
     assert google_finance.google_code("^FCHI") == ["PX1:INDEXEURO"]
+
+
+def test_fetch_text_never_raises(monkeypatch):
+    """Même une erreur hors « requests » (ex. certificat introuvable) renvoie None."""
+    from app.services.sources import http
+
+    def boom(*a, **k):
+        raise OSError("Could not find a suitable TLS CA certificate bundle")
+
+    monkeypatch.setattr(http._session, "get", boom)
+    monkeypatch.setenv("SCRAPING_DELAY_SECONDS", "0")
+    assert http.fetch_text("https://exemple.invalid/x") is None

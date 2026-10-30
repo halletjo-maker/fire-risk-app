@@ -128,6 +128,20 @@ d'alerte fonctionnent depuis le téléphone.
 
 ---
 
+## ☁️ Mise en ligne sur un serveur (Hetzner Cloud)
+
+`deploy/hetzner-cloud-init.sh` installe tout sur un serveur Ubuntu 24.04 neuf, au premier démarrage :
+Python, l'application (service systemd, utilisateur dédié, code en lecture seule), Caddy avec
+certificat https automatique sur `https://IP.sslip.io`, pare-feu (22/80/443), fail2ban, swap 2 Go.
+
+1. Crée un jeton GitHub *fine-grained* en lecture seule (Contents: Read-only) limité à ce dépôt.
+2. Hetzner Cloud → nouveau serveur Ubuntu 24.04 (4 Go de RAM) → colle le script dans **Cloud config**
+   après avoir rempli `EMAIL` et `GITHUB_TOKEN`.
+3. Environ 10 minutes plus tard : `https://IP-DU-SERVEUR.sslip.io` → « Crée ton accès ».
+
+Mise à jour : `sudo /opt/analyse-boursiere/update.sh` · Journal : `journalctl -u analyse-boursiere -f` ·
+Rapport d'installation : `/root/INSTALLATION.txt` et `/var/log/analyse-boursiere-install.log`.
+
 ## 🔐 Mot de passe et sécurité
 
 - **Première ouverture** : l'écran « Crée ton accès » demande ton adresse mail et un mot de passe

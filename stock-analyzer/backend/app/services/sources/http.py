@@ -47,6 +47,6 @@ def fetch_text(
             logger.info("HTTP %s pour %s", r.status_code, url)
             return None
         return r.text
-    except requests.RequestException as exc:
+    except Exception as exc:  # réseau, TLS, certificats… : la source suivante prend le relais
         logger.info("Échec réseau pour %s : %s", url, exc)
         return None
