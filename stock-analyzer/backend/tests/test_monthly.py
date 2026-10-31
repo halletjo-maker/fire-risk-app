@@ -99,3 +99,29 @@ def test_mail_settings_from_app(auth_client, monkeypatch):
     assert (cfg["host"], cfg["port"], cfg["password"], cfg["from"]) == ("smtp.gmail.com", 587, "abcdefghijklmnop", "moi@gmail.com")
     assert c.get("/health").json()["config"]["smtp_configured"] is True
     assert c.delete("/admin/mail").json()["configured"] is False
+
+
+def test_send_now_current_month_to_date(data, monkeypatch):
+    """Mois en cours : du 1er au jour du clic ; ne bloque pas le rapport automatique du 1er suivant."""
+    client, uid, pid = data
+    sent = []
+    monkeypatch.setattr(sender, "send", lambda to, subj, text, html=None: sent.append((subj, text)) or
+                        {"delivered": True, "status": "Envoyé", "file": None})
+    fixed = monthly.datetime(2026, 10, 15, 12, 0, tzinfo=monthly.TZ)
+
+    class FakeDT(monthly.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed
+
+    monkeypatch.setattr(monthly, "datetime", FakeDT)
+    r = client.post("/portfolios/report/send", json={"period": "current"}, headers=H).json()
+    assert r["sent"] and r["label"] == "octobre 2026 (du 1er au 15)"
+    assert sent[0][0] == "📊 Rapport octobre 2026 (du 1er au 15) — portefeuilles fictifs"
+    assert "depuis le 1er du mois" in sent[0][1]
+    # Le rapport complet d'octobre partira quand même le 1er novembre
+    assert monthly.send_all(date(2026, 11, 1)) == 1
+    # « Mois dernier » sans portefeuille ce mois-là : message clair
+    monkeypatch.setattr(monthly, "previous_month", lambda today=None: (2026, 8))
+    r = client.post("/portfolios/report/send", json={"period": "previous"}, headers=H).json()
+    assert r["sent"] is False and "Mois en cours" in r["status"]

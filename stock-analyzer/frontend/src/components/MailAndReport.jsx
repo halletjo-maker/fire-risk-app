@@ -7,7 +7,7 @@ import PasswordInput from './PasswordInput'
 // Rapport mensuel des portefeuilles fictifs (tous les utilisateurs)
 export function MonthlyReport({ initial, email }) {
   const [enabled, setEnabled] = useState(initial)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState(null)
   const [result, setResult] = useState(null)
 
   const toggle = async () => {
@@ -15,11 +15,12 @@ export function MonthlyReport({ initial, email }) {
     setEnabled(next)
     try { await api.setPreferences({ monthly_report: next }) } catch { setEnabled(!next) }
   }
-  const sendNow = async () => {
-    setBusy(true)
+  const sendNow = async (period) => {
+    setBusy(period)
     setResult(null)
-    try { setResult(await api.sendMonthlyReport()) } catch (e) { setResult({ sent: false, status: e.message }) } finally { setBusy(false) }
+    try { setResult(await api.sendMonthlyReport(period)) } catch (e) { setResult({ sent: false, status: e.message }) } finally { setBusy(null) }
   }
+  const today = new Date().toLocaleDateString('fr-BE', { day: 'numeric', month: 'long' })
 
   return (
     <div className="mt-5 rounded-lg border border-line p-4">
@@ -31,9 +32,17 @@ export function MonthlyReport({ initial, email }) {
           <span className="block text-xs text-muted">Envoyé à {email}</span>
         </span>
       </label>
-      <button className="btn-ghost mt-3 w-full justify-center border border-line" onClick={sendNow} disabled={busy}>
-        {busy ? <Spinner className="h-4 w-4" /> : <Send className="h-4 w-4" />} M'envoyer le rapport maintenant
-      </button>
+      <p className="mt-3 text-xs font-medium text-muted">M'envoyer un rapport maintenant :</p>
+      <div className="mt-1.5 grid grid-cols-2 gap-2">
+        <button className="btn-ghost justify-center border border-line text-sm" onClick={() => sendNow('current')} disabled={!!busy}>
+          {busy === 'current' ? <Spinner className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+          <span className="text-left leading-tight">Mois en cours<span className="block text-[11px] text-muted">du 1er au {today}</span></span>
+        </button>
+        <button className="btn-ghost justify-center border border-line text-sm" onClick={() => sendNow('previous')} disabled={!!busy}>
+          {busy === 'previous' ? <Spinner className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+          <span className="text-left leading-tight">Mois dernier<span className="block text-[11px] text-muted">mois complet</span></span>
+        </button>
+      </div>
       {result && (
         <p className={`mt-2 text-sm ${result.sent ? 'text-bull' : 'text-warn'}`} role="status">
           {result.sent ? `Rapport ${result.label} envoyé à ${result.email}.` : `Non envoyé : ${result.status}`}

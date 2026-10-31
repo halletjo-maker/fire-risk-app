@@ -92,14 +92,20 @@ def portfolio_month(conn, pf, year: int, month: int) -> dict | None:
     }
 
 
-def build(user_id: int, year: int, month: int) -> dict | None:
+def build(user_id: int, year: int, month: int, until_day: int | None = None) -> dict | None:
+    """Rapport d'un mois complet, ou du 1er au `until_day` inclus (mois en cours, envoi à la demande)."""
     with get_conn() as conn:
         user = conn.execute("SELECT id, email FROM users WHERE id = ?", (user_id,)).fetchone()
         pfs = conn.execute("SELECT * FROM portfolios WHERE user_id = ? ORDER BY id", (user_id,)).fetchall()
         items = [x for x in (portfolio_month(conn, pf, year, month) for pf in pfs) if x]
     if user is None or not items:
         return None
-    return {"email": user["email"], "year": year, "month": month, "label": f"{MONTHS[month - 1]} {year}",
+    label = f"{MONTHS[month - 1]} {year}"
+    span = "sur le mois"
+    if until_day:
+        label += " (le 1er)" if until_day == 1 else f" (du 1er au {until_day})"
+        span = "depuis le 1er du mois"
+    return {"email": user["email"], "year": year, "month": month, "label": label, "span": span, "partial": bool(until_day),
             "portfolios": items, "benchmark": benchmark(year, month)}
 
 
@@ -127,7 +133,8 @@ def render(report: dict) -> tuple[str, str, str]:
     lines = [f"Rapport mensuel — {label}", ""]
     cards = []
     for p in report["portfolios"]:
-        since = f"depuis sa création le {p['created_at'][8:10]}/{p['created_at'][5:7]}" if p["created_in_month"] else "sur le mois"
+        since = (f"depuis sa création le {p['created_at'][8:10]}/{p['created_at'][5:7]}" if p["created_in_month"]
+                 else report.get("span", "sur le mois"))
         lines += [
             f"■ {p['name']}",
             f"  Valeur : {_eur(p['start'])} → {_eur(p['end'])} ({_pct(p['month_pct'])} {since})",
@@ -175,7 +182,8 @@ Lignes ouvertes ({len(p['open'])})</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">{rows or '<tr><td style="color:#8B949E;font-size:13px">Aucune</td></tr>'}</table>
 </td></tr>""")
 
-    bench_txt = (f"Repère : {BENCHMARK[1]} {_pct(bench)} sur le mois complet." if bench is not None
+    bench_txt = (f"Repère : {BENCHMARK[1]} {_pct(bench)} {'depuis le 1er du mois' if report.get('partial') else 'sur le mois complet'}."
+                 if bench is not None
                  else "Repère MSCI World indisponible ce mois-ci.")
     url = get_settings().app_public_url.rstrip("/")
     lines += [bench_txt, "", f"Ouvrir l'application : {url}", "",
@@ -204,17 +212,17 @@ def _sent_key(user_id: int, year: int, month: int) -> str:
     return f"monthly_report:{user_id}:{year:04d}-{month:02d}"
 
 
-def send_for_user(user_id: int, year: int, month: int, force: bool = False) -> dict:
+def send_for_user(user_id: int, year: int, month: int, force: bool = False, until_day: int | None = None) -> dict:
     with get_conn() as conn:
         if not force and conn.execute("SELECT 1 FROM app_settings WHERE key = ?",
                                       (_sent_key(user_id, year, month),)).fetchone():
             return {"sent": False, "status": "Déjà envoyé"}
-    report = build(user_id, year, month)
+    report = build(user_id, year, month, until_day)
     if report is None:
         return {"sent": False, "status": "Aucun portefeuille fictif sur cette période"}
     subject, text, html = render(report)
     result = sender.send(report["email"], subject, text, html)
-    if result["delivered"]:
+    if result["delivered"] and not until_day:  # un rapport partiel ne remplace pas celui du 1er
         with get_conn() as conn:
             conn.execute("INSERT INTO app_settings (key, value) VALUES (?, datetime('now')) "
                          "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (_sent_key(user_id, year, month),))

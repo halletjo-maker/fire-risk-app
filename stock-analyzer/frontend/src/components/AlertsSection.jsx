@@ -47,7 +47,7 @@ export default function AlertsSection() {
           {hist.smtp_configured ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <MailWarning className="h-4 w-4 shrink-0" />}
           {hist.smtp_configured
             ? 'SMTP configuré : les alertes sont envoyées à ton adresse.'
-            : "SMTP non configuré : les alertes sont enregistrées ici et dans le dossier outbox, sans être envoyées. Ajoute un mot de passe d'application Gmail dans .env."}
+            : "Envoi des mails pas encore configuré : les alertes et rapports sont enregistrés sans être envoyés. L'administrateur les active dans « Réglages mail » ci-dessous."}
         </p>
       )}
       <div className="mt-3 grid grid-cols-2 gap-2">

@@ -55,18 +55,24 @@ def create(payload: PortfolioIn, background: BackgroundTasks, user: dict = Depen
     return {"portfolio": result}
 
 
+class ReportIn(BaseModel):
+    period: str = Field(default="previous", pattern="^(previous|current)$")
+
+
 @router.post("/report/send")
-def send_report(user: dict = Depends(current_user)) -> dict:
-    """Envoie tout de suite le rapport du mois précédent (ou du mois en cours s'il n'y en a pas encore)."""
+def send_report(payload: ReportIn | None = None, user: dict = Depends(current_user)) -> dict:
+    """Envoi immédiat : « previous » = mois dernier complet, « current » = du 1er à aujourd'hui."""
     from ..services import monthly
 
-    year, month = monthly.previous_month()
-    result = monthly.send_for_user(user["id"], year, month, force=True)
-    if result.get("status") == "Aucun portefeuille fictif sur cette période":
+    if payload and payload.period == "current":
         now = monthly.datetime.now(monthly.TZ)
-        result = monthly.send_for_user(user["id"], now.year, now.month, force=True)
-        if "label" in result:
-            result["label"] += " (mois en cours)"
+        result = monthly.send_for_user(user["id"], now.year, now.month, force=True, until_day=now.day)
+    else:
+        year, month = monthly.previous_month()
+        result = monthly.send_for_user(user["id"], year, month, force=True)
+    if result.get("status") == "Aucun portefeuille fictif sur cette période":
+        result["status"] = ("Aucun portefeuille fictif le mois dernier : choisis « Mois en cours »."
+                            if not (payload and payload.period == "current") else "Aucun portefeuille fictif.")
     return result
 
 
