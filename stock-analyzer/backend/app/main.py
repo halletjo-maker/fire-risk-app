@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import APP_NAME, APP_VERSION, get_settings
 from .database import init_db
@@ -61,5 +62,22 @@ class StripApiPrefix:
 
 
 app.add_middleware(StripApiPrefix)
+class SPAStaticFiles(StaticFiles):
+    """Fichiers de l'interface ; toute autre adresse (ex. /apprendre/rsi) renvoie la page unique."""
+
+    async def get_response(self, path, scope):
+        try:
+            response = await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404:
+                raise
+            response = None
+        if response is None or response.status_code == 404:
+            if "." in path.rsplit("/", 1)[-1]:  # fichier manquant (ex. .js) : vrai 404
+                return response if response is not None else await super().get_response("__absent__", scope)
+            return await super().get_response("index.html", scope)
+        return response
+
+
 if (WEB_DIR / "index.html").exists():
-    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
+    app.mount("/", SPAStaticFiles(directory=WEB_DIR, html=True), name="web")

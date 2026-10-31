@@ -1,3 +1,4 @@
+import { CRITERION_FICHE } from '../learn/fiches'
 import { AlertTriangle } from 'lucide-react'
 import { fmtScore, scoreBg, scoreColor } from '../lib/format'
 
@@ -22,11 +23,20 @@ export function ScoreRing({ score }) {
   )
 }
 
+export function LearnLink({ slug, label }) {
+  if (!slug) return null
+  return (
+    <a href={`/apprendre/${slug}`} target="_blank" rel="noopener"
+      className="ml-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-line align-middle text-[10px] font-semibold text-muted transition hover:border-bull/60 hover:text-bull"
+      aria-label={`Comprendre : ${label}`} title="Comprendre cet indicateur">?</a>
+  )
+}
+
 export function Criterion({ c }) {
   return (
     <li className="py-2.5">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm">{c.label}</span>
+        <span className="text-sm">{c.label}<LearnLink slug={CRITERION_FICHE[c.key]} label={c.label} /></span>
         <span className={`shrink-0 text-sm font-semibold ${scoreColor(c.score)}`}>
           {c.score == null ? '—' : `${fmtScore(c.score)}/10`}
         </span>

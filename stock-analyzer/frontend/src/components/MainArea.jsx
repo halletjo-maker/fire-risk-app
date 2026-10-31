@@ -184,7 +184,8 @@ export default function MainArea() {
         </div>
       </div>
       <p className="pb-4 text-center text-[11px] text-muted">
-        Informations fournies à titre indicatif — ne constituent pas un conseil en investissement (MiFID II).
+        Informations fournies à titre indicatif — ne constituent pas un conseil en investissement (MiFID II).{' '}
+        <a href="/apprendre" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-gray-200">Comprendre les analyses</a>
       </p>
     </div>
   )

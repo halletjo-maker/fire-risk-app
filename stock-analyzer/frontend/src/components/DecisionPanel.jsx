@@ -151,6 +151,11 @@ export default function DecisionPanel({ product, decision, loading, scores }) {
         {side && <Composition components={decision.components} total={decision.score} />}
         {side && <Arguments side={side} />}
         {side && <Notes notes={decision.notes} />}
+        {side && (
+          <a href="/apprendre/lire-les-scores" target="_blank" rel="noopener" className="inline-block text-xs text-muted underline underline-offset-2 hover:text-gray-200">
+            Comment lire ce score ?
+          </a>
+        )}
 
         {side && (
           <p className="border-t border-line pt-3 text-[11px] text-muted">

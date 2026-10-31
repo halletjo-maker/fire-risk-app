@@ -3,11 +3,12 @@ import { Check, ChevronRight, CircleAlert, Copy, FileText, Scale, Star } from 'l
 import { changeColor, fmtPct, fmtPrice, fmtScore, scoreColor } from '../lib/format'
 import { Spinner } from './ui'
 import TypeBadge from './TypeBadge'
+import { LearnLink } from './ScoreParts'
 
-function Section({ title, children }) {
+function Section({ title, learn, children }) {
   return (
     <div className="border-t border-line pt-4">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{title}</h3>
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{title}{learn && <LearnLink slug={learn} label={title} />}</h3>
       {children}
     </div>
   )
@@ -164,11 +165,11 @@ export default function ReportCard({ data, loading, error, onPick }) {
         <PointList items={r.weaknesses} positive={false} />
       </Section>
 
-      <Section title="★ Position vs MM100">
+      <Section title="★ Position vs MM100" learn="moyenne-mobile-100">
         <p className="text-sm leading-relaxed">{r.mm100}</p>
       </Section>
 
-      <Section title="Stop-loss proposés">
+      <Section title="Stop-loss proposés" learn="supports-resistances-stop-loss">
         <StopLoss sl={r.stop_loss} />
       </Section>
 

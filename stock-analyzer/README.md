@@ -370,6 +370,15 @@ Gmail + mot de passe d'application (myaccount.google.com/apppasswords, validatio
 requise). Les identifiants sont vérifiés auprès de Gmail avant d'être enregistrés et ne sont
 jamais renvoyés par l'API ; ils priment sur les variables SMTP du `.env`.
 
+## 📘 Apprendre : fiches de vulgarisation (public, sans compte)
+
+`/apprendre` : 8 fiches (lire les scores, MM100, RSI, MACD, Bollinger et volumes, supports /
+résistances / stop-loss, PER et valorisation, santé financière), avec schémas, pièges à éviter
+et la règle exacte appliquée par l'outil (`frontend/src/learn/fiches.js` — à mettre à jour si les
+règles de calcul changent). Petits « ? » à côté de chaque critère de l'analyse, liens « Comment
+lire ce score ? », menu et pied de page. Le backend renvoie la page unique pour ces adresses
+(`SPAStaticFiles`) ; l'outil reste réservé aux personnes connectées.
+
 ## 🗺️ Avancement
 
 - [x] **Étape 0** — Structure, backend FastAPI, SQLite, APScheduler, layout React
