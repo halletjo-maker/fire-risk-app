@@ -176,6 +176,7 @@ export async function mockRequest(path, { method = 'GET', body, headers = {} } =
   if (p.startsWith('/portfolios')) fail('Démo hors ligne : les portefeuilles fictifs sont disponibles sur la vraie application.')
   if (p.startsWith('/watchlists/presets/')) fail('Démo hors ligne : les listes thématiques sont disponibles sur la vraie application.')
   if (p === '/users/password/forgot') return { ok: true, message: 'Démo hors ligne : aucun mail envoyé.' }
+  if (p === '/admin/domain') return { current: location.hostname, available: false, pending: false, last: null, server_ip: null }
   if (p === '/admin/mail') return { configured: false, source: null, user: null }
   if (p === '/users/me/preferences') return { monthly_report: true }
   if (p === '/admin/version') return { version: null, auto_update: false, update_pending: false }

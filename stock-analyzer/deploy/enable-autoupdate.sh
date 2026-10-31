@@ -74,7 +74,30 @@ Unit=analyse-boursiere-update.service
 WantedBy=multi-user.target
 EOF
 
+# --- Nom de domaine : l'application dépose domain.request (Profil → Nom de domaine) ---
+cat > /etc/systemd/system/analyse-boursiere-domain.service <<EOF
+[Unit]
+Description=Branchement d'un nom de domaine (Analyse Boursiere)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash ${APP_DIR}/stock-analyzer/deploy/apply-domain.sh
+StandardOutput=append:${LOG}
+StandardError=append:${LOG}
+EOF
+cat > /etc/systemd/system/analyse-boursiere-domain.path <<EOF
+[Unit]
+Description=Demande de nom de domaine depuis l'application
+
+[Path]
+PathExists=${DATA_DIR}/domain.request
+Unit=analyse-boursiere-domain.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 [ -f "$APP_DIR/VERSION" ] || git -C "$APP_DIR" log -1 --format='%h|%cI|%s' > "$APP_DIR/VERSION" 2>/dev/null || true
 systemctl daemon-reload
-systemctl enable --now analyse-boursiere-update.timer analyse-boursiere-update.path
+systemctl enable --now analyse-boursiere-update.timer analyse-boursiere-update.path analyse-boursiere-domain.path
 echo "Mises à jour automatiques activées (chaque nuit + bouton dans l'application)."

@@ -153,6 +153,15 @@ L'interface est installable (manifest, icônes, plein écran) : sur iPhone, Safa
 « Sur l'écran d'accueil » ; sur Android, Chrome propose « Installer ». Un bandeau l'explique dans
 l'outil (masquable), et le mail d'invitation contient les deux procédures.
 
+## 🌐 Nom de domaine
+
+Chez le registraire : zone DNS → entrée **A** (sous-domaine vide) et **A** `www` vers l'IPv4 du
+serveur. Puis Profil → **Nom de domaine** (administrateur) : l'application vérifie que le nom
+pointe bien vers le serveur, dépose `domain.request` ; l'unité systemd `analyse-boursiere-domain.path`
+lance `deploy/apply-domain.sh` (root) qui valide les noms, réécrit le Caddyfile (domaine + www +
+ancienne adresse IP.sslip.io, certificats https automatiques), met à jour `APP_PUBLIC_URL` et
+`CORS_ORIGINS`, recharge Caddy et redémarre l'application.
+
 ## 🔐 Mot de passe et sécurité
 
 - **Première ouverture** : l'écran « Crée ton accès » demande ton adresse mail et un mot de passe

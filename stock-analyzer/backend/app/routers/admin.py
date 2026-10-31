@@ -1,9 +1,12 @@
 """Administration du serveur : version installée et mise à jour à la demande."""
 from __future__ import annotations
 
+import re
+import socket
 from pathlib import Path
+from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 
 from ..config import PROJECT_DIR, get_settings
@@ -78,3 +81,73 @@ def clear_mail(admin: dict = Depends(admin_user)) -> dict:
     with get_conn() as conn:
         conn.execute(f"DELETE FROM app_settings WHERE key IN ({','.join('?' * len(sender.DB_KEYS))})", sender.DB_KEYS)
     return mail_settings(admin)
+
+
+# ── Nom de domaine ───────────────────────────────────────────────────────────
+DOMAIN_UNIT = Path("/etc/systemd/system/analyse-boursiere-domain.path")
+DOMAIN_RE = re.compile(r"^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$")
+
+
+class DomainIn(BaseModel):
+    domain: str = Field(min_length=3, max_length=200)
+
+
+def _resolve(name: str | None) -> set[str]:
+    """Adresses IPv4 annoncées par le DNS pour ce nom (vide si inconnu)."""
+    if not name:
+        return set()
+    try:
+        return {a[4][0] for a in socket.getaddrinfo(name, None, socket.AF_INET)}
+    except (socket.gaierror, UnicodeError, OSError):
+        return set()
+
+
+def _domain_files() -> tuple[Path, Path]:
+    d = get_settings().database_path.parent
+    return d / "domain.request", d / "domain.status"
+
+
+def _server_ips(request: Request) -> set[str]:
+    return _resolve(urlparse(get_settings().app_public_url).hostname) | _resolve(request.url.hostname)
+
+
+@router.get("/domain")
+def domain_status(request: Request, admin: dict = Depends(admin_user)) -> dict:
+    req, status = _domain_files()
+    last = None
+    try:
+        state, names, when = status.read_text(encoding="utf-8").strip().split("|", 2)
+        last = {"ok": state == "ok", "detail": names, "at": when}
+    except (OSError, ValueError):
+        pass
+    return {
+        "current": urlparse(get_settings().app_public_url).hostname,
+        "available": DOMAIN_UNIT.exists(),
+        "pending": req.exists(),
+        "last": last,
+        "server_ip": sorted(_server_ips(request))[0] if _server_ips(request) else None,
+    }
+
+
+@router.post("/domain", status_code=202)
+def set_domain(payload: DomainIn, request: Request, admin: dict = Depends(admin_user)) -> dict:
+    """Vérifie que le domaine pointe vers ce serveur puis demande la configuration (Caddy, https, liens)."""
+    if not DOMAIN_UNIT.exists():
+        raise HTTPException(status_code=409, detail="Réglage indisponible sur cette installation (serveur pas encore à jour).")
+    name = payload.domain.strip().lower()
+    name = re.sub(r"^https?://", "", name).split("/")[0].removeprefix("www.")
+    if not DOMAIN_RE.match(name):
+        raise HTTPException(status_code=422, detail="Nom de domaine invalide (exemple : mm100.be).")
+    server = _server_ips(request)
+    found = _resolve(name)
+    if not found:
+        raise HTTPException(status_code=400, detail=f"{name} n'est pas encore visible sur Internet. Vérifie que le domaine "
+                            "est actif et que la zone DNS contient une entrée A vers l'adresse du serveur, puis réessaie "
+                            "dans 15 minutes (la propagation peut prendre jusqu'à quelques heures).")
+    if server and not (found & server):
+        raise HTTPException(status_code=400, detail=f"{name} pointe vers {', '.join(sorted(found))} au lieu de "
+                            f"{', '.join(sorted(server))}. Corrige l'entrée A dans la zone DNS (et supprime l'entrée par défaut).")
+    names = [name] + ([f"www.{name}"] if _resolve(f"www.{name}") & (server or found) else [])
+    req, _ = _domain_files()
+    req.write_text(" ".join(names) + "\n", encoding="utf-8")
+    return {"pending": True, "names": names}
