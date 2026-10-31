@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" fill="#0D1117"/>
   <rect x="56" y="56" width="400" height="400" rx="88" fill="#161B22" stroke="#30363D" stroke-width="8"/>
-  <path d="M120 330 L218 232 L288 288 L392 184" fill="none" stroke="#00FF88" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M112 262 L210 164 L280 220 L400 100" fill="none" stroke="#00FF88" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="384" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="86" fill="#E8762F" letter-spacing="-1">MM100</text>
 </svg>
