@@ -4,8 +4,8 @@ const BASE = '/api'
 
 // Session expirée ou révoquée : App revient à l'écran de connexion.
 export const SESSION_EXPIRED = 'ab:session-expired'
-const AUTH_PATHS = ['/users/login', '/users/register', '/users/current']
-const isAuthPath = (path) => AUTH_PATHS.includes(path) || path.startsWith('/users/invitation/')
+const AUTH_PATHS = ['/users/login', '/users/register', '/users/current', '/users/password/forgot', '/users/password/reset']
+const isAuthPath = (path) => AUTH_PATHS.includes(path) || path.startsWith('/users/invitation/') || path.startsWith('/users/password/reset/')
 
 // Mode démo (VITE_DEMO=1) : API simulée dans la page, sans serveur
 export const DEMO = import.meta.env.VITE_DEMO === '1'
@@ -41,6 +41,9 @@ export const api = {
   currentUser: () => request('/users/current'),
   login: (email, password) => request('/users/login', { method: 'POST', body: { email, password } }),
   register: (email, password, invitation) => request('/users/register', { method: 'POST', body: { email, password, invitation } }),
+  forgotPassword: (email) => request('/users/password/forgot', { method: 'POST', body: { email, app_url: window.location.origin } }),
+  resetInfo: (token) => request(`/users/password/reset/${encodeURIComponent(token)}`),
+  resetPassword: (token, password) => request('/users/password/reset', { method: 'POST', body: { token, password } }),
   invitationInfo: (token) => request(`/users/invitation/${encodeURIComponent(token)}`),
   members: () => request('/users/members'),
   adminVersion: () => request('/admin/version'),

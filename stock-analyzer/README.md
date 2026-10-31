@@ -168,8 +168,10 @@ l'outil (masquable), et le mail d'invitation contient les deux procédures.
   Chaque ami a son propre compte, ses watchlists et alertes, invisibles des autres. La même fenêtre
   liste les membres (retirer un accès supprime son compte et ses données) et les invitations en attente.
 - **Changer le mot de passe** : Profil → « Changer le mot de passe » (les autres appareils sont déconnectés).
-- **Mot de passe oublié** : sur la machine qui fait tourner l'application, double-clique sur
-  `reset_password.bat` (Windows) ou lance `cd backend && python -m app.reset_password ton@mail.be`.
+- **Mot de passe oublié** : écran de connexion → « Mot de passe oublié ? » → lien par mail (valable
+  1 heure, usage unique, 5 demandes max. par 15 min ; la réponse ne révèle pas si le compte existe).
+  Sans envoi de mails configuré : `reset_password.bat` (Windows) ou
+  `cd backend && python -m app.reset_password ton@mail.be` sur la machine qui fait tourner l'application.
 
 ## ✉️ Configurer l'envoi de mails (Gmail)
 

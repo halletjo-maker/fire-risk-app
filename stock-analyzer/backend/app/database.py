@@ -49,6 +49,15 @@ CREATE TABLE IF NOT EXISTS invitations (
     used_at         TEXT
 );
 
+-- Réinitialisation du mot de passe par mail (lien à usage unique, valable 1 heure)
+CREATE TABLE IF NOT EXISTS password_resets (
+    token_hash      TEXT PRIMARY KEY,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+    expires_at      TEXT    NOT NULL,
+    used_at         TEXT
+);
+
 -- Réglages globaux de l'application (ex. utilisateur actif)
 CREATE TABLE IF NOT EXISTS app_settings (
     key     TEXT PRIMARY KEY,
@@ -222,6 +231,7 @@ TABLES = [
     "users",
     "sessions",
     "invitations",
+    "password_resets",
     "portfolios",
     "portfolio_positions",
     "portfolio_values",

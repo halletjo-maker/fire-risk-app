@@ -184,6 +184,29 @@ def invitation_for_token(conn, token: str | None) -> dict | None:
     return dict(row) if row else None
 
 
+# ── Mot de passe oublié ────────────────────────────────────────────────────
+RESET_MINUTES = 60
+
+
+def create_reset(conn, user_id: int) -> str:
+    """Nouveau lien de réinitialisation (les précédents non utilisés sont annulés)."""
+    conn.execute("DELETE FROM password_resets WHERE user_id = ? AND used_at IS NULL", (user_id,))
+    token = secrets.token_urlsafe(32)
+    conn.execute("INSERT INTO password_resets (token_hash, user_id, expires_at) "
+                 f"VALUES (?, ?, datetime('now', '+{RESET_MINUTES} minutes'))", (_digest(token), user_id))
+    return token
+
+
+def reset_for_token(conn, token: str | None) -> dict | None:
+    if not token:
+        return None
+    row = conn.execute(
+        "SELECT r.token_hash, u.id AS user_id, u.email FROM password_resets r JOIN users u ON u.id = r.user_id "
+        "WHERE r.token_hash = ? AND r.used_at IS NULL AND r.expires_at > datetime('now')", (_digest(token),)
+    ).fetchone()
+    return dict(row) if row else None
+
+
 # ── Limitation des essais ──────────────────────────────────────────────────
 
 class Throttle:

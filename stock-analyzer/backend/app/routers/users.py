@@ -32,6 +32,16 @@ class PreferencesIn(BaseModel):
     monthly_report: bool
 
 
+class ForgotIn(BaseModel):
+    email: EmailStr
+    app_url: str | None = Field(default=None, max_length=200)
+
+
+class ResetIn(BaseModel):
+    token: str = Field(min_length=10, max_length=200)
+    password: str = Field(min_length=1, max_length=auth.PASSWORD_MAX)
+
+
 class PasswordChange(BaseModel):
     current_password: str = Field(min_length=1, max_length=auth.PASSWORD_MAX)
     new_password: str = Field(min_length=1, max_length=auth.PASSWORD_MAX)
@@ -128,6 +138,59 @@ def logout(request: Request, response: Response) -> dict:
     auth.delete_session(auth.token_from_request(request))
     auth.clear_cookie(response)
     return {"user": None}
+
+
+FORGOT_MESSAGE = ("Si un compte existe pour cette adresse, un mail avec un lien de réinitialisation vient de "
+                  "partir. Il est valable 1 heure. Pense à regarder dans les spams.")
+
+
+@router.post("/password/forgot")
+def forgot_password(payload: ForgotIn, request: Request) -> dict:
+    """Envoie un lien de réinitialisation. Même réponse que le compte existe ou non (rien n'est révélé)."""
+    email, ip = payload.email.strip().lower(), _client_ip(request)
+    if auth.throttle.blocked(f"reset:{email}", ip):
+        raise HTTPException(status_code=429, detail="Trop de demandes. Réessaie dans quelques minutes.")
+    auth.throttle.fail(f"reset:{email}", ip)  # chaque demande compte (5 par adresse en 15 min)
+    with get_conn() as conn:
+        row = conn.execute("SELECT id FROM users WHERE email = ? AND password_hash IS NOT NULL", (email,)).fetchone()
+        token = auth.create_reset(conn, row["id"]) if row else None
+    if token:
+        link = f"{_app_url(payload.app_url, request)}/?reinitialiser={token}"
+        text = ("Bonjour,\n\nTu as demandé à changer ton mot de passe sur Analyse Boursière.\n\n"
+                f"Choisis-en un nouveau ici (lien valable {auth.RESET_MINUTES} minutes, utilisable une seule fois) :\n"
+                f"{link}\n\nSi ce n'est pas toi, ignore ce mail : ton mot de passe actuel reste valable.")
+        sender.send(email, "Réinitialiser ton mot de passe — Analyse Boursière", text)
+    return {"ok": True, "message": FORGOT_MESSAGE}
+
+
+@router.get("/password/reset/{token}")
+def reset_info(token: str) -> dict:
+    with get_conn() as conn:
+        r = auth.reset_for_token(conn, token)
+    if r is None:
+        raise HTTPException(status_code=404, detail="Lien invalide, déjà utilisé ou expiré. Refais une demande.")
+    return {"email": r["email"]}
+
+
+@router.post("/password/reset")
+def reset_password(payload: ResetIn, request: Request, response: Response) -> dict:
+    """Nouveau mot de passe via le lien reçu par mail : les autres appareils sont déconnectés."""
+    problem = auth.password_problem(payload.password)
+    with get_conn() as conn:
+        r = auth.reset_for_token(conn, payload.token)
+        if r is None:
+            raise HTTPException(status_code=400, detail="Lien invalide, déjà utilisé ou expiré. Refais une demande.")
+        if problem:
+            raise HTTPException(status_code=422, detail=problem)
+        auth.set_password(conn, r["user_id"], payload.password)
+        conn.execute("UPDATE password_resets SET used_at = datetime('now') WHERE token_hash = ?", (r["token_hash"],))
+        conn.execute("DELETE FROM sessions WHERE user_id = ?", (r["user_id"],))
+        conn.execute("UPDATE users SET last_login_at = datetime('now') WHERE id = ?", (r["user_id"],))
+        token = auth.create_session(conn, r["user_id"])
+        user = _user(conn, r["user_id"])
+    auth.throttle.success(r["email"])
+    auth.set_cookie(response, request, token)
+    return {"user": user}
 
 
 @router.post("/password")
