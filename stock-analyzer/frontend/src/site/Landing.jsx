@@ -65,7 +65,10 @@ export default function Landing({ onLogin }) {
       {/* Accroche */}
       <section className="mx-auto grid max-w-5xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:py-16">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-bull">Entre amis et collègues · sur invitation</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-bull">
+            <span className="block">MM100 · l’analyse expliquée</span>
+            <span className="mt-1 block text-muted">Investir en comprenant</span>
+          </p>
           <h1 className="mt-2 text-3xl font-bold leading-tight sm:text-4xl">Comprendre une action avant d’investir.</h1>
           <p className="mt-4 text-[15px] leading-relaxed text-gray-300">
             Un outil d’aide à la décision qui croise trois regards — l’entreprise, son cours et l’actualité — et
