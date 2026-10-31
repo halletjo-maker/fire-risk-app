@@ -114,6 +114,9 @@ export default function SentimentCard({ data, loading, error }) {
         score={s.score}
         verdict={s.verdict}
       />
+      <a href="/apprendre/sentiment-actualites" target="_blank" rel="noopener" className="mt-1 inline-block text-xs text-muted underline underline-offset-2 hover:text-gray-200">
+        Comment ce score est-il calculé ?
+      </a>
       {s.inverse && s.underlying_score != null && (
         <p className="mt-2 text-xs text-muted">Sentiment sur {s.term} : {String(s.underlying_score).replace('.', ',')}/10 → inversé pour un turbo put.</p>
       )}

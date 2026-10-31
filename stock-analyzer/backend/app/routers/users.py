@@ -218,6 +218,10 @@ def invite(payload: InvitationIn, request: Request, admin: dict = Depends(admin_
         f"Bonjour,\n\n{admin['email']} t'invite à utiliser Analyse Boursière, une application d'aide "
         "à la décision pour tes placements (analyse technique, fondamentale, actualités, alertes).\n\n"
         f"Crée ton mot de passe ici (lien personnel, valable {auth.INVITATION_DAYS} jours) :\n{link}\n\n"
+        "Pour l'avoir comme une appli sur ton téléphone :\n"
+        "· iPhone : ouvre le lien dans Safari, touche le bouton Partager (carré avec une flèche), "
+        "puis « Sur l'écran d'accueil ».\n"
+        "· Android : dans Chrome, menu ⋮ puis « Installer l'application » (ou « Ajouter à l'écran d'accueil »).\n\n"
         "Aide à la décision automatisée, pas un conseil en investissement (MiFID II)."
     )
     mail = sender.send(email, "Invitation : Analyse Boursière", text)

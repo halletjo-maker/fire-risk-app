@@ -5,6 +5,7 @@ import { Spinner } from './ui'
 import { useWatchlists } from '../lib/watchlists'
 import WatchlistPanel from './WatchlistPanel'
 import WatchlistSuggestions from './WatchlistSuggestions'
+import InstallHint from './InstallHint'
 import BackendStatus from './BackendStatus'
 import SearchBar from './SearchBar'
 import ProductCard from './ProductCard'
@@ -138,6 +139,7 @@ export default function MainArea() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 p-3 xs:p-4 md:p-6">
       {DEMO && <DemoBanner onPick={wl.analyze} />}
+      <InstallHint />
       <SearchBar onAnalyze={analyze} busy={busy} />
       {error && (
         <div className="card border-bear/40 p-4 text-sm text-bear" role="alert">{error}</div>

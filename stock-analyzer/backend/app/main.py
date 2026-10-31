@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import mimetypes
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from .routers import admin, alerts, analyze, health, portfolios, users, watchlis
 from .scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
+mimetypes.add_type("application/manifest+json", ".webmanifest")  # installation sur téléphone
 logging.basicConfig(
     level=settings.log_level,
     format="%(asctime)s %(levelname)-7s %(name)s — %(message)s",

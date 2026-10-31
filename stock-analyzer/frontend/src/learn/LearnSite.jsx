@@ -5,6 +5,8 @@ import { CATEGORIES, FICHES, FICHES_BY_SLUG } from './fiches'
 import Illustration from './Illustrations'
 
 export const LEARN_ROOT = '/apprendre'
+// Ordre de lecture : thème par thème, comme sur la page d'accueil des fiches
+const ORDERED = CATEGORIES.flatMap((c) => FICHES.filter((f) => f.category === c.key))
 export const ficheUrl = (slug) => `${LEARN_ROOT}/${slug}`
 
 // Navigation sans rechargement (le serveur renvoie la même page pour toutes ces adresses)
@@ -100,9 +102,9 @@ const List = ({ items }) => (
 
 function Fiche({ fiche }) {
   useEffect(() => { document.title = `${fiche.title} — Apprendre` }, [fiche])
-  const i = FICHES.indexOf(fiche)
-  const prev = FICHES[i - 1]
-  const next = FICHES[i + 1]
+  const i = ORDERED.indexOf(fiche)
+  const prev = ORDERED[i - 1]
+  const next = ORDERED[i + 1]
   const cat = CATEGORIES.find((c) => c.key === fiche.category)
   return (
     <main className="mx-auto max-w-3xl px-4 py-6">

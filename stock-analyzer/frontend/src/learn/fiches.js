@@ -4,8 +4,10 @@
 
 export const CATEGORIES = [
   { key: 'bases', label: 'Bien démarrer' },
+  { key: 'produits', label: 'Les produits' },
   { key: 'technique', label: 'Analyse technique' },
   { key: 'fondamentale', label: 'Analyse fondamentale' },
+  { key: 'actualites', label: 'Actualités' },
 ]
 
 export const FICHES = [
@@ -345,6 +347,177 @@ export const FICHES = [
     ],
     related: ['valorisation-per', 'lire-les-scores'],
   },
+  {
+    slug: 'diversifier-gerer-risque',
+    category: 'bases',
+    emoji: '⚖️',
+    title: 'Diversifier et gérer le risque',
+    minutes: 4,
+    oneLiner: 'Ne jamais tout miser sur un seul produit, décider à l’avance combien on accepte de perdre, et laisser le temps faire son travail.',
+    intro: [
+      'Personne, ni toi ni un algorithme, ne sait ce que fera une action demain. La seule chose que tu contrôles vraiment, c’est le risque que tu prends : combien tu places, où, et quand tu acceptes de couper une perte.',
+    ],
+    sections: [
+      {
+        title: 'Les règles de bon sens',
+        bullets: [
+          'Diversifie : plusieurs entreprises, plusieurs secteurs, plusieurs zones (Europe, États-Unis, Asie). Un ETF monde le fait en un seul achat.',
+          'Limite chaque ligne : une seule action ne devrait représenter qu’une petite part de ton portefeuille (souvent 5 à 10 %).',
+          'Décide ta sortie avant d’entrer : un stop-loss pour limiter la perte, un objectif pour prendre ton bénéfice.',
+          'Garde une épargne de précaution à part : n’investis en Bourse que l’argent dont tu n’auras pas besoin avant plusieurs années.',
+          'Les frais grignotent la performance : trop d’allers-retours coûtent cher.',
+        ],
+      },
+      {
+        title: 'Pourquoi les pertes font si mal',
+        paras: [
+          'Perdre 50 % demande ensuite +100 % pour revenir au point de départ ; perdre 20 % demande +25 %. Couper tôt une petite perte est donc beaucoup plus facile à rattraper qu’une grosse.',
+        ],
+      },
+    ],
+    inApp: [
+      'Portefeuilles fictifs : au plus 10 lignes d’environ 10 % chacune, stop suiveur, pas de rachat d’un titre vendu depuis moins de 5 jours, frais estimés 0,1 % par ordre (1 € minimum).',
+      'Filtre de marché : aucun nouvel achat quand l’ETF MSCI World est sous sa MM100 (marché mondial baissier) ; les ventes continuent.',
+      'Liste « Monde » : environ un tiers Amériques, un tiers Europe, un tiers Asie-Pacifique.',
+      'Rapport mensuel : comparaison avec un ETF MSCI World, pour savoir si la méthode fait mieux qu’un placement passif.',
+    ],
+    traps: [
+      'Plusieurs actions du même secteur (par exemple cinq valeurs technologiques américaines) ne font pas une vraie diversification.',
+      'Déplacer son stop-loss vers le bas « pour laisser une chance » transforme une petite perte en grosse perte.',
+      'Juger une méthode sur quelques jours : il faut plusieurs mois et la comparer à un repère (MSCI World).',
+    ],
+    keyPoints: [
+      'Diversifier, limiter chaque ligne, décider sa sortie à l’avance.',
+      'Une perte de 50 % demande +100 % pour être effacée.',
+    ],
+    related: ['supports-resistances-stop-loss', 'produits-action-etf-crypto', 'lire-les-scores'],
+  },
+  {
+    slug: 'produits-action-etf-crypto',
+    category: 'produits',
+    emoji: '🧺',
+    title: 'Action, ETF ou crypto : quelles différences ?',
+    minutes: 4,
+    oneLiner: 'Une action, c’est un morceau d’entreprise ; un ETF, un panier de centaines d’actions ; une crypto, un actif numérique sans entreprise derrière.',
+    intro: [
+      'Ces trois produits s’achètent chez un courtier mais n’ont pas du tout le même niveau de risque. L’application les analyse donc avec des critères différents.',
+    ],
+    sections: [
+      {
+        title: 'En résumé',
+        bullets: [
+          'Action : une part d’une entreprise. Tu profites de sa réussite (cours, dividendes) mais tu subis ses difficultés. Risque concentré sur une seule société.',
+          'ETF (fonds indiciel coté) : un panier qui réplique un indice (par exemple le MSCI World, environ 1 400 entreprises de pays développés). Diversifié et peu cher : idéal pour la base d’un portefeuille.',
+          'Crypto : actif numérique (Bitcoin, Ether…) sans bénéfices ni dividendes. Très volatil : des variations de 10 % en une journée sont courantes.',
+        ],
+      },
+      {
+        title: 'Bien choisir un ETF',
+        bullets: [
+          'Les frais annuels (TER) : moins de 0,3 % par an, c’est bien.',
+          'La taille du fonds : un très petit fonds peut fermer.',
+          'Capitalisant (les dividendes sont réinvestis) ou distribuant (ils sont versés).',
+          'Réplication physique (le fonds détient les titres) ou synthétique (contrat d’échange avec une banque).',
+        ],
+      },
+    ],
+    inApp: [
+      'Actions : analyse fondamentale complète (voir les fiches PER et santé financière).',
+      'ETF : frais TER (30 %) — moins de 0,1 % : 9,5/10 · 0,1–0,2 : 9 · 0,2–0,3 : 8 · 0,3–0,5 : 6,5 · 0,5–0,8 : 5 · plus : 3. Taille (25 %) — moins de 50 M : 3/10 · 50–100 M : 4,5 · 100–500 M : 6 · 500 M–1 Md : 8 · plus : 9. Nombre de positions (20 %) — moins de 20 : 3,5/10 · 20–50 : 5 · 50–100 : 7 · 100–500 : 8,5 · plus : 9,5. Performance depuis le 1er janvier (15 %) et réplication (10 % : physique 8/10, synthétique 6,5).',
+      'ETF à effet de levier ou inverse : score fondamental plafonné à 4/10 (réservé au très court terme).',
+      'Cryptos : capitalisation (45 %) — moins de 100 M : 2,5/10 · jusqu’à 1 Md : 4,5 · jusqu’à 10 Md : 6,5 · jusqu’à 100 Md : 8 · plus : 9. Liquidité, volume 24 h / capitalisation (30 %) — moins de 0,5 % : 4 · 0,5–2 % : 6 · 2–5 % : 7,5 · plus : 8,5. Offre en circulation / maximale (25 %) — moins de 50 % : 5,5 · 50–90 % : 7 · plus : 8,5 · offre illimitée : 5.',
+    ],
+    traps: [
+      'Un ETF sectoriel ou d’un seul pays reste concentré : ce n’est pas un ETF monde.',
+      'Le passé ne garantit rien : une performance récente spectaculaire n’annonce pas la suite.',
+      'Cryptos : garde-les à une petite part du total, et méfie-toi des promesses de gains rapides.',
+    ],
+    keyPoints: [
+      'Action = une entreprise ; ETF = un panier ; crypto = un actif numérique très volatil.',
+      'Pour un ETF, regarde d’abord les frais et la taille.',
+    ],
+    related: ['turbos-warrants', 'diversifier-gerer-risque', 'sante-financiere'],
+  },
+  {
+    slug: 'turbos-warrants',
+    category: 'produits',
+    emoji: '⚡',
+    title: 'Turbos et warrants : le levier',
+    minutes: 4,
+    oneLiner: 'Des produits qui amplifient les variations d’un sous-jacent (action, indice…) : les gains comme les pertes, jusqu’à la perte totale.',
+    intro: [
+      'Un turbo « call » gagne quand le sous-jacent monte, un turbo « put » quand il baisse. Avec un levier de 5, une hausse de 2 % du sous-jacent fait environ +10 % sur le turbo… et une baisse de 2 % environ −10 %.',
+      'Le turbo a une barrière désactivante : si le sous-jacent la touche, le turbo s’arrête et ne vaut presque plus rien. Ce sont des produits émis par des banques, destinés au court terme.',
+    ],
+    sections: [
+      {
+        title: 'Les notions à connaître',
+        bullets: [
+          'Levier : combien de fois les variations sont amplifiées.',
+          'Barrière : le niveau qui désactive le produit. Plus elle est proche, plus le risque de tout perdre est grand.',
+          'Échéance : la date de fin. Sur un warrant, la valeur temps fond à l’approche de l’échéance.',
+          'Spread : l’écart entre prix d’achat et prix de vente, un coût caché à chaque aller-retour.',
+          'Émetteur : la banque qui garantit le produit ; si elle fait défaut, le produit peut ne pas être remboursé.',
+        ],
+      },
+    ],
+    inApp: [
+      'Analyse technique et sentiment réalisés sur le sous-jacent ; pour un put, ces scores sont inversés (une baisse du sous-jacent est favorable).',
+      'Distance à la barrière (40 %) — moins de 3 % : 1/10 · 3–5 % : 2,5 · 5–10 % : 4,5 · 10–15 % : 6 · 15–25 % : 7,5 · 25–40 % : 8,5 · plus : 9.',
+      'Échéance (15 %, ou 30 % sans barrière) — moins de 30 jours : 2/10 · jusqu’à 90 : 4 · jusqu’à 180 : 6 · jusqu’à 365 : 7,5 · plus : 8,5.',
+      'Levier (25 %) — moins de 2 : 9/10 · 2–5 : 8 · 5–10 : 6 · 10–20 : 4 · 20 et plus : 2.',
+      'Spread (20 %) — moins de 0,5 % : 9/10 · 0,5–1 % : 8 · 1–2 % : 6,5 · 2–5 % : 4 · plus : 2. Émetteur (15 %) : grande banque reconnue 8/10, autre 6.',
+      'Stop-loss : calculé sur le sous-jacent puis traduit en prix du turbo ; il doit se déclencher bien avant la barrière.',
+    ],
+    traps: [
+      'La perte totale est possible, et rapide : une mauvaise nouvelle la nuit peut faire toucher la barrière à l’ouverture.',
+      'Un levier élevé transforme le bruit normal du marché en grosses variations.',
+      'Ce n’est pas un placement : c’est un outil de court terme, à petite dose.',
+    ],
+    keyPoints: [
+      'Levier × variation du sous-jacent ≈ variation du turbo.',
+      'Barrière proche = danger ; garde toujours une bonne marge.',
+    ],
+    related: ['produits-action-etf-crypto', 'supports-resistances-stop-loss', 'diversifier-gerer-risque'],
+  },
+  {
+    slug: 'sentiment-actualites',
+    category: 'actualites',
+    emoji: '📰',
+    title: 'Le sentiment des actualités',
+    minutes: 3,
+    oneLiner: 'L’application lit les titres de presse récents et mesure s’ils sont plutôt positifs ou négatifs pour le produit.',
+    intro: [
+      'Une annonce de résultats, un rachat, un procès ou un rappel de produits peuvent faire bouger un cours en quelques minutes. Le score « sentiment » résume le ton des titres d’actualité des derniers jours.',
+    ],
+    sections: [
+      {
+        title: 'Comment c’est calculé',
+        bullets: [
+          'Sources : Google Actualités en français et en anglais (et NewsAPI si configuré), titres des 72 dernières heures, 10 au maximum.',
+          'Chaque titre est classé positif, neutre ou négatif selon des mots-clés (« bondit », « record », « relève ses prévisions » / « chute », « avertissement », « enquête »…), en tenant compte des négations.',
+          'Les titres de moins de 24 h comptent plus (poids 1), ceux de 24 à 48 h un peu moins (0,7), les plus anciens 0,5.',
+          'Score = 5 + 5 × ton moyen, ramené vers 5 quand il y a moins de 5 articles (peu d’information = neutralité).',
+        ],
+      },
+    ],
+    inApp: [
+      '20 % du score global.',
+      'Verdict : positif à partir de 6/10, négatif à 4/10 ou moins, neutre entre les deux.',
+      'Turbo ou warrant put : score inversé.',
+      'Les prochains événements (publication de résultats, détachement du dividende dans les 30 jours) sont affichés quand ils sont connus.',
+    ],
+    traps: [
+      'Un titre peut être trompeur : « chute moins forte que prévu » est en réalité une bonne nouvelle.',
+      'L’actualité est déjà souvent intégrée dans le cours au moment où tu la lis.',
+      'Avant une publication de résultats, le cours peut bouger fortement dans les deux sens : prudence.',
+    ],
+    keyPoints: [
+      'Le sentiment donne la température du moment, pas la valeur de l’entreprise.',
+      'Lis toujours les titres eux-mêmes avant de décider.',
+    ],
+    related: ['lire-les-scores', 'valorisation-per'],
+  },
 ]
 
 export const FICHES_BY_SLUG = Object.fromEntries(FICHES.map((f) => [f.slug, f]))
@@ -364,4 +537,17 @@ export const CRITERION_FICHE = {
   debt: 'sante-financiere',
   fcf: 'sante-financiere',
   dividend: 'sante-financiere',
+  ter: 'produits-action-etf-crypto',
+  size: 'produits-action-etf-crypto',
+  holdings: 'produits-action-etf-crypto',
+  ytd: 'produits-action-etf-crypto',
+  replication: 'produits-action-etf-crypto',
+  mcap: 'produits-action-etf-crypto',
+  liquidity: 'produits-action-etf-crypto',
+  supply: 'produits-action-etf-crypto',
+  barrier: 'turbos-warrants',
+  maturity: 'turbos-warrants',
+  leverage: 'turbos-warrants',
+  spread: 'turbos-warrants',
+  issuer: 'turbos-warrants',
 }

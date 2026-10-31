@@ -147,6 +147,12 @@ créé avant cette fonction : `bash /opt/analyse-boursiere/update.sh; bash
 `/var/log/analyse-boursiere-update.log` · Journal : `journalctl -u analyse-boursiere -f` ·
 Rapport d'installation : `/root/INSTALLATION.txt` et `/var/log/analyse-boursiere-install.log`.
 
+## 📲 Installer sur téléphone
+
+L'interface est installable (manifest, icônes, plein écran) : sur iPhone, Safari → Partager →
+« Sur l'écran d'accueil » ; sur Android, Chrome propose « Installer ». Un bandeau l'explique dans
+l'outil (masquable), et le mail d'invitation contient les deux procédures.
+
 ## 🔐 Mot de passe et sécurité
 
 - **Première ouverture** : l'écran « Crée ton accès » demande ton adresse mail et un mot de passe
@@ -372,8 +378,9 @@ jamais renvoyés par l'API ; ils priment sur les variables SMTP du `.env`.
 
 ## 📘 Apprendre : fiches de vulgarisation (public, sans compte)
 
-`/apprendre` : 8 fiches (lire les scores, MM100, RSI, MACD, Bollinger et volumes, supports /
-résistances / stop-loss, PER et valorisation, santé financière), avec schémas, pièges à éviter
+`/apprendre` : 12 fiches (lire les scores, diversifier et gérer le risque, action / ETF / crypto,
+turbos et warrants, MM100, RSI, MACD, Bollinger et volumes, supports / résistances / stop-loss,
+PER et valorisation, santé financière, sentiment des actualités), avec schémas, pièges à éviter
 et la règle exacte appliquée par l'outil (`frontend/src/learn/fiches.js` — à mettre à jour si les
 règles de calcul changent). Petits « ? » à côté de chaque critère de l'analyse, liens « Comment
 lire ce score ? », menu et pied de page. Le backend renvoie la page unique pour ces adresses
