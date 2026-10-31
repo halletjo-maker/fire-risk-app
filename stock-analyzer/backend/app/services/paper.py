@@ -10,6 +10,8 @@ Règles (appliquées après chaque mise à jour des cours de la watchlist choisi
   meilleur score d'abord, au plus `max_positions` lignes d'environ 1/`max_positions` du
   portefeuille chacune, en actions entières (cryptos : quantités fractionnées). Pas de rachat d'un
   titre vendu depuis moins de 5 jours.
+- Filtre de marché : aucun nouvel achat quand l'ETF MSCI World est sous sa MM100 (marché mondial
+  baissier) ; les ventes continuent. Repris dès que l'ETF repasse au-dessus.
 - Frais estimés : 0,1 % du montant, 1 € minimum par ordre. Cours en devise convertis en euros.
 Aucun ordre réel n'est passé : c'est une simulation.
 """
@@ -22,6 +24,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from ..database import get_conn
+from . import regime
 from .sources import cache, yahoo
 from .targets import rnd
 
@@ -108,6 +111,7 @@ def run(portfolio_id: int) -> dict:
         # Données réseau récupérées avant toute écriture (la base n'est pas verrouillée pendant ce temps)
         currencies = {p["currency"] for p in positions} | {i["currency"] for i in items if i["last_signal"] == "ACHAT"}
         rates = {c: fx_rate(c) for c in currencies}
+        market = regime.regime()  # filtre de marché (MSCI World vs sa MM100)
         quotes = {p["symbol"]: _quote_price(p["symbol"]) for p in positions
                   if not (by_sym.get(p["symbol"]) or {}).get("last_price")}
 
@@ -157,6 +161,12 @@ def run(portfolio_id: int) -> dict:
             (i for i in items if i["last_signal"] == "ACHAT" and i["symbol"] not in open_syms
              and i["symbol"] not in cooldown and _entry_ok(i)),
             key=lambda i: i["last_score"] or 0, reverse=True)
+        note = None
+        if not market["ok"]:  # marché mondial en tendance baissière : pas de nouvelle ligne
+            dist = f"{market['distance_pct']:+.1f}".replace(".", ",")
+            note = (f"Achats suspendus : le {market['label']} est sous sa MM100 ({dist} %). "
+                    "Les ventes continuent normalement.")
+            candidates = []
         for it in candidates:
             if len(open_syms) >= pf["max_positions"]:
                 break
@@ -193,8 +203,8 @@ def run(portfolio_id: int) -> dict:
             buys += 1
 
         # ── 3. Valeur du jour ──────────────────────────────────────────────
-        conn.execute("UPDATE portfolios SET cash = ?, fees_paid = ?, last_run_at = datetime('now') WHERE id = ?",
-                     (round(cash, 2), round(fees, 2), portfolio_id))
+        conn.execute("UPDATE portfolios SET cash = ?, fees_paid = ?, last_note = ?, last_run_at = datetime('now') "
+                     "WHERE id = ?", (round(cash, 2), round(fees, 2), note, portfolio_id))
         conn.execute(
             "INSERT INTO portfolio_values (portfolio_id, day, value_eur) VALUES (?, ?, ?) "
             "ON CONFLICT(portfolio_id, day) DO UPDATE SET value_eur = excluded.value_eur",
@@ -232,6 +242,7 @@ def summary(conn, pf) -> dict:
         if pf["watchlist_id"] else None
     return {
         "id": pf["id"], "name": pf["name"], "created_at": pf["created_at"], "last_run_at": pf["last_run_at"],
+        "note": pf["last_note"] if "last_note" in pf.keys() else None,
         "watchlist": dict(wl) if wl else None,
         "initial_cash": pf["initial_cash"], "cash": round(pf["cash"], 2), "invested": round(invested, 2),
         "value": value, "pnl_eur": round(value - pf["initial_cash"], 2),

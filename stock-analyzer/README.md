@@ -348,8 +348,11 @@ chaque mise à jour des cours (15 min, ou 1×/jour pour les listes IPO), `servic
 - **achète** ensuite les produits au signal 🟢 ACHAT dont le cours est dans la zone d'achat
   (≈ / ≤ / ≥), meilleur score d'abord, 10 lignes maximum d'≈ 10 % du portefeuille, actions
   entières, pas de rachat d'un titre vendu depuis moins de 5 jours ;
+- **filtre de marché** (`services/regime.py`) : aucun nouvel achat quand l'ETF MSCI World (IWDA.AS)
+  clôture sous sa MM100 (marché mondial baissier) ; les ventes continuent ; reprise automatique ;
 - frais estimés 0,1 % (1 € minimum) par ordre, conversion des devises en euros (Yahoo `EURUSD=X`…) ;
-- enregistre la valeur du jour (historique).
+- enregistre la valeur du jour (historique), affichée en courbe face à la même somme placée dans
+  l'ETF MSCI World le jour de la création.
 Aucun ordre réel n'est passé. API : `GET/POST /portfolios`, `GET/DELETE /portfolios/{id}`,
 `POST /portfolios/{id}/run`.
 

@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS portfolios (
     fees_paid       REAL    NOT NULL DEFAULT 0,
     max_positions   INTEGER NOT NULL DEFAULT 10,
     last_run_at     TEXT,
+    last_note       TEXT,       -- ex. « Achats suspendus : MSCI World sous sa MM100 »
     created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -259,6 +260,7 @@ MIGRATIONS = [
     ("watchlist_items", "stop_price", "REAL"),
     ("watchlist_items", "currency", "TEXT"),
     ("watchlist_items", "region", "TEXT"),
+    ("portfolios", "last_note", "TEXT"),
     ("watchlist_items", "zone", "TEXT"),
     ("watchlists", "screen_synced_at", "TEXT"),
 ]

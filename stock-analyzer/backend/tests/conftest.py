@@ -20,6 +20,14 @@ def _user_from_test_header(x_user_email: str | None = Header(default=None)) -> d
     return dict(row)
 
 
+@pytest.fixture(autouse=True)
+def _no_benchmark_network(monkeypatch):
+    """Pas d'appel réseau pour le repère MSCI World : indisponible = aucun achat bloqué."""
+    from app.services import regime
+
+    monkeypatch.setattr(regime, "closes", lambda: [])
+
+
 def _make_client(tmp_path, monkeypatch, override: bool):
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
     monkeypatch.setenv("SCHEDULER_ENABLED", "false")

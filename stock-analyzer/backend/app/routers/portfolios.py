@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from ..database import get_conn
 from ..deps import current_user
-from ..services import paper
+from ..services import paper, regime
 
 router = APIRouter(prefix="/portfolios", tags=["portefeuilles fictifs"])
 
@@ -88,9 +88,14 @@ def detail(pid: int, user: dict = Depends(current_user)) -> dict:
             "ORDER BY exit_at DESC LIMIT 100", (pid,))]
         s["history"] = [dict(r) for r in conn.execute(
             "SELECT day, value_eur FROM portfolio_values WHERE portfolio_id = ? ORDER BY day", (pid,))]
-        closed = [t["pnl_eur"] for t in s["trades"] if t["pnl_eur"] is not None]
-        s["stats"] = {"closed": len(closed), "wins": sum(1 for x in closed if x > 0),
-                      "realized_eur": round(sum(closed), 2)}
+    # Repère : la même somme placée dans l'ETF MSCI World le jour de la création
+    days = [h["day"] for h in s["history"]]
+    for h, v in zip(s["history"], regime.indexed(days, pf["created_at"][:10], pf["initial_cash"])):
+        h["benchmark_eur"] = v
+    s["benchmark_label"] = regime.LABEL
+    s["regime"] = regime.regime()
+    closed = [t["pnl_eur"] for t in s["trades"] if t["pnl_eur"] is not None]
+    s["stats"] = {"closed": len(closed), "wins": sum(1 for x in closed if x > 0), "realized_eur": round(sum(closed), 2)}
     return {"portfolio": s}
 
 

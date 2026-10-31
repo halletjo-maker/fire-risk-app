@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Trash2, Wallet } from 'lucide-react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { PauseCircle, ShieldCheck, Trash2, Wallet } from 'lucide-react'
 import { api } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { changeColor, fmtPct, fmtPrice } from '../lib/format'
@@ -8,6 +8,8 @@ import ConfirmDialog from './ConfirmDialog'
 import { Spinner } from './ui'
 
 // Prévient la liste du menu qu'un portefeuille a changé
+const PortfolioChart = lazy(() => import('./PortfolioChart'))
+
 export const PORTFOLIOS_CHANGED = 'ab:portfolios-changed'
 export const notifyPortfolios = () => window.dispatchEvent(new Event(PORTFOLIOS_CHANGED))
 
@@ -76,6 +78,7 @@ function Rules() {
         <li><b className="text-gray-200">Répartition</b> : jusqu'à 10 lignes d'environ 10 % du portefeuille, en actions entières (cryptos : quantités fractionnées).</li>
         <li><b className="text-gray-200">Vente</b> : objectif atteint, stop-loss touché (le stop monte avec le cours pour protéger les gains), ou signal passé à 🔴 VENTE.</li>
         <li>Pas de rachat d'un titre vendu depuis moins de 5 jours.</li>
+        <li><b className="text-gray-200">Filtre de marché</b> : aucun nouvel achat quand l'ETF MSCI World est sous sa MM100 (marché mondial baissier). Les ventes continuent.</li>
         <li>Frais estimés : 0,1 % par ordre (1 € minimum). Cours en dollars convertis en euros.</li>
         <li>Décisions prises à chaque mise à jour des cours : 15 min, toutes les 30 min selon les Bourses ouvertes pour la liste Monde, 1×/jour pour les listes IPO.</li>
         <li>Simplification : la simulation ignore les lots minimums (100 actions au Japon et à Hong Kong).</li>
@@ -123,6 +126,32 @@ export function PortfolioModal({ id, onClose }) {
               Capital de départ {eur(p.initial_cash)} · watchlist {p.watchlist ? `« ${p.watchlist.name} »` : 'supprimée'}
             </p>
           </div>
+          {p.note && (
+            <p className="flex gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-sm text-warn" role="status">
+              <PauseCircle className="mt-0.5 h-4 w-4 shrink-0" /> {p.note}
+            </p>
+          )}
+          {!p.note && p.regime?.available && (
+            <p className="flex gap-2 text-xs text-muted">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-bull" />
+              Filtre de marché : {p.regime.label} au-dessus de sa MM100 ({fmtPct(p.regime.distance_pct)}), achats autorisés.
+            </p>
+          )}
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">Évolution vs {p.benchmark_label}</h3>
+            {p.history.length >= 2 ? (
+              <Suspense fallback={<div className="flex h-48 items-center justify-center"><Spinner /></div>}>
+                <div className="mt-2"><PortfolioChart history={p.history} initial={p.initial_cash} benchLabel={p.benchmark_label} /></div>
+              </Suspense>
+            ) : (
+              <p className="mt-2 rounded-lg border border-dashed border-line p-3 text-sm text-muted">
+                La courbe apparaîtra dès le 2e jour de simulation : une valeur est enregistrée chaque jour, comparée à la
+                même somme placée dans un {p.benchmark_label}.
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Stat label="Liquidités" value={eur(p.cash)} />
             <Stat label="Investi" value={eur(p.invested)} />
