@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     email           TEXT    NOT NULL UNIQUE COLLATE NOCASE,
     password_hash   TEXT,       -- scrypt ; NULL = mot de passe pas encore créé
     is_admin        INTEGER NOT NULL DEFAULT 0,   -- peut inviter des amis et gérer les membres
+    monthly_report  INTEGER NOT NULL DEFAULT 1,   -- rapport mensuel des portefeuilles fictifs par mail
     created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
     last_login_at   TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -247,6 +248,7 @@ MIGRATIONS = [
     ("watchlist_items", "product_id", "TEXT"),
     ("users", "password_hash", "TEXT"),
     ("users", "is_admin", "INTEGER NOT NULL DEFAULT 0"),
+    ("users", "monthly_report", "INTEGER NOT NULL DEFAULT 1"),
     ("watchlist_items", "buy_price", "REAL"),
     ("watchlist_items", "buy_kind", "TEXT"),
     ("watchlist_items", "buy_note", "TEXT"),

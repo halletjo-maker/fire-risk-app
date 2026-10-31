@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter
 
+from ..services.mail import sender
 from ..config import APP_NAME, APP_VERSION, get_settings
 from ..database import db_status
 from ..scheduler import scheduler_status
@@ -24,7 +25,7 @@ def health() -> dict:
         "database": db,
         "scheduler": scheduler_status(),
         "config": {
-            "smtp_configured": settings.smtp_configured,
+            "smtp_configured": sender.smtp_configured(),
             "newsapi_configured": bool(settings.newsapi_key),
             "alpha_vantage_configured": bool(settings.alpha_vantage_key),
             "refresh_interval_minutes": settings.refresh_interval_minutes,

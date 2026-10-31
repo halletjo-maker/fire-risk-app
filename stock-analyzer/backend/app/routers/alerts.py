@@ -68,7 +68,7 @@ def get_item_alerts(item_id: int, user: dict = Depends(current_user)) -> dict:
     with get_conn() as conn:
         item = _own_item(conn, item_id, user["id"])
         return {"item": dict(item), "alerts": _item_alerts(conn, item_id),
-                "frequencies": alerts_service.FREQUENCY_LABELS, "smtp_configured": get_settings().smtp_configured}
+                "frequencies": alerts_service.FREQUENCY_LABELS, "smtp_configured": sender.smtp_configured()}
 
 
 @router.put("/item/{item_id}")
@@ -90,7 +90,7 @@ def history(limit: int = Query(20, ge=1, le=100), user: dict = Depends(current_u
         rows = conn.execute(
             "SELECT id, alert_type, product_id, product, subject, delivered, status, sent_at FROM alert_events "
             "WHERE user_id = ? ORDER BY id DESC LIMIT ?", (user["id"], limit)).fetchall()
-    return {"events": [dict(r) for r in rows], "smtp_configured": get_settings().smtp_configured}
+    return {"events": [dict(r) for r in rows], "smtp_configured": sender.smtp_configured()}
 
 
 @router.post("/test")

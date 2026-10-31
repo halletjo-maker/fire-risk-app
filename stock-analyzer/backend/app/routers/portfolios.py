@@ -55,6 +55,21 @@ def create(payload: PortfolioIn, background: BackgroundTasks, user: dict = Depen
     return {"portfolio": result}
 
 
+@router.post("/report/send")
+def send_report(user: dict = Depends(current_user)) -> dict:
+    """Envoie tout de suite le rapport du mois précédent (ou du mois en cours s'il n'y en a pas encore)."""
+    from ..services import monthly
+
+    year, month = monthly.previous_month()
+    result = monthly.send_for_user(user["id"], year, month, force=True)
+    if result.get("status") == "Aucun portefeuille fictif sur cette période":
+        now = monthly.datetime.now(monthly.TZ)
+        result = monthly.send_for_user(user["id"], now.year, now.month, force=True)
+        if "label" in result:
+            result["label"] += " (mois en cours)"
+    return result
+
+
 @router.get("/{pid}")
 def detail(pid: int, user: dict = Depends(current_user)) -> dict:
     with get_conn() as conn:

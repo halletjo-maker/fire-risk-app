@@ -353,6 +353,20 @@ chaque mise à jour des cours (15 min, ou 1×/jour pour les listes IPO), `servic
 Aucun ordre réel n'est passé. API : `GET/POST /portfolios`, `GET/DELETE /portfolios/{id}`,
 `POST /portfolios/{id}/run`.
 
+## 📊 Rapport mensuel par mail
+
+Le **1er de chaque mois à 8 h** (nouvel essai les 2 jours suivants en cas d'échec), chaque
+utilisateur ayant un portefeuille fictif reçoit le rapport du mois précédent (`services/monthly.py`) :
+valeur début → fin de mois, performance du mois et depuis le départ, achats / ventes, meilleure
+et pire vente, frais, lignes ouvertes, repère ETF MSCI World (sur la même période pour un
+portefeuille créé en cours de mois). Un envoi réussi n'est jamais répété.
+Profil → **Rapport mensuel** : activer / désactiver, « M'envoyer le rapport maintenant ».
+
+**Compte d'envoi sans toucher au serveur** : Profil → **Réglages mail** (administrateur) → adresse
+Gmail + mot de passe d'application (myaccount.google.com/apppasswords, validation en deux étapes
+requise). Les identifiants sont vérifiés auprès de Gmail avant d'être enregistrés et ne sont
+jamais renvoyés par l'API ; ils priment sur les variables SMTP du `.env`.
+
 ## 🗺️ Avancement
 
 - [x] **Étape 0** — Structure, backend FastAPI, SQLite, APScheduler, layout React

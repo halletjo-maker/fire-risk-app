@@ -77,6 +77,16 @@ def refresh_world_zones() -> None:
         logger.exception("Échec de la mise à jour de la liste mondiale")
 
 
+def send_monthly_reports() -> None:
+    """Le 1er du mois à 8 h (et les 2 jours suivants si l'envoi a échoué) : rapport du mois précédent."""
+    from .services import monthly
+
+    try:
+        monthly.send_all()
+    except Exception:
+        logger.exception("Échec de l'envoi des rapports mensuels")
+
+
 def start_scheduler() -> None:
     settings = get_settings()
     if not settings.scheduler_enabled or scheduler.running:
@@ -100,6 +110,10 @@ def start_scheduler() -> None:
     scheduler.add_job(
         refresh_world_zones, "cron", minute="5,35", id="refresh_world_zones",
         name="Liste mondiale (Bourses ouvertes, toutes les 30 min)", replace_existing=True,
+    )
+    scheduler.add_job(
+        send_monthly_reports, "cron", day="1-3", hour=8, minute=7, id="monthly_reports",
+        name="Rapport mensuel des portefeuilles fictifs", replace_existing=True,
     )
     scheduler.start()
     logger.info("Planificateur démarré (toutes les %s min)", minutes)

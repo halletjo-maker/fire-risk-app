@@ -28,6 +28,10 @@ class InvitationIn(BaseModel):
     app_url: str | None = Field(default=None, max_length=200)  # adresse vue par l'invitant (lien du mail)
 
 
+class PreferencesIn(BaseModel):
+    monthly_report: bool
+
+
 class PasswordChange(BaseModel):
     current_password: str = Field(min_length=1, max_length=auth.PASSWORD_MAX)
     new_password: str = Field(min_length=1, max_length=auth.PASSWORD_MAX)
@@ -142,6 +146,13 @@ def change_password(payload: PasswordChange, request: Request, user: dict = Depe
     return {"ok": True}
 
 
+@router.put("/me/preferences")
+def preferences(payload: PreferencesIn, user: dict = Depends(current_user)) -> dict:
+    with get_conn() as conn:
+        conn.execute("UPDATE users SET monthly_report = ? WHERE id = ?", (int(payload.monthly_report), user["id"]))
+    return {"monthly_report": payload.monthly_report}
+
+
 @router.get("/me")
 def me(user: dict = Depends(current_user)) -> dict:
     """Profil de l'utilisateur connecté + quelques chiffres."""
@@ -161,7 +172,9 @@ def me(user: dict = Depends(current_user)) -> dict:
             """,
             {"u": uid},
         ).fetchone()
-    return {"user": user, "stats": dict(stats)}
+    with get_conn() as conn:
+        pref = conn.execute("SELECT monthly_report FROM users WHERE id = ?", (uid,)).fetchone()
+    return {"user": user, "stats": dict(stats), "preferences": {"monthly_report": bool(pref["monthly_report"]) if pref else True}}
 
 
 # ── Administration : inviter des amis, gérer les membres ───────────────────

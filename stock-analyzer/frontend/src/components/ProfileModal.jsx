@@ -5,6 +5,7 @@ import { Spinner } from './ui'
 import AlertsSection from './AlertsSection'
 import PasswordChange from './PasswordChange'
 import ServerUpdate from './ServerUpdate'
+import { MailSettings, MonthlyReport } from './MailAndReport'
 
 const fmt = (iso) => {
   if (!iso) return '—'
@@ -77,6 +78,8 @@ export default function ProfileModal({ onClose, onLogout }) {
               Les alertes mail sont envoyées à cette adresse. Tes données restent sur cette
               installation, même après une déconnexion.
             </p>
+            <MonthlyReport initial={data.preferences?.monthly_report ?? true} email={data.user.email} />
+            {data.user.is_admin && <MailSettings />}
             <PasswordChange />
             {data.user.is_admin && <ServerUpdate />}
           </>
