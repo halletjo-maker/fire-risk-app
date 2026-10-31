@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { ArrowRight, Mail, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Mail, ShieldCheck } from 'lucide-react'
 import { Logo } from './ui'
 import PasswordInput from './PasswordInput'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 export const PASSWORD_MIN = 10
 
-export default function LoginScreen({ setupRequired, registrationOpen, invitation, notice, onSubmit }) {
+export default function LoginScreen({ setupRequired, registrationOpen, invitation, notice, onSubmit, onBack }) {
   // Invitation : création du mot de passe pour l'adresse invitée ;
   // première utilisation : création du compte administrateur ; ensuite : connexion
   const [mode, setMode] = useState(invitation ? 'invite' : setupRequired ? 'register' : 'login')
@@ -48,6 +48,11 @@ export default function LoginScreen({ setupRequired, registrationOpen, invitatio
     <div className="flex min-h-full items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center"><Logo /></div>
+        {onBack && (
+          <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-1 text-sm text-muted hover:text-gray-100">
+            <ArrowLeft className="h-4 w-4" /> Retour à l'accueil
+          </button>
+        )}
         <form onSubmit={submit} noValidate className="card p-6 sm:p-8">
           <h1 className="text-xl font-bold">{invited ? 'Tu es invité 🎉' : register ? 'Crée ton accès 🔐' : 'Bienvenue 👋'}</h1>
           <p className="mt-1 text-sm text-muted">

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Clock, Cpu, Lightbulb, LineChart } from 'lucide-react'
-import { Logo } from '../components/ui'
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Clock, Cpu, Lightbulb } from 'lucide-react'
+import SiteLayout, { Link } from '../site/SiteLayout'
 import { CATEGORIES, FICHES, FICHES_BY_SLUG } from './fiches'
 import Illustration from './Illustrations'
 
@@ -8,45 +8,6 @@ export const LEARN_ROOT = '/apprendre'
 // Ordre de lecture : thème par thème, comme sur la page d'accueil des fiches
 const ORDERED = CATEGORIES.flatMap((c) => FICHES.filter((f) => f.category === c.key))
 export const ficheUrl = (slug) => `${LEARN_ROOT}/${slug}`
-
-// Navigation sans rechargement (le serveur renvoie la même page pour toutes ces adresses)
-export function navigate(href) {
-  window.history.pushState(null, '', href)
-  window.dispatchEvent(new PopStateEvent('popstate'))
-  window.scrollTo(0, 0)
-}
-
-function Link({ href, className, children, ...rest }) {
-  return (
-    <a href={href} className={className} {...rest}
-      onClick={(e) => { if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); navigate(href) } }}>
-      {children}
-    </a>
-  )
-}
-
-function Header() {
-  return (
-    <header className="sticky top-0 z-10 border-b border-line bg-bg/95 backdrop-blur">
-      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
-        <Link href={LEARN_ROOT} className="flex items-center gap-2" aria-label="Accueil des fiches">
-          <Logo compact />
-          <span className="text-sm font-semibold text-muted">Apprendre</span>
-        </Link>
-        <a href="/" className="btn-primary px-3 py-2 text-sm"><LineChart className="h-4 w-4" /> Ouvrir l'outil</a>
-      </div>
-    </header>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="mx-auto max-w-3xl px-4 pb-10 pt-6 text-center text-[11px] leading-relaxed text-muted">
-      Contenu pédagogique, à but d'information générale. Il ne constitue pas un conseil en investissement
-      ni une recommandation d'achat ou de vente (MiFID II). Investir comporte un risque de perte en capital.
-    </footer>
-  )
-}
 
 function Index() {
   useEffect(() => { document.title = 'Apprendre — fiches pour comprendre la Bourse' }, [])
@@ -173,15 +134,13 @@ export default function LearnSite({ path }) {
   const slug = path.replace(/\/+$/, '').slice(LEARN_ROOT.length + 1)
   const fiche = slug ? FICHES_BY_SLUG[slug] : null
   return (
-    <div className="min-h-full">
-      <Header />
+    <SiteLayout>
       {slug && !fiche ? (
         <main className="mx-auto max-w-3xl px-4 py-10 text-center">
           <p className="font-semibold">Cette fiche n'existe pas (ou plus).</p>
           <Link href={LEARN_ROOT} className="btn-primary mt-4 inline-flex">Voir toutes les fiches</Link>
         </main>
       ) : fiche ? <Fiche fiche={fiche} /> : <Index />}
-      <Footer />
-    </div>
+    </SiteLayout>
   )
 }

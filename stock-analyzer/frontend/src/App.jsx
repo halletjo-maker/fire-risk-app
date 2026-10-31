@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, SESSION_EXPIRED } from './lib/api'
 import LoginScreen from './components/LoginScreen'
+import Landing from './site/Landing'
 import AppLayout from './components/AppLayout'
 import { Spinner } from './components/ui'
 
@@ -22,6 +23,10 @@ export default function App() {
   const [auth, setAuth] = useState({ setup_required: false, registration_open: false })
   const [invitation, setInvitation] = useState(null) // { token, email, invited_by }
   const [notice, setNotice] = useState(null)
+  // Visiteur non connecté : page d'accueil, sauf lien d'invitation, première utilisation ou « Se connecter »
+  const [showLogin, setShowLogin] = useState(() => {
+    try { return new URLSearchParams(window.location.search).has('connexion') } catch { return false }
+  })
   const [bootError, setBootError] = useState(null)
 
   const boot = async () => {
@@ -68,6 +73,10 @@ export default function App() {
     else if (mode === 'register') res = await api.register(email, password)
     else res = await api.login(email, password)
     if (mode === 'invite') { clearInvitationFromUrl(); setInvitation(null) }
+    try {  // « ?connexion=1 » n'a plus d'utilité une fois connecté
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('connexion')) { url.searchParams.delete('connexion'); window.history.replaceState(null, '', url.pathname + url.search) }
+    } catch { /* sans importance */ }
     setNotice(null)
     setAuth({ setup_required: false, registration_open: auth.registration_open && mode !== 'register' })
     setUser(res.user)
@@ -94,9 +103,17 @@ export default function App() {
   if (user === undefined) {
     return <div className="flex min-h-full items-center justify-center"><Spinner /></div>
   }
+  if (!user && !showLogin && !invitation && !auth.setup_required && !notice) {
+    return <Landing onLogin={() => { setShowLogin(true); window.scrollTo(0, 0) }} />
+  }
   if (!user) {
     return (
       <LoginScreen
+        onBack={invitation || auth.setup_required ? null : () => {
+          setShowLogin(false)
+          setNotice(null)
+          try { window.history.replaceState(null, '', '/') } catch { /* sans importance */ }
+        }}
         setupRequired={auth.setup_required}
         registrationOpen={auth.registration_open}
         invitation={invitation}

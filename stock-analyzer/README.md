@@ -376,6 +376,14 @@ Gmail + mot de passe d'application (myaccount.google.com/apppasswords, validatio
 requise). Les identifiants sont vérifiés auprès de Gmail avant d'être enregistrés et ne sont
 jamais renvoyés par l'API ; ils priment sur les variables SMTP du `.env`.
 
+## 🏠 Site public
+
+Visiteur non connecté : page d'accueil (`site/Landing.jsx` : présentation, fonctions, méthode,
+limites, accès sur invitation), plus `/a-propos` et `/confidentialite` (`site/StaticPages.jsx`),
+en-tête et pied de page communs avec les fiches (`site/SiteLayout.jsx`). « Se connecter » =
+`/?connexion=1`. Les liens d'invitation, la première utilisation et « session expirée » vont
+directement à l'écran de connexion. Site anonyme : aucun nom d'auteur.
+
 ## 📘 Apprendre : fiches de vulgarisation (public, sans compte)
 
 `/apprendre` : 12 fiches (lire les scores, diversifier et gérer le risque, action / ETF / crypto,
