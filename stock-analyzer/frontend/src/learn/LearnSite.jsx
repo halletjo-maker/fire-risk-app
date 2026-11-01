@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Clock, Cpu, Lightbulb }
 import SiteLayout, { Link } from '../site/SiteLayout'
 import { CATEGORIES, FICHES, FICHES_BY_SLUG } from './fiches'
 import Illustration from './Illustrations'
+import ShareButton from '../site/ShareButton'
 
 export const LEARN_ROOT = '/apprendre'
 // Ordre de lecture : thème par thème, comme sur la page d'accueil des fiches
@@ -79,6 +80,7 @@ function Fiche({ fiche }) {
       <p className="mt-3 rounded-lg border-l-4 border-bull bg-panel px-4 py-3 text-[15px] leading-relaxed">
         <b>En une phrase :</b> {fiche.oneLiner}
       </p>
+      <div className="mt-3"><ShareButton compact path={`/apprendre/${fiche.slug}`} title={fiche.title} text={fiche.oneLiner} /></div>
 
       <div className="mt-5 space-y-3 text-[15px] leading-relaxed text-gray-200">
         {fiche.intro.map((p) => <p key={p}>{p}</p>)}
@@ -98,6 +100,7 @@ function Fiche({ fiche }) {
       <Block icon={Cpu} title="Dans l'application" tone="app"><List items={fiche.inApp} /></Block>
       <Block icon={AlertTriangle} title="Pièges à éviter" tone="warn"><List items={fiche.traps} /></Block>
       <Block icon={Lightbulb} title="À retenir" tone="key"><List items={fiche.keyPoints} /></Block>
+      <ShareButton path={`/apprendre/${fiche.slug}`} title={fiche.title} text={`${fiche.title} — ${fiche.oneLiner}`} />
       {fiche.sources?.length > 0 && (
         <section className="mt-5 text-sm">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Sources</h2>

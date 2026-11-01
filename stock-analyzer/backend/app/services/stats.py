@@ -20,7 +20,7 @@ BOTS = re.compile(r"bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|
 SOURCE_RE = re.compile(r"[^a-z0-9.\-]")
 KNOWN = {"google": "Google", "bing": "Bing", "duckduckgo": "DuckDuckGo", "reddit": "Reddit", "facebook": "Facebook",
          "instagram": "Instagram", "linkedin": "LinkedIn", "t.co": "X (Twitter)", "x.com": "X (Twitter)",
-         "youtube": "YouTube", "tiktok": "TikTok", "whatsapp": "WhatsApp", "wa.me": "WhatsApp", "messenger": "Messenger"}
+         "youtube": "YouTube", "tiktok": "TikTok", "partage": "Bouton Partager", "whatsapp": "WhatsApp", "wa.me": "WhatsApp", "messenger": "Messenger"}
 
 
 def _today() -> str:

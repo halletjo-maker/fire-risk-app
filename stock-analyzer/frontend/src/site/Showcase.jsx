@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { BookOpen, PauseCircle } from 'lucide-react'
 import SiteLayout, { Link } from './SiteLayout'
+import ShareButton from './ShareButton'
 import { api } from '../lib/api'
 import { changeColor, fmtPct } from '../lib/format'
 import { Spinner } from '../components/ui'
@@ -43,6 +44,8 @@ export default function Showcase() {
           même somme placée dans un ETF MSCI World. Tout est montré tel quel, les bonnes comme les mauvaises périodes.
         </p>
 
+        <div className="mt-3"><ShareButton compact path="/portefeuille-temoin" title="Le portefeuille témoin MM100"
+          text="Un portefeuille virtuel géré seul par des règles publiques, comparé chaque jour au MSCI World." /></div>
         {error && <p className="mt-8 card p-5 text-sm text-muted">{error}</p>}
         {!data && !error && <div className="flex justify-center py-16"><Spinner /></div>}
         {data && (
