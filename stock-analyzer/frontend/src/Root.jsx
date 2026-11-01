@@ -7,7 +7,10 @@ const LearnSite = lazy(() => import('./learn/LearnSite.jsx'))
 const About = lazy(() => import('./site/StaticPages.jsx').then((m) => ({ default: m.About })))
 const Privacy = lazy(() => import('./site/StaticPages.jsx').then((m) => ({ default: m.Privacy })))
 const Showcase = lazy(() => import('./site/Showcase.jsx'))
-const PUBLIC = { '/a-propos': About, '/confidentialite': Privacy, '/portefeuille-temoin': Showcase }
+const Landing = lazy(() => import('./site/Landing.jsx'))
+// /accueil : la page d'accueil publique, aussi pour un membre connecté (sur « / » il arrive dans l'outil)
+const Home = () => <Landing onLogin={() => window.location.assign('/')} />
+const PUBLIC = { '/a-propos': About, '/confidentialite': Privacy, '/portefeuille-temoin': Showcase, '/accueil': Home }
 // Compteur de visites du site public (sans cookie) : le serveur ignore les robots et les membres connectés
 let lastReferrer = document.referrer
 function countVisit(path) {

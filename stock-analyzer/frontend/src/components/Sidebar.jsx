@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, ChevronDown, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
+import { BookOpen, ChevronDown, Home, LineChart, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
 import { WATCHLIST_COLORS } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { fmtScore, scoreColor } from '../lib/format'
@@ -246,10 +246,19 @@ export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfol
         </ul>
         {!loading && !error && <Presets onDone={onNavigate} />}
         {!loading && !error && <Portfolios onOpen={onPortfolio} onNew={onNewPortfolio} />}
-        <a href="/apprendre" target="_blank" rel="noopener"
-          className="mx-2 mt-4 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted hover:bg-panel2 hover:text-gray-100">
-          <BookOpen className="h-4 w-4 shrink-0 text-bull" /> Apprendre : fiches pour comprendre les analyses
-        </a>
+        <div className="mx-2 mt-4">
+          <p className="px-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Le site</p>
+          {[
+            ['/accueil', Home, 'Page d’accueil'],
+            ['/apprendre', BookOpen, 'Apprendre : les fiches'],
+            ['/portefeuille-temoin', LineChart, 'Portefeuille témoin'],
+          ].map(([href, Icon, label]) => (
+            <a key={href} href={href}
+              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted hover:bg-panel2 hover:text-gray-100">
+              <Icon className="h-4 w-4 shrink-0 text-bull" /> {label}
+            </a>
+          ))}
+        </div>
       </nav>
 
       {/* Profil : mail actif + changement d'utilisateur */}
