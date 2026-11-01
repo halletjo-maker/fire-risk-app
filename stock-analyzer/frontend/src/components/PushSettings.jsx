@@ -47,7 +47,10 @@ export default function PushSettings({ isAdmin }) {
       await api.pushTest()
       setMsg({ ok: true, text: 'Activé ! Une notification de test vient d’être envoyée.' })
     } catch (e) {
-      setMsg({ ok: false, text: e.message })
+      const pushDown = e.name === 'AbortError' || /push service/i.test(e.message || '')
+      setMsg({ ok: false, text: pushDown
+        ? 'Le service de notifications du téléphone ne répond pas (Chrome passe par les Services Google Play). Vérifie qu’ils sont installés et sans restriction de batterie, ou active les notifications depuis Firefox.'
+        : e.message })
     } finally { setBusy(null) }
   }
   const disable = async () => {
