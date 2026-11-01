@@ -87,6 +87,16 @@ def send_monthly_reports() -> None:
         logger.exception("Échec de l'envoi des rapports mensuels")
 
 
+def nightly_backup() -> None:
+    from .services import backup
+    backup.nightly()
+
+
+def weekly_backup() -> None:
+    from .services import backup
+    backup.weekly()
+
+
 def start_scheduler() -> None:
     settings = get_settings()
     if not settings.scheduler_enabled or scheduler.running:
@@ -114,6 +124,14 @@ def start_scheduler() -> None:
     scheduler.add_job(
         send_monthly_reports, "cron", day="1-3", hour=8, minute=7, id="monthly_reports",
         name="Rapport mensuel des portefeuilles fictifs", replace_existing=True,
+    )
+    scheduler.add_job(
+        nightly_backup, "cron", hour=3, minute=40, id="nightly_backup",
+        name="Sauvegarde de la base (chaque nuit)", replace_existing=True,
+    )
+    scheduler.add_job(
+        weekly_backup, "cron", day_of_week="sun", hour=7, minute=20, id="weekly_backup",
+        name="Sauvegarde chiffrée par mail (dimanche)", replace_existing=True,
     )
     scheduler.start()
     logger.info("Planificateur démarré (toutes les %s min)", minutes)

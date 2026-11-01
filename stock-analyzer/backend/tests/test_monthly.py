@@ -89,11 +89,11 @@ def test_mail_settings_from_app(auth_client, monkeypatch):
     c = auth_client
     c.post("/users/register", json={"email": "jean@exemple.be", "password": "correct-horse-42"})
     assert c.get("/admin/mail").json()["configured"] is False
-    monkeypatch.setattr(sender, "check_login", lambda u, p: "Gmail refuse ces identifiants." if p != "abcdefghijklmnop" else None)
+    monkeypatch.setattr(sender, "check_login", lambda u, p, prov="gmail": "Gmail refuse ces identifiants." if p != "abcdefghijklmnop" else None)
     bad = c.put("/admin/mail", json={"user": "moi@gmail.com", "password": "mauvais-mdp"})
     assert bad.status_code == 400 and "refuse" in bad.json()["detail"]
     ok = c.put("/admin/mail", json={"user": "moi@gmail.com", "password": "abcd efgh ijkl mnop"})  # espaces de Google retirés
-    assert ok.json() == {"configured": True, "source": "app", "user": "moi@gmail.com"}
+    assert ok.json() == {"configured": True, "source": "app", "user": "moi@gmail.com", "provider": "gmail"}
     assert "password" not in ok.text and "abcdefghijklmnop" not in ok.text
     cfg = sender.smtp_config()
     assert (cfg["host"], cfg["port"], cfg["password"], cfg["from"]) == ("smtp.gmail.com", 587, "abcdefghijklmnop", "moi@gmail.com")

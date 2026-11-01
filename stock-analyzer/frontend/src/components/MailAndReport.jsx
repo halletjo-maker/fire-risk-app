@@ -52,12 +52,14 @@ export function MonthlyReport({ initial, email }) {
   )
 }
 
-// Compte d'envoi des mails (administrateur) : Gmail + mot de passe d'application
+// Compte d'envoi des mails (administrateur) : Gmail (mot de passe d'application) ou adresse du domaine chez OVHcloud
 export function MailSettings() {
   const [info, setInfo] = useState(null)
   const [editing, setEditing] = useState(false)
+  const [provider, setProvider] = useState('ovh')
   const [user, setUser] = useState('')
   const [password, setPassword] = useState('')
+  const gmail = provider === 'gmail'
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
@@ -68,7 +70,7 @@ export function MailSettings() {
     setBusy(true)
     setError(null)
     try {
-      setInfo(await api.saveMailSettings({ user: user.trim(), password }))
+      setInfo(await api.saveMailSettings({ user: user.trim(), password, provider }))
       setEditing(false)
       setPassword('')
     } catch (err) {
@@ -87,24 +89,39 @@ export function MailSettings() {
           <p className={`mt-1 flex items-center gap-1.5 text-sm ${info.configured ? 'text-bull' : 'text-warn'}`}>
             {info.configured ? <><Check className="h-4 w-4" /> Envoi actif depuis {info.user}</> : 'Aucun compte d\'envoi : les alertes et rapports ne partent pas.'}
           </p>
-          <button className="btn-ghost mt-3 w-full justify-center border border-line" onClick={() => { setEditing(true); setUser(info.user || '') }}>
-            {info.configured ? 'Changer de compte d\'envoi' : 'Configurer l\'envoi avec Gmail'}
+          <button className="btn-ghost mt-3 w-full justify-center border border-line" onClick={() => { setEditing(true); setProvider(info.provider || 'ovh'); setUser(info.user || '') }}>
+            {info.configured ? 'Changer de compte d\'envoi' : 'Configurer l\'envoi des mails'}
           </button>
         </>
       )}
       {editing && (
         <form onSubmit={save} className="mt-2 space-y-3">
-          <ol className="list-decimal space-y-1 pl-4 text-xs text-muted">
-            <li>La <b className="text-gray-200">validation en deux étapes</b> doit être activée sur ton compte Google.</li>
-            <li>Ouvre <a className="text-bull underline" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">myaccount.google.com/apppasswords</a>, crée un mot de passe nommé « Analyse Boursière ».</li>
-            <li>Google affiche <b className="text-gray-200">16 lettres</b> : colle-les ci-dessous (les espaces ne comptent pas).</li>
-          </ol>
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-bg p-1 text-sm" role="radiogroup" aria-label="Fournisseur">
+            {[['ovh', 'Mon domaine (OVHcloud)'], ['gmail', 'Gmail']].map(([id, label]) => (
+              <button key={id} type="button" role="radio" aria-checked={provider === id}
+                className={`rounded-md px-2 py-1.5 ${provider === id ? 'bg-panel font-semibold text-gray-100' : 'text-muted'}`}
+                onClick={() => { setProvider(id); setError(null) }}>{label}</button>
+            ))}
+          </div>
+          {gmail ? (
+            <ol className="list-decimal space-y-1 pl-4 text-xs text-muted">
+              <li>La <b className="text-gray-200">validation en deux étapes</b> doit être activée sur ton compte Google.</li>
+              <li>Ouvre <a className="text-bull underline" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">myaccount.google.com/apppasswords</a>, crée un mot de passe nommé « Analyse Boursière ».</li>
+              <li>Google affiche <b className="text-gray-200">16 lettres</b> : colle-les ci-dessous (les espaces ne comptent pas).</li>
+            </ol>
+          ) : (
+            <ol className="list-decimal space-y-1 pl-4 text-xs text-muted">
+              <li>Dans OVHcloud, crée la boîte mail (ex. <b className="text-gray-200">contact@mm100.be</b>) incluse avec ton domaine.</li>
+              <li>Indique ci-dessous cette adresse et le mot de passe choisi pour elle.</li>
+              <li>Tes invités verront cette adresse comme expéditeur, plus ton Gmail.</li>
+            </ol>
+          )}
           <label className="block text-sm font-medium">
-            Adresse Gmail d'envoi
-            <input className="input mt-2" type="email" autoCapitalize="none" placeholder="prenom.nom@gmail.com" value={user} onChange={(e) => setUser(e.target.value)} required />
+            Adresse d'envoi
+            <input className="input mt-2" type="email" autoCapitalize="none" placeholder={gmail ? 'prenom.nom@gmail.com' : 'contact@mm100.be'} value={user} onChange={(e) => setUser(e.target.value)} required />
           </label>
-          <label className="block text-sm font-medium" htmlFor="smtp-pw">Mot de passe d'application (16 lettres)</label>
-          <PasswordInput id="smtp-pw" value={password} onChange={setPassword} autoComplete="off" placeholder="abcd efgh ijkl mnop" />
+          <label className="block text-sm font-medium" htmlFor="smtp-pw">{gmail ? 'Mot de passe d\'application (16 lettres)' : 'Mot de passe de cette boîte mail'}</label>
+          <PasswordInput id="smtp-pw" value={password} onChange={setPassword} autoComplete="off" placeholder={gmail ? 'abcd efgh ijkl mnop' : ''} />
           {error && <p className="text-sm text-bear" role="alert">{error}</p>}
           <div className="flex gap-2">
             <button type="button" className="btn-ghost flex-1 justify-center border border-line" onClick={() => { setEditing(false); setError(null) }}>Annuler</button>
@@ -112,7 +129,7 @@ export function MailSettings() {
               {busy ? 'Vérification…' : 'Vérifier et enregistrer'}
             </button>
           </div>
-          <p className="text-[11px] text-muted">Le mot de passe est vérifié auprès de Gmail puis enregistré sur ton serveur ; il n'est jamais réaffiché.</p>
+          <p className="text-[11px] text-muted">Le mot de passe est vérifié auprès de {gmail ? 'Gmail' : 'OVHcloud'} puis enregistré sur ton serveur ; il n'est jamais réaffiché.</p>
         </form>
       )}
       {error && !editing && <p className="mt-2 text-sm text-bear">{error}</p>}

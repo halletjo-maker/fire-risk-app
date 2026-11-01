@@ -6,6 +6,7 @@ import AlertsSection from './AlertsSection'
 import PasswordChange from './PasswordChange'
 import ServerUpdate from './ServerUpdate'
 import DomainSettings from './DomainSettings'
+import BackupSettings from './BackupSettings'
 import { MailSettings, MonthlyReport } from './MailAndReport'
 
 const fmt = (iso) => {
@@ -81,6 +82,7 @@ export default function ProfileModal({ onClose, onLogout }) {
             </p>
             <MonthlyReport initial={data.preferences?.monthly_report ?? true} email={data.user.email} />
             {data.user.is_admin && <MailSettings />}
+            {data.user.is_admin && <BackupSettings />}
             <PasswordChange />
             {data.user.is_admin && <ServerUpdate />}
             {data.user.is_admin && <DomainSettings />}

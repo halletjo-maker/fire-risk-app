@@ -19,8 +19,20 @@ from ...config import get_settings
 logger = logging.getLogger(__name__)
 
 
-GMAIL = {"host": "smtp.gmail.com", "port": 587, "tls": True}
-DB_KEYS = ("smtp_user", "smtp_password", "smtp_from")
+# Fournisseurs proposés dans l'application (Profil → Réglages mail)
+PROVIDERS = {
+    "gmail": {"host": "smtp.gmail.com", "port": 587, "tls": True, "label": "Gmail"},
+    # Adresse sur ton nom de domaine hébergée chez OVHcloud (Zimbra Starter / MX Plan)
+    "ovh": {"host": "ssl0.ovh.net", "port": 465, "tls": False, "label": "OVHcloud"},
+}
+GMAIL = PROVIDERS["gmail"]
+DB_KEYS = ("smtp_user", "smtp_password", "smtp_from", "smtp_provider")
+
+
+def provider_for(email: str) -> str:
+    """Gmail pour une adresse gmail.com, sinon une adresse de ton domaine chez OVHcloud."""
+    domain = email.rsplit("@", 1)[-1].lower()
+    return "gmail" if domain in ("gmail.com", "googlemail.com") else "ovh"
 
 
 def smtp_config() -> dict:
@@ -36,7 +48,9 @@ def smtp_config() -> dict:
     except Exception:
         db = {}
     if db.get("smtp_user") and db.get("smtp_password"):
-        cfg.update(GMAIL, user=db["smtp_user"], password=db["smtp_password"], source="app",
+        prov = PROVIDERS.get(db.get("smtp_provider") or "gmail", GMAIL)
+        cfg.update(host=prov["host"], port=prov["port"], tls=prov["tls"], user=db["smtp_user"],
+                   password=db["smtp_password"], source="app", provider=db.get("smtp_provider") or "gmail",
                    **{"from": db.get("smtp_from") or db["smtp_user"]})
     cfg["configured"] = bool(cfg["host"] and cfg["user"] and cfg["password"])
     return cfg
@@ -46,18 +60,28 @@ def smtp_configured() -> bool:
     return smtp_config()["configured"]
 
 
-def check_login(user: str, password: str) -> str | None:
-    """Essaie de se connecter à Gmail. Renvoie un message d'erreur, ou None si c'est bon."""
+def _open(host: str, port: int, tls: bool) -> smtplib.SMTP:
+    if tls and port != 465:
+        smtp = smtplib.SMTP(host, port, timeout=20)
+        smtp.starttls(context=ssl.create_default_context())
+        return smtp
+    return smtplib.SMTP_SSL(host, port, timeout=20, context=ssl.create_default_context())
+
+
+def check_login(user: str, password: str, provider: str = "gmail") -> str | None:
+    """Essaie de se connecter au serveur d'envoi. Renvoie un message d'erreur, ou None si c'est bon."""
+    prov = PROVIDERS[provider]
     try:
-        with smtplib.SMTP(GMAIL["host"], GMAIL["port"], timeout=20) as smtp:
-            smtp.starttls(context=ssl.create_default_context())
+        with _open(prov["host"], prov["port"], prov["tls"]) as smtp:
             smtp.login(user, password)
         return None
     except smtplib.SMTPAuthenticationError:
-        return ("Gmail refuse ces identifiants. Utilise un mot de passe d'application (16 lettres), "
-                "pas ton mot de passe Gmail habituel.")
+        if provider == "gmail":
+            return ("Gmail refuse ces identifiants. Utilise un mot de passe d'application (16 lettres), "
+                    "pas ton mot de passe Gmail habituel.")
+        return "OVHcloud refuse ces identifiants : vérifie l'adresse complète et le mot de passe de cette boîte mail."
     except (smtplib.SMTPException, OSError) as exc:
-        return f"Connexion à Gmail impossible ({exc.__class__.__name__}). Réessaie plus tard."
+        return f"Connexion à {prov['label']} impossible ({exc.__class__.__name__}). Réessaie plus tard."
 
 
 def outbox_dir() -> Path:
@@ -65,37 +89,35 @@ def outbox_dir() -> Path:
     return get_settings().database_path.parent / "outbox"
 
 
-def build_message(to: str, subject: str, text: str, html: str | None = None) -> EmailMessage:
+def build_message(to: str, subject: str, text: str, html: str | None = None,
+                  attachments: list[tuple[str, bytes]] | None = None) -> EmailMessage:
     c = smtp_config()
     msg = EmailMessage()
     sender = c["from"] or c["user"] or "alertes@analyse-boursiere.local"
     msg["From"] = formataddr(("Analyse Boursière", sender))
     msg["To"] = to
     msg["Subject"] = subject
-    msg["Message-ID"] = make_msgid(domain="analyse-boursiere.local")
+    msg["Message-ID"] = make_msgid(domain=sender.rsplit("@", 1)[-1] if "@" in sender else "analyse-boursiere.local")
     msg.set_content(text)
     if html:
         msg.add_alternative(html, subtype="html")
+    for name, data in attachments or ():
+        msg.add_attachment(data, maintype="application", subtype="octet-stream", filename=name)
     return msg
 
 
-def send(to: str, subject: str, text: str, html: str | None = None) -> dict:
+def send(to: str, subject: str, text: str, html: str | None = None,
+         attachments: list[tuple[str, bytes]] | None = None) -> dict:
     """Renvoie {"delivered": bool, "status": "...", "file": chemin .eml éventuel}."""
     s = smtp_config()
-    msg = build_message(to, subject, text, html)
+    msg = build_message(to, subject, text, html, attachments)
     if not s["configured"]:
         path = save_to_outbox(msg)
         return {"delivered": False, "status": "SMTP non configuré : mail enregistré dans outbox", "file": str(path)}
     try:
-        if s["tls"] and s["port"] != 465:
-            with smtplib.SMTP(s["host"], s["port"], timeout=20) as smtp:
-                smtp.starttls(context=ssl.create_default_context())
-                smtp.login(s["user"], s["password"])
-                smtp.send_message(msg)
-        else:
-            with smtplib.SMTP_SSL(s["host"], s["port"], timeout=20, context=ssl.create_default_context()) as smtp:
-                smtp.login(s["user"], s["password"])
-                smtp.send_message(msg)
+        with _open(s["host"], s["port"], s["tls"]) as smtp:
+            smtp.login(s["user"], s["password"])
+            smtp.send_message(msg)
         return {"delivered": True, "status": "Envoyé", "file": None}
     except smtplib.SMTPAuthenticationError:
         logger.warning("SMTP : identifiants refusés")

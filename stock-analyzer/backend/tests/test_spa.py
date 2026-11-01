@@ -26,3 +26,12 @@ def test_installable_on_phone(auth_client):
         assert c.get(icon).headers["content-type"] == "image/png"
     html = c.get("/").text
     assert 'rel="manifest"' in html and 'rel="apple-touch-icon"' in html
+
+
+@pytest.mark.skipif(not (WEB_DIR / "index.html").exists(), reason="interface non construite")
+def test_link_preview_uses_public_url(auth_client, monkeypatch):
+    monkeypatch.setenv("APP_PUBLIC_URL", "https://mm100.be")
+    for path in ("/", "/apprendre/rsi"):
+        html = auth_client.get(path).text
+        assert 'property="og:image" content="https://mm100.be/og-image.png"' in html and "__PUBLIC_URL__" not in html
+    assert auth_client.get("/og-image.png").headers["content-type"] == "image/png"

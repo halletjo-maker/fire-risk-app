@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -68,6 +69,22 @@ class SPAStaticFiles(StaticFiles):
     """Fichiers de l'interface ; toute autre adresse (ex. /apprendre/rsi) renvoie la page unique."""
 
     async def get_response(self, path, scope):
+        response = await self._response(path, scope)
+        if isinstance(response, FileResponse) and Path(response.path).name == "index.html":
+            return self._page(Path(response.path), scope)
+        return response
+
+    @staticmethod
+    def _page(index: Path, scope) -> HTMLResponse:
+        """Page unique avec l'adresse publique (aperçu des liens partagés : image et adresse absolues)."""
+        base = get_settings().app_public_url.rstrip("/")
+        if not base:
+            host = dict(scope.get("headers") or []).get(b"host", b"localhost").decode("latin-1")
+            base = f"{scope.get('scheme', 'http')}://{host}"
+        html = index.read_text(encoding="utf-8").replace("__PUBLIC_URL__", base)
+        return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
+
+    async def _response(self, path, scope):
         try:
             response = await super().get_response(path, scope)
         except StarletteHTTPException as exc:
