@@ -12,6 +12,7 @@ from __future__ import annotations
 import base64
 import gzip
 import hashlib
+import hmac
 import logging
 import os
 import sqlite3
@@ -119,6 +120,15 @@ def set_passphrase(passphrase: str) -> None:
     with get_conn() as conn:
         _save(conn, backup_salt=salt.hex(), backup_key=_derive(passphrase, salt).decode(),
               backup_passphrase_set_at=datetime.now().isoformat(timespec="seconds"))
+
+
+def check_passphrase(passphrase: str) -> bool | None:
+    """Le mot de passe noté est-il celui des copies envoyées ? None si aucun n'a été choisi."""
+    with get_conn() as conn:
+        key, salt = _setting(conn, "backup_key"), _setting(conn, "backup_salt")
+    if not key or not salt:
+        return None
+    return hmac.compare_digest(_derive(passphrase, bytes.fromhex(salt)), key.encode())
 
 
 # ── Envoi hebdomadaire ───────────────────────────────────────────────────────

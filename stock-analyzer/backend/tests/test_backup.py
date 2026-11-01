@@ -44,6 +44,8 @@ def test_weekly_mail_encrypted_and_restorable(auth_client):
     assert c.put("/admin/backup", json={"passphrase": "court"}).status_code == 422
     st = c.put("/admin/backup", json={"passphrase": "mon secret de secours"}).json()
     assert st["passphrase_set"] is True and "secret" not in str(st)
+    assert c.post("/admin/backup/check", json={"passphrase": "mon secret de secours"}).json() == {"ok": True}
+    assert c.post("/admin/backup/check", json={"passphrase": "mon secret de secour"}).json() == {"ok": False}
 
     r = c.post("/admin/backup/send").json()            # SMTP non configuré → le mail va dans outbox
     assert r["sent"] is False and "outbox" in r["status"]

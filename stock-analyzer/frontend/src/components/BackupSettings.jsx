@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, DatabaseBackup, Send } from 'lucide-react'
+import { Check, DatabaseBackup, KeyRound, Send } from 'lucide-react'
 import { api } from '../lib/api'
 import { Spinner } from './ui'
 import PasswordInput from './PasswordInput'
@@ -17,6 +17,9 @@ export default function BackupSettings() {
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+  const [checking, setChecking] = useState(false)
+  const [probe, setProbe] = useState('')
+  const [verdict, setVerdict] = useState(null)
 
   useEffect(() => { api.backupStatus().then(setInfo).catch(() => setInfo(null)) }, [])
 
@@ -33,6 +36,12 @@ export default function BackupSettings() {
       setConfirm('')
       setNoted(false)
     } catch (err) { setError(err.message) } finally { setBusy(null) }
+  }
+  const check = async (e) => {
+    e.preventDefault()
+    setBusy('check')
+    setVerdict(null)
+    try { setVerdict((await api.checkBackupPassphrase(probe)).ok) } catch (err) { setVerdict(err.message) } finally { setBusy(null) }
   }
   const sendNow = async () => {
     setBusy('send')
@@ -80,6 +89,26 @@ export default function BackupSettings() {
             </button>
           )}
         </div>
+      )}
+      {!editing && info.passphrase_set && !checking && (
+        <button className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted underline-offset-2 hover:text-gray-100 hover:underline"
+          onClick={() => { setChecking(true); setProbe(''); setVerdict(null) }}>
+          <KeyRound className="h-4 w-4" /> Vérifier mon mot de passe noté
+        </button>
+      )}
+      {checking && (
+        <form onSubmit={check} className="mt-3 space-y-2">
+          <label className="block text-sm font-medium" htmlFor="bk-probe">Tape le mot de passe que tu as noté</label>
+          <PasswordInput id="bk-probe" value={probe} onChange={(v) => { setProbe(v); setVerdict(null) }} autoComplete="off" />
+          {verdict === true && <p className="text-sm text-bull" role="status">✅ C'est le bon : il ouvre tes copies de sauvegarde.</p>}
+          {verdict === false && <p className="text-sm text-bear" role="alert">❌ Ce n'est pas celui-là. Vérifie majuscules et espaces, ou choisis-en un nouveau et note-le.</p>}
+          {typeof verdict === 'string' && <p className="text-sm text-bear" role="alert">{verdict}</p>}
+          <div className="flex gap-2">
+            <button type="button" className="btn-ghost flex-1 justify-center border border-line" onClick={() => setChecking(false)}>Fermer</button>
+            <button type="submit" className="btn-primary flex-1" disabled={!probe || busy === 'check'}>{busy === 'check' ? 'Vérification…' : 'Vérifier'}</button>
+          </div>
+          <p className="text-[11px] text-muted">Rien n'est modifié ; les copies déjà reçues avant un changement de mot de passe gardent l'ancien.</p>
+        </form>
       )}
       {result && (
         <p className={`mt-2 text-sm ${result.sent ? 'text-bull' : 'text-warn'}`} role="status">

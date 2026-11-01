@@ -53,6 +53,7 @@ export const api = {
   saveMailSettings: (body) => request('/admin/mail', { method: 'PUT', body }),
   backupStatus: () => request('/admin/backup'),
   setBackupPassphrase: (passphrase) => request('/admin/backup', { method: 'PUT', body: { passphrase } }),
+  checkBackupPassphrase: (passphrase) => request('/admin/backup/check', { method: 'POST', body: { passphrase } }),
   sendBackup: () => request('/admin/backup/send', { method: 'POST' }),
   setPreferences: (body) => request('/users/me/preferences', { method: 'PUT', body }),
   sendMonthlyReport: (period) => request('/portfolios/report/send', { method: 'POST', body: { period } }),

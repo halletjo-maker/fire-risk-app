@@ -105,6 +105,16 @@ def set_backup_passphrase(payload: BackupPassIn, admin: dict = Depends(admin_use
     return backup.status()
 
 
+class BackupCheckIn(BaseModel):
+    passphrase: str = Field(min_length=1, max_length=200)
+
+
+@router.post("/backup/check")
+def check_backup_passphrase(payload: BackupCheckIn, admin: dict = Depends(admin_user)) -> dict:
+    """Vérifie le mot de passe noté, sans rien changer."""
+    return {"ok": backup.check_passphrase(payload.passphrase)}
+
+
 @router.post("/backup/send")
 def send_backup_now(admin: dict = Depends(admin_user)) -> dict:
     result = backup.send_by_mail()
