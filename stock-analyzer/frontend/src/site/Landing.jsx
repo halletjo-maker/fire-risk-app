@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  ArrowRight, Bell, BookOpen, FileText, Globe2, Layers, LineChart, LogIn, Mail, Newspaper, ShieldCheck, Smartphone,
+  ArrowRight, Bell, BookOpen, Check, FileText, Globe2, Layers, LineChart, LogIn, Mail, Newspaper, ShieldCheck, Smartphone,
   Wallet,
 } from 'lucide-react'
 import SiteLayout, { Link } from './SiteLayout'
-import { FICHES_BY_SLUG } from '../learn/fiches'
+import { FICHES, FICHES_BY_SLUG } from '../learn/fiches'
+import { api } from '../lib/api'
 
 // Aperçu illustratif d'une analyse (exemple, pas un vrai produit)
 function Preview() {
@@ -37,6 +38,40 @@ function Preview() {
         <span className="block text-muted">★ au-dessus de sa MM100 (+6,4 %) · stop conseillé 47,90 €</span>
       </p>
     </div>
+  )
+}
+
+// Formulaire « Demander une invitation » (le champ « site » est un piège à robots, invisible)
+function AccessRequest() {
+  const [email, setEmail] = useState('')
+  const [message, setMessage] = useState('')
+  const [trap, setTrap] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(null)
+  const [error, setError] = useState(null)
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) return setError('Adresse mail invalide.')
+    setBusy(true)
+    setError(null)
+    try {
+      setDone((await api.requestAccess({ email: email.trim(), message: message.trim() || null, website: trap || null })).message)
+    } catch (err) { setError(err.message) } finally { setBusy(false) }
+  }
+  if (done) return <p className="mt-4 flex gap-2 rounded-lg border border-bull/40 bg-bull/10 px-3 py-2 text-sm text-bull" role="status"><Check className="mt-0.5 h-4 w-4 shrink-0" /> {done}</p>
+  return (
+    <form onSubmit={submit} noValidate className="mt-4 space-y-2">
+      <label htmlFor="req-email" className="block text-sm font-medium">Demander une invitation</label>
+      <input id="req-email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" className="input"
+        placeholder="ton adresse mail" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <textarea className="input min-h-[64px] resize-y" maxLength={500} placeholder="Un mot pour te présenter (facultatif)"
+        value={message} onChange={(e) => setMessage(e.target.value)} aria-label="Message (facultatif)" />
+      <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" value={trap}
+        onChange={(e) => setTrap(e.target.value)} className="absolute -left-[9999px] h-px w-px opacity-0" />
+      {error && <p className="text-sm text-bear" role="alert">{error}</p>}
+      <button type="submit" className="btn-primary w-full" disabled={busy}><Mail className="h-4 w-4" /> {busy ? 'Envoi…' : 'Envoyer ma demande'}</button>
+      <p className="text-xs text-muted">Ton adresse ne sert qu’à te répondre. Chaque demande est lue ; si elle est acceptée, tu reçois un lien par mail.</p>
+    </form>
   )
 }
 
@@ -120,6 +155,9 @@ export default function Landing({ onLogin }) {
           <ShieldCheck className="h-5 w-5 shrink-0 text-bull" />
           Filtre de prudence : quand le marché mondial passe sous sa moyenne 100 jours, les portefeuilles fictifs cessent d’acheter.
         </p>
+        <Link href="/portefeuille-temoin" className="mt-4 inline-flex items-center gap-1 text-sm text-bull hover:underline">
+          Voir le portefeuille témoin, géré seul par ces règles <ArrowRight className="h-4 w-4" />
+        </Link>
       </section>
 
       {/* Fiches */}
@@ -128,7 +166,7 @@ export default function Landing({ onLogin }) {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 className="text-xl font-bold">Apprendre, sans jargon</h2>
             <Link href="/apprendre" className="inline-flex items-center gap-1 text-sm text-bull hover:underline">
-              Les 12 fiches <ArrowRight className="h-4 w-4" />
+              Les {FICHES.length} fiches <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
           <ul className="mt-5 grid gap-4 md:grid-cols-3">
@@ -158,12 +196,13 @@ export default function Landing({ onLogin }) {
         <div className="card p-5">
           <h2 className="flex items-center gap-2 text-lg font-bold"><Mail className="h-5 w-5 text-bull" /> Comment y accéder</h2>
           <ul className="mt-3 space-y-2 text-sm leading-relaxed text-gray-300">
-            <li>L’outil est réservé aux personnes invitées. Pour recevoir une invitation, demande à la personne qui t’a parlé du projet.</li>
+            <li>L’outil est réservé aux personnes invitées : laisse ton adresse ci-dessous pour en demander une.</li>
             <li>Les fiches « Apprendre » sont ouvertes à tous, sans compte.</li>
             <li className="flex gap-2"><Smartphone className="h-5 w-5 shrink-0 text-muted" /> Installable sur iPhone et Android, comme une vraie application.</li>
             <li className="flex gap-2"><Newspaper className="h-5 w-5 shrink-0 text-muted" /> Gratuit, sans publicité, sans revente de données.</li>
           </ul>
-          <button className="btn-primary mt-4 w-full" onClick={onLogin}><LogIn className="h-4 w-4" /> J’ai déjà un compte</button>
+          <AccessRequest />
+          <button className="btn-ghost mt-3 w-full justify-center border border-line" onClick={onLogin}><LogIn className="h-4 w-4" /> J’ai déjà un compte</button>
         </div>
       </section>
       </main>

@@ -1,4 +1,4 @@
-import { BookOpen, Info, LogIn } from 'lucide-react'
+import { BookOpen, Info, LineChart, LogIn } from 'lucide-react'
 import { Logo } from '../components/ui'
 
 // Pages publiques : accueil, fiches « Apprendre », à propos, confidentialité
@@ -33,7 +33,8 @@ export function SiteHeader({ onLogin }) {
         </Link>
         <nav className="flex items-center gap-1 sm:gap-2" aria-label="Navigation principale">
           <Link href="/apprendre" className="btn-ghost px-2.5 py-2 text-sm"><BookOpen className="h-4 w-4" /> Apprendre</Link>
-          <Link href="/a-propos" className="btn-ghost hidden px-2.5 py-2 text-sm sm:inline-flex"><Info className="h-4 w-4" /> À propos</Link>
+          <Link href="/portefeuille-temoin" className="btn-ghost hidden px-2.5 py-2 text-sm sm:inline-flex"><LineChart className="h-4 w-4" /> Témoin</Link>
+          <Link href="/a-propos" className="btn-ghost hidden px-2.5 py-2 text-sm md:inline-flex"><Info className="h-4 w-4" /> À propos</Link>
           {login}
         </nav>
       </div>
@@ -48,6 +49,7 @@ export function SiteFooter() {
         <nav className="flex flex-wrap gap-x-5 gap-y-2 text-muted" aria-label="Liens du site">
           <Link href="/" className="hover:text-gray-100">Accueil</Link>
           <Link href="/apprendre" className="hover:text-gray-100">Apprendre</Link>
+          <Link href="/portefeuille-temoin" className="hover:text-gray-100">Portefeuille témoin</Link>
           <Link href="/a-propos" className="hover:text-gray-100">À propos</Link>
           <Link href="/confidentialite" className="hover:text-gray-100">Confidentialité</Link>
           <a href={LOGIN_URL} className="hover:text-gray-100">Se connecter</a>

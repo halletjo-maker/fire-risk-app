@@ -267,18 +267,14 @@ def members(admin: dict = Depends(admin_user)) -> dict:
     }
 
 
-@router.post("/invitations", status_code=201)
-def invite(payload: InvitationIn, request: Request, admin: dict = Depends(admin_user)) -> dict:
-    """Crée un lien d'invitation (7 jours, usage unique) et l'envoie par mail si le SMTP est configuré."""
-    email = payload.email.strip().lower()
-    with get_conn() as conn:
-        existing = conn.execute("SELECT password_hash FROM users WHERE email = ?", (email,)).fetchone()
-        if existing and existing["password_hash"]:
-            raise HTTPException(status_code=409, detail="Cette personne a déjà un compte.")
-        token, inv = auth.create_invitation(conn, email, admin["id"])
-    link = f"{_app_url(payload.app_url, request)}/?invitation={token}"
+def _send_invitation(conn, email: str, admin: dict, base_url: str, anonymous: bool = False) -> dict:
+    """Crée le lien (7 jours, usage unique) et l'envoie. anonymous : sans l'adresse de l'administrateur."""
+    token, inv = auth.create_invitation(conn, email, admin["id"], anonymous=anonymous)
+    link = f"{base_url}/?invitation={token}"
+    opening = ("Bonne nouvelle : ta demande d'accès à MM100 est acceptée. MM100 est un outil d'aide"
+               if anonymous else f"{admin['email']} t'invite à utiliser Analyse Boursière, une application d'aide")
     text = (
-        f"Bonjour,\n\n{admin['email']} t'invite à utiliser Analyse Boursière, une application d'aide "
+        f"Bonjour,\n\n{opening} "
         "à la décision pour tes placements (analyse technique, fondamentale, actualités, alertes).\n\n"
         f"Crée ton mot de passe ici (lien personnel, valable {auth.INVITATION_DAYS} jours) :\n{link}\n\n"
         "Pour l'avoir comme une appli sur ton téléphone :\n"
@@ -287,8 +283,60 @@ def invite(payload: InvitationIn, request: Request, admin: dict = Depends(admin_
         "· Android : dans Chrome, menu ⋮ puis « Installer l'application » (ou « Ajouter à l'écran d'accueil »).\n\n"
         "Aide à la décision automatisée, pas un conseil en investissement (MiFID II)."
     )
-    mail = sender.send(email, "Invitation : Analyse Boursière", text)
+    mail = sender.send(email, "Ton accès à MM100" if anonymous else "Invitation : Analyse Boursière", text)
     return {"invitation": inv, "link": link, "mail": {"sent": mail["delivered"], "status": mail["status"]}}
+
+
+@router.post("/invitations", status_code=201)
+def invite(payload: InvitationIn, request: Request, admin: dict = Depends(admin_user)) -> dict:
+    """Crée un lien d'invitation (7 jours, usage unique) et l'envoie par mail si le SMTP est configuré."""
+    email = payload.email.strip().lower()
+    with get_conn() as conn:
+        existing = conn.execute("SELECT password_hash FROM users WHERE email = ?", (email,)).fetchone()
+        if existing and existing["password_hash"]:
+            raise HTTPException(status_code=409, detail="Cette personne a déjà un compte.")
+        result = _send_invitation(conn, email, admin, _app_url(payload.app_url, request))
+        conn.execute("DELETE FROM invite_requests WHERE email = ?", (email,))
+    return result
+
+
+# ── Demandes d'accès (formulaire de la page d'accueil) ──────────────────────
+@router.get("/access-requests")
+def access_requests(admin: dict = Depends(admin_user)) -> dict:
+    with get_conn() as conn:
+        rows = conn.execute("SELECT id, email, message, created_at FROM invite_requests ORDER BY id DESC").fetchall()
+    return {"requests": [dict(r) for r in rows]}
+
+
+class AppUrlIn(BaseModel):
+    app_url: str | None = Field(default=None, max_length=200)
+
+
+@router.post("/access-requests/{req_id}/accept")
+def accept_request(req_id: int, request: Request, payload: AppUrlIn | None = None,
+                   admin: dict = Depends(admin_user)) -> dict:
+    """Envoie une invitation sans révéler l'adresse de l'administrateur."""
+    with get_conn() as conn:
+        row = conn.execute("SELECT email FROM invite_requests WHERE id = ?", (req_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Demande introuvable")
+        conn.execute("DELETE FROM invite_requests WHERE id = ?", (req_id,))
+        known = conn.execute("SELECT 1 FROM users WHERE email = ? AND password_hash IS NOT NULL",
+                             (row["email"],)).fetchone()
+        if known:
+            raise HTTPException(status_code=409, detail="Cette personne a déjà un compte.")
+        return _send_invitation(conn, row["email"], admin, _app_url(payload.app_url if payload else None, request),
+                                anonymous=True)
+
+
+@router.delete("/access-requests/{req_id}")
+def decline_request(req_id: int, admin: dict = Depends(admin_user)) -> dict:
+    """Refus discret : la demande est effacée, aucun mail n'est envoyé."""
+    with get_conn() as conn:
+        n = conn.execute("DELETE FROM invite_requests WHERE id = ?", (req_id,)).rowcount
+    if not n:
+        raise HTTPException(status_code=404, detail="Demande introuvable")
+    return {"ok": True}
 
 
 @router.delete("/invitations/{inv_id}")

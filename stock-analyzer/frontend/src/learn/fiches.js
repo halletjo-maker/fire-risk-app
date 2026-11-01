@@ -8,6 +8,7 @@ export const CATEGORIES = [
   { key: 'technique', label: 'Analyse technique' },
   { key: 'fondamentale', label: 'Analyse fondamentale' },
   { key: 'actualites', label: 'Actualités' },
+  { key: 'fiscalite', label: 'Fiscalité belge' },
 ]
 
 export const FICHES = [
@@ -517,6 +518,212 @@ export const FICHES = [
       'Lis toujours les titres eux-mêmes avant de décider.',
     ],
     related: ['lire-les-scores', 'valorisation-per'],
+  },
+  {
+    slug: 'taxe-plus-values',
+    category: 'fiscalite',
+    emoji: '🧾',
+    title: 'La taxe sur les plus-values (depuis 2026)',
+    minutes: 5,
+    updated: 'novembre 2026',
+    oneLiner: "Depuis le 1er janvier 2026, le gain réalisé en vendant une action, un ETF, un fonds, une obligation ou une crypto est taxé à 10 %, après une franchise de 10 000 € par personne et par an.",
+    intro: [
+      "Jusqu'en 2025, un particulier belge qui gérait son portefeuille « en bon père de famille » ne payait pas d'impôt sur ses plus-values. La loi d'avril 2026 (publiée au Moniteur belge le 21 avril 2026) a changé cela, avec effet au 1er janvier 2026.",
+      "Seul le gain réalisé, c'est-à-dire au moment de la vente, est visé. Tant que tu gardes un titre, rien n'est dû, même s'il a fortement monté.",
+    ],
+    sections: [
+      {
+        title: "L'essentiel",
+        bullets: [
+          'Taux : 10 % de la plus-value réalisée.',
+          'Produits concernés : actions, ETF, fonds, obligations, cryptomonnaies, et certains contrats d’assurance-placement.',
+          'Franchise : les 10 000 premiers euros de plus-values de l’année sont exonérés, par personne (un couple a donc deux franchises). Le montant est indexé chaque année.',
+          'Franchise non utilisée : on peut en reporter au plus 1 000 € par an, pendant cinq ans maximum (jusqu’à 15 000 € de franchise une année donnée).',
+        ],
+      },
+      {
+        title: 'Et ce que je possédais avant 2026 ?',
+        paras: [
+          "Les gains acquis avant 2026 restent hors taxe. Pour un titre acheté avant 2026, le point de départ du calcul est sa valeur au 31 décembre 2025 (le cours de clôture pour un titre coté).",
+          "Si tu l'avais payé plus cher que ce cours, tu peux utiliser ton vrai prix d'achat pour les ventes faites jusqu'au 31 décembre 2030, à condition de pouvoir le prouver (avis d'exécution, relevé). Garde ces documents.",
+        ],
+      },
+      {
+        title: 'Exemple',
+        bullets: [
+          'Action achetée 40 € en 2023, cotée 50 € au 31/12/2025, vendue 70 € en 2026.',
+          'Gain taxable : 70 − 50 = 20 € par action (les 10 € gagnés avant 2026 sont exonérés).',
+          'Si tes gains de l’année ne dépassent pas 10 000 €, tu ne paies finalement rien, mais il faut le demander dans ta déclaration.',
+        ],
+      },
+      {
+        title: 'Les pertes',
+        paras: [
+          "Une moins-value réalisée peut être déduite des plus-values de la même année, de la même catégorie (le régime à 10 %). Une perte qui n'a pas servi dans l'année ne se reporte pas sur les années suivantes.",
+        ],
+      },
+      {
+        title: 'Qui paie ? La banque ou toi',
+        bullets: [
+          'Banque ou courtier en Belgique (Saxo a une succursale belge) : il retient en principe les 10 % à chaque vente. Il ne connaît ni ta franchise ni tes pertes chez d’autres intermédiaires : tu récupères le trop-payé via ta déclaration.',
+          '« Opt-out » : tu peux demander qu’il ne retienne rien ; tu déclares alors toi-même tes plus-values. Chaque intermédiaire fixe sa date limite (chez Saxo, c’était le 30 juin 2026).',
+          'Courtier étranger sans présence en Belgique : en général rien n’est retenu ; c’est à toi de calculer et de déclarer.',
+          'Première déclaration concernée : celle de 2027, pour les revenus 2026.',
+        ],
+      },
+      {
+        title: 'Autres régimes (hors de cette fiche)',
+        bullets: [
+          'Participations importantes (au moins 20 % d’une société) : règles spécifiques.',
+          '« Plus-values internes » (revendre ses titres à sa propre société) : 33 %.',
+          'Opérations spéculatives ou anormales : taxation plus lourde possible.',
+        ],
+      },
+    ],
+    inApp: [
+      'Les portefeuilles fictifs et les rapports ne calculent pas cette taxe : leurs performances sont avant impôts.',
+      'Les objectifs de vente de l’outil ne tiennent pas compte de la franchise annuelle : à toi de répartir tes ventes si c’est utile.',
+    ],
+    traps: [
+      'Croire que la franchise est automatique : elle se demande dans la déclaration annuelle.',
+      'Perdre les preuves d’achat d’avant 2026 : sans elles, impossible de faire valoir un prix d’achat plus élevé que le cours du 31/12/2025.',
+      'Compter sur une perte de l’an passé : elle ne se reporte pas.',
+      'Oublier un compte chez un courtier étranger : la déclaration reste obligatoire.',
+    ],
+    keyPoints: [
+      '10 % sur le gain réalisé depuis le 1er janvier 2026, après 10 000 € de franchise par personne et par an.',
+      'Les gains d’avant 2026 ne sont pas taxés.',
+      'Garde tes avis d’achat et de vente, et vérifie ta déclaration 2027.',
+      'Règles récentes et parfois précisées en cours de route : en cas de doute, demande au SPF Finances ou à un comptable.',
+    ],
+    sources: [
+      ['Belfius : exonérations et réductions possibles', 'https://www.belfius.be/webapps/fr/selfcare/belfius/epargner-investir/outils-services/exonerations-réductions-possibles-taxe-sur-les-plus-values'],
+      ['Bolero : exonération et moins-values', 'https://www.bolero.be/fr/campagnes/la-taxe-sur-les-plus-values-chez-bolero/exoneration-et-moins-values-dans-le-cadre-de-la-taxe-sur-les-plus-values'],
+      ['Saxo : impôt sur les plus-values et opt-out', 'https://www.help.saxo/hc/fr-be/articles/36192904266525-Imp%C3%B4t-sur-les-plus-values-et-opt-out-comment-faire-un-choix'],
+      ['Baker Tilly : impact pour les investisseurs', 'https://bakertilly.be/fr/news/taxe-sur-les-plus-values-des-actifs-financiers-a-partir-de-2026-impact-sur-les-investisseurs/'],
+    ],
+    related: ['tob-taxe-de-bourse', 'dividendes-precompte'],
+  },
+  {
+    slug: 'tob-taxe-de-bourse',
+    category: 'fiscalite',
+    emoji: '🏦',
+    title: 'La taxe sur les opérations de Bourse (TOB)',
+    minutes: 3,
+    updated: 'novembre 2026',
+    oneLiner: "Chaque achat et chaque vente en Bourse paie une petite taxe : 0,12 %, 0,35 % ou 1,32 % selon le produit, avec un plafond par opération.",
+    intro: [
+      "La TOB existe depuis longtemps et s'ajoute aux frais du courtier. Elle est due même si tu perds de l'argent sur l'opération.",
+    ],
+    sections: [
+      {
+        title: 'Les trois taux',
+        bullets: [
+          '0,35 % (maximum 1 600 € par opération) : actions, et ETF non enregistrés dans l’Espace économique européen.',
+          '0,12 % (maximum 1 300 €) : ETF et fonds cotés enregistrés dans l’Espace économique européen, obligations, SIR belges.',
+          '1,32 % (maximum 4 000 €) : fonds et ETF de capitalisation (qui réinvestissent les dividendes) enregistrés en Belgique.',
+        ],
+      },
+      {
+        title: 'Le piège des ETF de capitalisation',
+        paras: [
+          "Beaucoup d'ETF populaires sur le monde entier existent en version « capitalisation » enregistrée en Belgique : ils paient alors 1,32 % à l'achat et à la vente, contre 0,12 % pour un ETF comparable non enregistré en Belgique. Sur 5 000 €, cela fait 66 € au lieu de 6 €. Regarde la fiche du produit chez ton courtier avant d'acheter.",
+        ],
+      },
+      {
+        title: 'Qui la paie ?',
+        bullets: [
+          'Courtier belge (dont la succursale belge de Saxo) : il la retient automatiquement, tu n’as rien à faire.',
+          'Courtier étranger qui ne s’en charge pas : tu dois la déclarer et la payer toi-même au SPF Finances, au plus tard le dernier jour ouvrable du deuxième mois qui suit l’opération.',
+        ],
+      },
+    ],
+    inApp: [
+      'Les portefeuilles fictifs comptent 0,1 % de frais par opération (minimum 1 €) : c’est une moyenne simplifiée, la TOB réelle peut être plus élevée.',
+    ],
+    traps: [
+      'Multiplier les petits allers-retours : TOB et frais sont payés à chaque fois.',
+      'Acheter un ETF de capitalisation enregistré en Belgique sans le savoir : 1,32 % à l’entrée et à la sortie.',
+      'Oublier de payer la TOB chez un courtier étranger : des amendes sont prévues.',
+    ],
+    keyPoints: [
+      'Actions : 0,35 %. ETF européens : souvent 0,12 %. Capitalisation enregistrée en Belgique : 1,32 %.',
+      'La TOB s’ajoute aux frais du courtier, à l’achat comme à la vente.',
+    ],
+    sources: [
+      ['Test-Achats : la taxe sur les opérations de Bourse', 'https://www.test-achats.be/invest/fiscalite-et-droits/taxation/dossiers/taxe-de-bourse/taxe-operation-bourse'],
+      ['Circulaire 2026/C/42 (FAQ TOB, mars 2026)', 'https://blog.oeccbb.be/fr/article/circulaire-2026c42-faq-tob-taxe-sur-les-operations-de-bourse-version-2/30750'],
+      ['Wikifin : les taxes sur vos investissements', 'https://www.wikifin.be/fr/impots-emploi-et-revenus/declaration-dimpots/vos-revenus-mobiliers/les-taxes-sur-vos'],
+    ],
+    related: ['taxe-plus-values', 'produits-action-etf-crypto'],
+  },
+  {
+    slug: 'dividendes-precompte',
+    category: 'fiscalite',
+    emoji: '💶',
+    title: 'Dividendes, précompte et compte à l’étranger',
+    minutes: 4,
+    updated: 'novembre 2026',
+    oneLiner: "Les dividendes sont taxés à 30 % (le précompte mobilier), mais une petite partie peut être récupérée ; un compte à l'étranger doit être signalé.",
+    intro: [
+      "Quand une société te verse un dividende, une partie part directement en impôt avant d'arriver sur ton compte. Voici les règles principales pour un particulier belge.",
+    ],
+    sections: [
+      {
+        title: 'Le précompte mobilier : 30 %',
+        bullets: [
+          'Dividendes et intérêts : 30 % retenus à la source par ta banque ou ton courtier belge.',
+          'Action étrangère : le pays de la société retient d’abord sa propre taxe (par exemple 15 % aux États-Unis avec le formulaire W-8BEN), puis la Belgique prend 30 % sur le reste.',
+          'Exemple : 100 € de dividende américain → 15 € pour les États-Unis → 25,50 € pour la Belgique → 59,50 € pour toi.',
+        ],
+      },
+      {
+        title: 'La part que tu peux récupérer',
+        paras: [
+          "Les premiers 833 € de dividendes d'actions de l'année (revenus 2025) sont exonérés, par personne. Comme le précompte a déjà été retenu, tu le récupères via ta déclaration (cadre VII, code 1437), jusqu'à 249,90 €. Le montant est revu chaque année.",
+          "Les dividendes d'ETF et de fonds n'ouvrent pas droit à cette exonération.",
+        ],
+      },
+      {
+        title: 'Fonds obligataires : la taxe Reynders',
+        paras: [
+          "Si un fonds investit plus de 10 % en obligations, la part de ton gain qui vient des intérêts est taxée à 30 % à la vente. Cette part n'est pas taxée une seconde fois par la taxe sur les plus-values.",
+        ],
+      },
+      {
+        title: 'Gros portefeuilles : la taxe sur les comptes-titres',
+        paras: [
+          "Au-delà d'une valeur moyenne d'un million d'euros sur un compte-titres, une taxe annuelle s'applique : 0,30 % depuis le 1er juin 2026 (0,15 % avant).",
+        ],
+      },
+      {
+        title: 'Compte à l’étranger : deux démarches',
+        bullets: [
+          'Une seule fois : signaler le compte au Point de contact central de la Banque nationale (en ligne avec ta carte d’identité ou itsme).',
+          'Chaque année : cocher son existence au cadre XIII de ta déclaration, avec le pays.',
+          'Cela vaut aussi pour les comptes-titres et les comptes crypto à l’étranger. Un compte auprès d’une succursale belge (comme Saxo Belgique) n’est pas un compte étranger.',
+        ],
+      },
+    ],
+    inApp: [
+      'Le rendement du dividende affiché par l’outil est brut, avant toute taxe.',
+    ],
+    traps: [
+      'Comparer des rendements de dividende sans tenir compte des 30 % (et de la taxe étrangère).',
+      'Ne pas réclamer les 833 € exonérés : l’argent reste au fisc.',
+      'Oublier le cadre XIII pour un compte chez un courtier ou une plateforme crypto à l’étranger.',
+    ],
+    keyPoints: [
+      '30 % de précompte sur les dividendes, en partie récupérable pour les actions.',
+      'Un compte à l’étranger : déclaration à la Banque nationale une fois, puis cadre XIII chaque année.',
+    ],
+    sources: [
+      ['Crelan : exonération des dividendes (FAQ)', 'https://www.crelan.be/fr/particuliers/article/exoneration-dividendes-faq'],
+      ['Wikifin : déclarer vos comptes à l’étranger', 'https://www.wikifin.be/fr/impots-emploi-et-revenus/declaration-dimpots/vos-revenus-mobiliers/declarer-vos-comptes-letranger'],
+      ['BNP Paribas Fortis : taxe annuelle sur les comptes-titres', 'https://www.bnpparibasfortis.be/fr/public/particuliers/epargner-et-placer/taxe-compte-titre'],
+      ['Pareto : la taxe Reynders', 'https://pareto.be/fr/tout-savoir/optimisation-fiscale/taxes/taxe-reynders/'],
+    ],
+    related: ['taxe-plus-values', 'tob-taxe-de-bourse'],
   },
 ]
 

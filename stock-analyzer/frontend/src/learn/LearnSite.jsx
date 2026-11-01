@@ -72,7 +72,9 @@ function Fiche({ fiche }) {
       <Link href={LEARN_ROOT} className="inline-flex items-center gap-1 text-sm text-muted hover:text-gray-100">
         <ArrowLeft className="h-4 w-4" /> Toutes les fiches
       </Link>
-      <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted">{cat?.label} · {fiche.minutes} min</p>
+      <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted">
+        {cat?.label} · {fiche.minutes} min{fiche.updated && <span className="normal-case tracking-normal"> · règles vérifiées en {fiche.updated}</span>}
+      </p>
       <h1 className="mt-1 text-2xl font-bold leading-tight"><span aria-hidden="true">{fiche.emoji}</span> {fiche.title}</h1>
       <p className="mt-3 rounded-lg border-l-4 border-bull bg-panel px-4 py-3 text-[15px] leading-relaxed">
         <b>En une phrase :</b> {fiche.oneLiner}
@@ -96,6 +98,17 @@ function Fiche({ fiche }) {
       <Block icon={Cpu} title="Dans l'application" tone="app"><List items={fiche.inApp} /></Block>
       <Block icon={AlertTriangle} title="Pièges à éviter" tone="warn"><List items={fiche.traps} /></Block>
       <Block icon={Lightbulb} title="À retenir" tone="key"><List items={fiche.keyPoints} /></Block>
+      {fiche.sources?.length > 0 && (
+        <section className="mt-5 text-sm">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Sources</h2>
+          <ul className="mt-2 space-y-1">
+            {fiche.sources.map(([label, url]) => (
+              <li key={url}><a href={url} target="_blank" rel="noreferrer" className="text-bull underline-offset-2 hover:underline">{label}</a></li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted">Information générale, pas un conseil fiscal : ta situation peut demander l’avis d’un comptable ou du SPF Finances.</p>
+        </section>
+      )}
 
       {fiche.related?.length > 0 && (
         <section className="mt-6">

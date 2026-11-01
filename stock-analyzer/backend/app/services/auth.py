@@ -158,14 +158,14 @@ def clear_cookie(response) -> None:
 
 # ── Invitations ────────────────────────────────────────────────────────────
 
-def create_invitation(conn, email: str, invited_by: int) -> tuple[str, dict]:
+def create_invitation(conn, email: str, invited_by: int, anonymous: bool = False) -> tuple[str, dict]:
     """Remplace l'invitation en attente pour cette adresse ; renvoie (jeton, invitation)."""
     conn.execute("DELETE FROM invitations WHERE email = ? AND used_at IS NULL", (email,))
     token = secrets.token_urlsafe(32)
     inv_id = conn.execute(
-        "INSERT INTO invitations (token_hash, email, invited_by, expires_at) "
-        f"VALUES (?, ?, ?, datetime('now', '+{INVITATION_DAYS} days'))",
-        (_digest(token), email, invited_by),
+        "INSERT INTO invitations (token_hash, email, invited_by, anonymous, expires_at) "
+        f"VALUES (?, ?, ?, ?, datetime('now', '+{INVITATION_DAYS} days'))",
+        (_digest(token), email, invited_by, int(anonymous)),
     ).lastrowid
     row = conn.execute("SELECT id, email, created_at, expires_at FROM invitations WHERE id = ?", (inv_id,)).fetchone()
     return token, dict(row)
@@ -176,7 +176,8 @@ def invitation_for_token(conn, token: str | None) -> dict | None:
     if not token:
         return None
     row = conn.execute(
-        "SELECT i.id, i.email, i.expires_at, u.email AS invited_by FROM invitations i "
+        "SELECT i.id, i.email, i.expires_at, CASE WHEN i.anonymous THEN NULL ELSE u.email END AS invited_by "
+        "FROM invitations i "
         "LEFT JOIN users u ON u.id = i.invited_by "
         "WHERE i.token_hash = ? AND i.used_at IS NULL AND i.expires_at > datetime('now')",
         (_digest(token),),

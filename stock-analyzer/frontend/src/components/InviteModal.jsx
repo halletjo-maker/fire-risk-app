@@ -73,8 +73,23 @@ export default function InviteModal({ onClose }) {
   const [data, setData] = useState(null)
   const [removing, setRemoving] = useState(null)
 
-  const load = () => api.members().then(setData).catch((e) => setError(e.message))
+  const [requests, setRequests] = useState([])
+  const [reqBusy, setReqBusy] = useState(null)
+  const load = () => {
+    api.members().then(setData).catch((e) => setError(e.message))
+    api.accessRequests().then((r) => setRequests(r.requests)).catch(() => {})
+  }
   useEffect(() => { load() }, [])
+
+  const answer = async (req, accept) => {
+    setReqBusy(req.id)
+    setError(null)
+    try {
+      if (accept) setResult(await api.acceptAccessRequest(req.id))
+      else await api.declineAccessRequest(req.id)
+      load()
+    } catch (e) { setError(e.message) } finally { setReqBusy(null) }
+  }
 
   const submit = async (e) => {
     e.preventDefault()
@@ -127,6 +142,29 @@ export default function InviteModal({ onClose }) {
             {busy ? 'Création…' : <><Send className="h-4 w-4" /> Créer l'invitation</>}
           </button>
         </form>
+      )}
+
+      {requests.length > 0 && (
+        <div className="mt-6 border-t border-line pt-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">Demandes d'accès ({requests.length})</h3>
+          <p className="mt-1 text-xs text-muted">Déposées depuis la page d'accueil. Accepter envoie une invitation sans ton adresse ; refuser efface la demande sans prévenir.</p>
+          <ul className="mt-2 divide-y divide-line">
+            {requests.map((r) => (
+              <li key={r.id} className="py-2.5">
+                <p className="truncate text-sm font-medium">{r.email}</p>
+                <p className="text-xs text-muted">Le {fmtDate(r.created_at)}{r.message ? ` · « ${r.message} »` : ''}</p>
+                <div className="mt-2 flex gap-2">
+                  <button className="btn-primary flex-1 py-1.5 text-sm" disabled={reqBusy === r.id} onClick={() => answer(r, true)}>
+                    {reqBusy === r.id ? <Spinner className="h-4 w-4" /> : <Send className="h-4 w-4" />} Inviter
+                  </button>
+                  <button className="btn-ghost flex-1 justify-center border border-line py-1.5 text-sm" disabled={reqBusy === r.id} onClick={() => answer(r, false)}>
+                    <X className="h-4 w-4" /> Refuser
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <div className="mt-6 border-t border-line pt-4">

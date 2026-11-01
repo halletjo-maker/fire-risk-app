@@ -44,9 +44,18 @@ CREATE TABLE IF NOT EXISTS invitations (
     token_hash      TEXT    NOT NULL UNIQUE,
     email           TEXT    NOT NULL COLLATE NOCASE,
     invited_by      INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    anonymous       INTEGER NOT NULL DEFAULT 0,  -- 1 : sans le nom de l'administrateur (demande d'accès)
     created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
     expires_at      TEXT    NOT NULL,
     used_at         TEXT
+);
+
+-- Demandes d'accès déposées depuis la page d'accueil publique
+CREATE TABLE IF NOT EXISTS invite_requests (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    email           TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    message         TEXT,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Réinitialisation du mot de passe par mail (lien à usage unique, valable 1 heure)
@@ -121,6 +130,7 @@ CREATE TABLE IF NOT EXISTS portfolios (
     max_positions   INTEGER NOT NULL DEFAULT 10,
     last_run_at     TEXT,
     last_note       TEXT,       -- ex. « Achats suspendus : MSCI World sous sa MM100 »
+    is_public       INTEGER NOT NULL DEFAULT 0,  -- 1 : « portefeuille témoin » visible sur le site public
     created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -231,6 +241,7 @@ TABLES = [
     "users",
     "sessions",
     "invitations",
+    "invite_requests",
     "password_resets",
     "portfolios",
     "portfolio_positions",
@@ -273,6 +284,8 @@ MIGRATIONS = [
     ("portfolios", "last_note", "TEXT"),
     ("watchlist_items", "zone", "TEXT"),
     ("watchlists", "screen_synced_at", "TEXT"),
+    ("portfolios", "is_public", "INTEGER NOT NULL DEFAULT 0"),
+    ("invitations", "anonymous", "INTEGER NOT NULL DEFAULT 0"),
 ]
 
 

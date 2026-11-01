@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { PauseCircle, ShieldCheck, Trash2, Wallet } from 'lucide-react'
+import { Globe2, PauseCircle, ShieldCheck, Trash2, Wallet } from 'lucide-react'
 import { api } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { changeColor, fmtPct, fmtPrice } from '../lib/format'
@@ -217,6 +217,23 @@ export function PortfolioModal({ id, onClose }) {
           )}
 
           <Rules />
+          {p.can_publish && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm">
+              <input type="checkbox" className="mt-1 h-4 w-4 accent-[#00FF88]" checked={!!p.is_public}
+                onChange={async (e) => {
+                  const next = e.target.checked
+                  setData({ ...p, is_public: next })
+                  try { await api.setPortfolioPublic(id, next) } catch { setData({ ...p }) }
+                }} />
+              <span>
+                <span className="flex items-center gap-1.5 font-medium"><Globe2 className="h-4 w-4" /> Montrer sur le site public</span>
+                <span className="block text-xs text-muted">
+                  Devient le « portefeuille témoin » de la page <a href="/portefeuille-temoin" target="_blank" rel="noreferrer" className="text-bull underline">/portefeuille-temoin</a> :
+                  performance, lignes et ventes, sans ton nom ni ton adresse. Un seul portefeuille à la fois.
+                </span>
+              </span>
+            </label>
+          )}
           <p className="text-[11px] text-muted">
             Simulation sur les derniers cours connus, sans ordre réel. Les résultats passés ne préjugent pas des résultats
             futurs. Pas un conseil en investissement.

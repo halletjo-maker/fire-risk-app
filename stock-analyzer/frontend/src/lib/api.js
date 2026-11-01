@@ -5,7 +5,7 @@ const BASE = '/api'
 // Session expirée ou révoquée : App revient à l'écran de connexion.
 export const SESSION_EXPIRED = 'ab:session-expired'
 const AUTH_PATHS = ['/users/login', '/users/register', '/users/current', '/users/password/forgot', '/users/password/reset']
-const isAuthPath = (path) => AUTH_PATHS.includes(path) || path.startsWith('/users/invitation/') || path.startsWith('/users/password/reset/')
+const isAuthPath = (path) => AUTH_PATHS.includes(path) || path.startsWith('/public/') || path.startsWith('/users/invitation/') || path.startsWith('/users/password/reset/')
 
 // Mode démo (VITE_DEMO=1) : API simulée dans la page, sans serveur
 export const DEMO = import.meta.env.VITE_DEMO === '1'
@@ -76,6 +76,12 @@ export const api = {
   portfolio: (id) => request(`/portfolios/${id}`),
   createPortfolio: (body) => request('/portfolios', { method: 'POST', body }),
   deletePortfolio: (id) => request(`/portfolios/${id}`, { method: 'DELETE' }),
+  setPortfolioPublic: (id, isPublic) => request(`/portfolios/${id}/public`, { method: 'POST', body: { public: isPublic } }),
+  publicPortfolio: () => request('/public/portfolio'),
+  requestAccess: (body) => request('/public/access-request', { method: 'POST', body }),
+  accessRequests: () => request('/users/access-requests'),
+  acceptAccessRequest: (id) => request(`/users/access-requests/${id}/accept`, { method: 'POST', body: { app_url: window.location.origin } }),
+  declineAccessRequest: (id) => request(`/users/access-requests/${id}`, { method: 'DELETE' }),
   createPresetWatchlist: (key) => request(`/watchlists/presets/${key}`, { method: 'POST' }),
   refreshWatchlist: (id) => request(`/watchlists/${id}/refresh`, { method: 'POST' }),
   watchlistSuggestions: (id) => request(`/watchlists/${id}/suggestions`),

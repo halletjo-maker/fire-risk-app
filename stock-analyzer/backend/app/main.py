@@ -14,7 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import APP_NAME, APP_VERSION, get_settings
 from .database import init_db
-from .routers import admin, alerts, analyze, health, portfolios, users, watchlists
+from .routers import admin, alerts, analyze, health, portfolios, public, users, watchlists
 from .scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -45,7 +45,7 @@ app.add_middleware(
 )
 
 for router in (health.router, users.router, watchlists.router, analyze.router, alerts.router, admin.router,
-               portfolios.router):
+               portfolios.router, public.router):
     app.include_router(router)
 
 

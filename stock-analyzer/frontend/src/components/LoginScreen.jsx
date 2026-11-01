@@ -59,7 +59,7 @@ export default function LoginScreen({ setupRequired, registrationOpen, invitatio
   const title = invited ? 'Tu es invité 🎉' : resetting ? 'Nouveau mot de passe 🔑' : forgot ? 'Mot de passe oublié'
     : mode === 'register' ? 'Crée ton accès 🔐' : 'Bienvenue 👋'
   const subtitle = invited
-    ? `${invitation.invited_by || 'Un membre'} t'invite à utiliser Analyse Boursière. Choisis ton mot de passe pour créer ton compte personnel : tes watchlists et alertes ne sont visibles que par toi.`
+    ? `${invitation.invited_by ? `${invitation.invited_by} t'invite` : 'Bienvenue ! Tu es invité'} à utiliser Analyse Boursière. Choisis ton mot de passe pour créer ton compte personnel : tes watchlists et alertes ne sont visibles que par toi.`
     : resetting ? 'Choisis un nouveau mot de passe. Tes autres appareils seront déconnectés.'
       : forgot ? 'Indique l\'adresse de ton compte : tu recevras un lien pour choisir un nouveau mot de passe.'
         : mode === 'register'

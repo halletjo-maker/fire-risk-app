@@ -76,18 +76,18 @@ def send_report(payload: ReportIn | None = None, user: dict = Depends(current_us
     return result
 
 
-@router.get("/{pid}")
-def detail(pid: int, user: dict = Depends(current_user)) -> dict:
-    with get_conn() as conn:
-        pf = _own(conn, pid, user["id"])
-        s = paper.summary(conn, pf)
-        s["trades"] = [dict(r) for r in conn.execute(
-            "SELECT id, symbol, name, currency, qty, entry_price, entry_at, exit_price, exit_at, exit_reason, pnl_eur, "
-            "ROUND((exit_price * qty / exit_fx - exit_fee) / (entry_price * qty / entry_fx + entry_fee) * 100 - 100, 2) "
-            "AS pnl_pct FROM portfolio_positions WHERE portfolio_id = ? AND status = 'CLOSED' "
-            "ORDER BY exit_at DESC LIMIT 100", (pid,))]
-        s["history"] = [dict(r) for r in conn.execute(
-            "SELECT day, value_eur FROM portfolio_values WHERE portfolio_id = ? ORDER BY day", (pid,))]
+def full_detail(conn, pf) -> dict:
+    """Résumé + opérations clôturées + courbe comparée au MSCI World (vue privée et page publique)."""
+    pid = pf["id"]
+    s = paper.summary(conn, pf)
+    s["is_public"] = bool(pf["is_public"]) if "is_public" in pf.keys() else False
+    s["trades"] = [dict(r) for r in conn.execute(
+        "SELECT id, symbol, name, currency, qty, entry_price, entry_at, exit_price, exit_at, exit_reason, pnl_eur, "
+        "ROUND((exit_price * qty / exit_fx - exit_fee) / (entry_price * qty / entry_fx + entry_fee) * 100 - 100, 2) "
+        "AS pnl_pct FROM portfolio_positions WHERE portfolio_id = ? AND status = 'CLOSED' "
+        "ORDER BY exit_at DESC LIMIT 100", (pid,))]
+    s["history"] = [dict(r) for r in conn.execute(
+        "SELECT day, value_eur FROM portfolio_values WHERE portfolio_id = ? ORDER BY day", (pid,))]
     # Repère : la même somme placée dans l'ETF MSCI World le jour de la création
     days = [h["day"] for h in s["history"]]
     for h, v in zip(s["history"], regime.indexed(days, pf["created_at"][:10], pf["initial_cash"])):
@@ -96,7 +96,32 @@ def detail(pid: int, user: dict = Depends(current_user)) -> dict:
     s["regime"] = regime.regime()
     closed = [t["pnl_eur"] for t in s["trades"] if t["pnl_eur"] is not None]
     s["stats"] = {"closed": len(closed), "wins": sum(1 for x in closed if x > 0), "realized_eur": round(sum(closed), 2)}
+    return s
+
+
+@router.get("/{pid}")
+def detail(pid: int, user: dict = Depends(current_user)) -> dict:
+    with get_conn() as conn:
+        s = full_detail(conn, _own(conn, pid, user["id"]))
+    s["can_publish"] = bool(user.get("is_admin"))
     return {"portfolio": s}
+
+
+class PublicIn(BaseModel):
+    public: bool
+
+
+@router.post("/{pid}/public")
+def set_public(pid: int, payload: PublicIn, user: dict = Depends(current_user)) -> dict:
+    """Administrateur : montre ce portefeuille (un seul à la fois) sur la page publique « Portefeuille témoin »."""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Réservé à l'administrateur de l'application.")
+    with get_conn() as conn:
+        _own(conn, pid, user["id"])
+        if payload.public:
+            conn.execute("UPDATE portfolios SET is_public = 0 WHERE is_public = 1")
+        conn.execute("UPDATE portfolios SET is_public = ? WHERE id = ?", (int(payload.public), pid))
+    return {"is_public": payload.public}
 
 
 @router.post("/{pid}/run")
