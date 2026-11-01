@@ -89,6 +89,15 @@ def clear_mail(admin: dict = Depends(admin_user)) -> dict:
     return mail_settings(admin)
 
 
+# ── Visites du site ─────────────────────────────────────────────────────────
+@router.get("/stats")
+def site_stats(days: int = 30, admin: dict = Depends(admin_user)) -> dict:
+    from ..main import seo_pages
+    from ..services import stats
+
+    return stats.summary(max(1, min(days, 365)), seo_pages())
+
+
 # ── Sauvegardes ─────────────────────────────────────────────────────────────
 class BackupPassIn(BaseModel):
     passphrase: str = Field(min_length=backup.PASSPHRASE_MIN, max_length=200)

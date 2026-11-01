@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr, Field
 
 from ..database import get_conn
@@ -42,6 +42,25 @@ def showcase() -> dict:
         "history": s["history"], "benchmark_label": s["benchmark_label"],
         "stats": {"closed": s["stats"]["closed"], "wins": s["stats"]["wins"]},
     }
+
+
+class HitIn(BaseModel):
+    path: str = Field(max_length=200)
+    referrer: str | None = Field(default=None, max_length=500)
+    ref: str | None = Field(default=None, max_length=60)
+
+
+@router.post("/hit", status_code=204)
+def hit(payload: HitIn, request: Request) -> Response:
+    """Une page publique affichée (compteur de visites sans cookie). Les membres connectés ne comptent pas."""
+    from ..main import seo_pages
+    from ..services import stats
+
+    path = payload.path.rstrip("/") or "/"
+    if path in seo_pages() and auth.user_for_token(auth.token_from_request(request)) is None:
+        stats.record(path, _client_ip(request), request.headers.get("user-agent"), payload.referrer, payload.ref,
+                     request.headers.get("host", "").split(":")[0])
+    return Response(status_code=204)
 
 
 class AccessRequestIn(BaseModel):

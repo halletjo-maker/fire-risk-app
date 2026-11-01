@@ -85,20 +85,25 @@ export function Privacy() {
           'Ton mot de passe, uniquement sous forme chiffrée (haché) : personne ne peut le lire, pas même l’administrateur.',
           'Tes watchlists, alertes, portefeuilles fictifs et l’historique de tes analyses.',
           'Tes sessions de connexion (30 jours), pour ne pas avoir à te reconnecter à chaque visite.',
+          'Si tu actives les notifications : l’adresse technique de ton appareil fournie par ton navigateur, pour pouvoir t’envoyer les messages.',
+          'Si tu demandes une invitation : ton adresse mail et ton message, effacés dès la réponse.',
         ]} />
         <p>Les fiches « Apprendre » se consultent sans compte et sans aucune donnée personnelle.</p>
       </Section>
       <Section title="Où sont-elles ?">
         <p>
           Sur un serveur loué chez Hetzner, en Allemagne (Union européenne), protégé par un pare-feu et une connexion
-          chiffrée (https). Les mails sont envoyés par l'intermédiaire de Gmail (Google).
+          chiffrée (https). Les mails partent d'une boîte hébergée chez OVHcloud (Union européenne). Une copie de sauvegarde
+          chiffrée est envoyée chaque semaine à l'administrateur ; elle est illisible sans son mot de passe.
         </p>
       </Section>
       <Section title="Cookies et traceurs">
         <p>
-          Un seul cookie, strictement nécessaire : celui qui garde ta session ouverte. Aucune publicité, aucun outil de
-          mesure d'audience, aucun traceur tiers. Le navigateur mémorise aussi quelques préférences sur ton appareil
-          (dernière watchlist ouverte, bandeau d'installation masqué).
+          Un seul cookie, strictement nécessaire : celui qui garde ta session ouverte. Aucune publicité, aucun traceur
+          tiers, aucun Google Analytics. Pour savoir combien de personnes lisent le site public, le serveur compte
+          lui-même les pages vues, sans cookie : un visiteur est reconnu le temps d'une journée par une empreinte
+          irréversible (renouvelée chaque jour, effacée après 2 jours), et seuls des totaux sont gardés. Le navigateur
+          mémorise aussi quelques préférences sur ton appareil (dernière watchlist ouverte, bandeau d'installation masqué).
         </p>
       </Section>
       <Section title="Partage">

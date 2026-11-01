@@ -53,6 +53,7 @@ export const api = {
   saveMailSettings: (body) => request('/admin/mail', { method: 'PUT', body }),
   backupStatus: () => request('/admin/backup'),
   setBackupPassphrase: (passphrase) => request('/admin/backup', { method: 'PUT', body: { passphrase } }),
+  siteStats: (days) => request(`/admin/stats?days=${days}`),
   pushStatus: () => request('/push'),
   pushSubscribe: (sub) => request('/push/subscribe', { method: 'POST', body: sub }),
   pushUnsubscribe: (endpoint) => request('/push/unsubscribe', { method: 'POST', body: { endpoint } }),

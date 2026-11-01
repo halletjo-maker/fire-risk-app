@@ -64,6 +64,31 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
     created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Statistiques de visite du site public, sans cookie : seulement des totaux par jour.
+-- daily_visitors garde une empreinte anonyme (sel du jour + IP + navigateur) 2 jours au plus.
+CREATE TABLE IF NOT EXISTS site_stats (
+    day             TEXT PRIMARY KEY,
+    visitors        INTEGER NOT NULL DEFAULT 0,
+    views           INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS site_page_views (
+    day             TEXT NOT NULL,
+    path            TEXT NOT NULL,
+    views           INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (day, path)
+);
+CREATE TABLE IF NOT EXISTS site_sources (
+    day             TEXT NOT NULL,
+    source          TEXT NOT NULL,
+    visitors        INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (day, source)
+);
+CREATE TABLE IF NOT EXISTS daily_visitors (
+    day             TEXT NOT NULL,
+    hash            TEXT NOT NULL,
+    PRIMARY KEY (day, hash)
+);
+
 -- Demandes d'accès déposées depuis la page d'accueil publique
 CREATE TABLE IF NOT EXISTS invite_requests (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -257,6 +282,7 @@ TABLES = [
     "invitations",
     "invite_requests",
     "push_subscriptions",
+    "site_stats",
     "password_resets",
     "portfolios",
     "portfolio_positions",

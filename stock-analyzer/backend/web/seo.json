@@ -1,0 +1,117 @@
+{
+ "/": {
+  "title": "MM100 · Comprendre une action avant d’investir",
+  "description": "L’entreprise, son cours et l’actualité notés sur 10, avec des fiches gratuites pour apprendre à lire les indicateurs. Sans publicité.",
+  "priority": 1
+ },
+ "/apprendre": {
+  "title": "Apprendre à investir : fiches simples et gratuites · MM100",
+  "description": "15 fiches sans jargon : moyenne mobile 100 jours, RSI, PER, ETF, turbos, et la fiscalité belge (taxe sur les plus-values 2026, TOB, précompte).",
+  "priority": 0.9
+ },
+ "/portefeuille-temoin": {
+  "title": "Portefeuille témoin : la méthode MM100 face au MSCI World",
+  "description": "Un portefeuille virtuel géré seul par des règles publiques, comparé jour après jour à un ETF MSCI World. Gains et pertes montrés tels quels.",
+  "priority": 0.8
+ },
+ "/a-propos": {
+  "title": "À propos · MM100",
+  "description": "Un projet personnel, gratuit et sans publicité pour comprendre une action avant d’investir.",
+  "priority": 0.4
+ },
+ "/confidentialite": {
+  "title": "Confidentialité · MM100",
+  "description": "Les données gardées par MM100, où elles sont, et comment les faire effacer.",
+  "priority": 0.2
+ },
+ "/apprendre/lire-les-scores": {
+  "title": "Lire l'analyse de l'application · MM100",
+  "description": "Trois regards sur un produit (l'entreprise, son cours, l'actualité) résumés en une note sur 10 et un signal.",
+  "section": "Bien démarrer",
+  "priority": 0.7
+ },
+ "/apprendre/moyenne-mobile-100": {
+  "title": "La moyenne mobile 100 jours (MM100) · MM100",
+  "description": "La moyenne des 100 derniers cours de clôture : elle gomme le bruit quotidien et montre la tendance de fond.",
+  "section": "Analyse technique",
+  "priority": 0.7
+ },
+ "/apprendre/rsi": {
+  "title": "Le RSI : le thermomètre du marché · MM100",
+  "description": "Une note de 0 à 100 qui mesure la vigueur des hausses par rapport aux baisses des 14 dernières séances.",
+  "section": "Analyse technique",
+  "priority": 0.7
+ },
+ "/apprendre/macd": {
+  "title": "Le MACD : la dynamique en marche · MM100",
+  "description": "L’écart entre une moyenne rapide et une moyenne lente du cours, pour voir si la dynamique accélère ou ralentit.",
+  "section": "Analyse technique",
+  "priority": 0.7
+ },
+ "/apprendre/bollinger-volumes": {
+  "title": "Bandes de Bollinger et volumes · MM100",
+  "description": "Une enveloppe autour du cours qui s’élargit quand le marché s’agite, et le volume qui confirme (ou non) les mouvements.",
+  "section": "Analyse technique",
+  "priority": 0.7
+ },
+ "/apprendre/supports-resistances-stop-loss": {
+  "title": "Supports, résistances et stop-loss · MM100",
+  "description": "Les « planchers » et « plafonds » où le cours a tendance à rebondir ou caler, et le stop-loss qui limite les pertes.",
+  "section": "Analyse technique",
+  "priority": 0.7
+ },
+ "/apprendre/valorisation-per": {
+  "title": "Le PER : est-ce cher ? · MM100",
+  "description": "Le prix de l’action divisé par le bénéfice par action : combien d’années de bénéfices tu paies.",
+  "section": "Analyse fondamentale",
+  "priority": 0.7
+ },
+ "/apprendre/sante-financiere": {
+  "title": "La santé financière d’une entreprise · MM100",
+  "description": "Croissance, rentabilité, dette, trésorerie et dividende : le bilan de santé derrière le cours.",
+  "section": "Analyse fondamentale",
+  "priority": 0.7
+ },
+ "/apprendre/diversifier-gerer-risque": {
+  "title": "Diversifier et gérer le risque · MM100",
+  "description": "Ne jamais tout miser sur un seul produit, décider à l’avance combien on accepte de perdre, et laisser le temps faire son travail.",
+  "section": "Bien démarrer",
+  "priority": 0.7
+ },
+ "/apprendre/produits-action-etf-crypto": {
+  "title": "Action, ETF ou crypto : quelles différences ? · MM100",
+  "description": "Une action, c’est un morceau d’entreprise ; un ETF, un panier de centaines d’actions ; une crypto, un actif numérique sans entreprise derrière.",
+  "section": "Les produits",
+  "priority": 0.7
+ },
+ "/apprendre/turbos-warrants": {
+  "title": "Turbos et warrants : le levier · MM100",
+  "description": "Des produits qui amplifient les variations d’un sous-jacent (action, indice…) : les gains comme les pertes, jusqu’à la perte totale.",
+  "section": "Les produits",
+  "priority": 0.7
+ },
+ "/apprendre/sentiment-actualites": {
+  "title": "Le sentiment des actualités · MM100",
+  "description": "L’application lit les titres de presse récents et mesure s’ils sont plutôt positifs ou négatifs pour le produit.",
+  "section": "Actualités",
+  "priority": 0.7
+ },
+ "/apprendre/taxe-plus-values": {
+  "title": "La taxe sur les plus-values (depuis 2026) · MM100",
+  "description": "Depuis le 1er janvier 2026, le gain réalisé en vendant une action, un ETF, un fonds, une obligation ou une crypto est taxé à 10 %, après une franchise de 10 000 € par personne et par an.",
+  "section": "Fiscalité belge",
+  "priority": 0.8
+ },
+ "/apprendre/tob-taxe-de-bourse": {
+  "title": "La taxe sur les opérations de Bourse (TOB) · MM100",
+  "description": "Chaque achat et chaque vente en Bourse paie une petite taxe : 0,12 %, 0,35 % ou 1,32 % selon le produit, avec un plafond par opération.",
+  "section": "Fiscalité belge",
+  "priority": 0.8
+ },
+ "/apprendre/dividendes-precompte": {
+  "title": "Dividendes, précompte et compte à l’étranger · MM100",
+  "description": "Les dividendes sont taxés à 30 % (le précompte mobilier), mais une petite partie peut être récupérée ; un compte à l'étranger doit être signalé.",
+  "section": "Fiscalité belge",
+  "priority": 0.8
+ }
+}
