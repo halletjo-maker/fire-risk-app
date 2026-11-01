@@ -6,6 +6,7 @@ import {
 import SiteLayout, { Link } from './SiteLayout'
 import { FICHES, FICHES_BY_SLUG } from '../learn/fiches'
 import { api } from '../lib/api'
+import { changeColor, fmtPct } from '../lib/format'
 
 // Aperçu illustratif d'une analyse (exemple, pas un vrai produit)
 function Preview() {
@@ -75,6 +76,34 @@ function AccessRequest() {
   )
 }
 
+// Carte en direct du portefeuille témoin (masquée s'il n'y en a pas)
+function ShowcaseTeaser() {
+  const [d, setD] = useState(null)
+  useEffect(() => { api.publicPortfolio().then(setD).catch(() => setD(null)) }, [])
+  if (!d) return null
+  const last = d.history?.filter((h) => h.benchmark_eur != null).at(-1)
+  const bench = last ? (last.benchmark_eur / d.initial_cash - 1) * 100 : null
+  const since = new Date(`${d.started}T12:00:00`).toLocaleDateString('fr-BE', { day: 'numeric', month: 'long' })
+  return (
+    <Link href="/portefeuille-temoin" className="card mt-3 block w-full max-w-sm p-4 transition hover:border-bull/60">
+      <p className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-muted">
+        <span>Portefeuille témoin · en direct</span><ArrowRight className="h-4 w-4" />
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-3">
+        <div>
+          <p className={`text-xl font-bold ${changeColor(d.pnl_pct)}`}>{fmtPct(d.pnl_pct)}</p>
+          <p className="text-xs text-muted">géré seul par l’outil</p>
+        </div>
+        <div>
+          <p className={`text-xl font-bold ${bench == null ? '' : changeColor(bench)}`}>{bench == null ? '—' : fmtPct(bench)}</p>
+          <p className="text-xs text-muted">ETF MSCI World</p>
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-muted">Depuis le {since} · {d.positions.length} lignes · argent virtuel</p>
+    </Link>
+  )
+}
+
 const FEATURES = [
   [LineChart, 'Une analyse en quelques secondes', 'Tape un nom, un ticker ou un code ISIN : action, ETF, crypto, indice ou turbo. Score sur 10, signal et rapport détaillé avec stop-loss et alternatives.'],
   [Layers, 'Des watchlists qui vivent', 'Tes listes se mettent à jour toutes les 15 minutes, avec pour chaque produit un cours d’achat et un objectif de vente.'],
@@ -114,7 +143,7 @@ export default function Landing({ onLogin }) {
             <Link href="/apprendre" className="btn-ghost border border-line"><BookOpen className="h-4 w-4" /> Découvrir les fiches</Link>
           </div>
         </div>
-        <div className="flex justify-center md:justify-end"><Preview /></div>
+        <div className="flex flex-col items-center md:items-end"><Preview /><ShowcaseTeaser /></div>
       </section>
 
       {/* Fonctions */}
