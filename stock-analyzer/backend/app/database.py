@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash   TEXT,       -- scrypt ; NULL = mot de passe pas encore créé
     is_admin        INTEGER NOT NULL DEFAULT 0,   -- peut inviter des amis et gérer les membres
     monthly_report  INTEGER NOT NULL DEFAULT 1,   -- rapport mensuel des portefeuilles fictifs par mail
+    push_alerts     INTEGER NOT NULL DEFAULT 1,   -- notifications : mes alertes
+    push_trades     INTEGER NOT NULL DEFAULT 1,   -- notifications : achats/ventes des portefeuilles fictifs
+    push_access     INTEGER NOT NULL DEFAULT 1,   -- notifications : demandes d'accès (administrateur)
     created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
     last_login_at   TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -48,6 +51,17 @@ CREATE TABLE IF NOT EXISTS invitations (
     created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
     expires_at      TEXT    NOT NULL,
     used_at         TEXT
+);
+
+-- Appareils abonnés aux notifications (Web Push)
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint        TEXT    NOT NULL UNIQUE,
+    p256dh          TEXT    NOT NULL,
+    auth            TEXT    NOT NULL,
+    user_agent      TEXT,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Demandes d'accès déposées depuis la page d'accueil publique
@@ -242,6 +256,7 @@ TABLES = [
     "sessions",
     "invitations",
     "invite_requests",
+    "push_subscriptions",
     "password_resets",
     "portfolios",
     "portfolio_positions",
@@ -286,6 +301,9 @@ MIGRATIONS = [
     ("watchlists", "screen_synced_at", "TEXT"),
     ("portfolios", "is_public", "INTEGER NOT NULL DEFAULT 0"),
     ("invitations", "anonymous", "INTEGER NOT NULL DEFAULT 0"),
+    ("users", "push_alerts", "INTEGER NOT NULL DEFAULT 1"),
+    ("users", "push_trades", "INTEGER NOT NULL DEFAULT 1"),
+    ("users", "push_access", "INTEGER NOT NULL DEFAULT 1"),
 ]
 
 

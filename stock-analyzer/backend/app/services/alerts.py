@@ -192,6 +192,8 @@ def check_all(now: datetime | None = None) -> int:
             subject, text, html = compose(r["alert_type"], ctx, full, r["unsubscribe_token"], r["watchlist"])
             result = sender.send(r["email"], subject, text, html)
             sent += 1
+            from . import push
+            push.notify_later(r["user_id"], "alerts", subject, f"{r['item_name']} · watchlist « {r['watchlist']} »", "/")
             with get_conn() as conn:
                 conn.execute(
                     "UPDATE alerts SET last_state = ?, last_triggered_at = ? WHERE id = ?",

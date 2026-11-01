@@ -108,6 +108,7 @@ def run(portfolio_id: int) -> dict:
         positions = [dict(r) for r in conn.execute(
             "SELECT * FROM portfolio_positions WHERE portfolio_id = ? AND status = 'OPEN'", (portfolio_id,))]
         sells = buys = 0
+        events: list[str] = []
         # Données réseau récupérées avant toute écriture (la base n'est pas verrouillée pendant ce temps)
         currencies = {p["currency"] for p in positions} | {i["currency"] for i in items if i["last_signal"] == "ACHAT"}
         rates = {c: fx_rate(c) for c in currencies}
@@ -146,6 +147,8 @@ def run(portfolio_id: int) -> dict:
                     (price, fx, f, reason, round(proceeds - f - cost, 2), high, stop, price, fx, pos["id"]))
                 pos["status"] = "CLOSED"
                 sells += 1
+                gain = (proceeds - f) / cost * 100 - 100 if cost else 0
+                events.append(f"Vente {pos['name'] or pos['symbol']} ({f'{gain:+.1f}'.replace('.', ',')} %) : {reason.lower()}")
             else:
                 conn.execute("UPDATE portfolio_positions SET high = ?, stop = ?, last_price = ?, last_fx = ? WHERE id = ?",
                              (high, stop, price, fx, pos["id"]))
@@ -201,6 +204,7 @@ def run(portfolio_id: int) -> dict:
             held_value += cost
             open_syms.add(it["symbol"])
             buys += 1
+            events.append(f"Achat {it['name'] or it['symbol']} ({round(cost)} €)")
 
         # ── 3. Valeur du jour ──────────────────────────────────────────────
         conn.execute("UPDATE portfolios SET cash = ?, fees_paid = ?, last_note = ?, last_run_at = datetime('now') "
@@ -211,6 +215,9 @@ def run(portfolio_id: int) -> dict:
             (portfolio_id, _today(), round(cash + held_value, 2)))
     if buys or sells:
         logger.info("Portefeuille fictif %s : %s achat(s), %s vente(s)", portfolio_id, buys, sells)
+        from . import push
+        push.notify_later(pf["user_id"], "trades", f"{pf['name']} : {buys + sells} opération{'s' if buys + sells > 1 else ''}",
+                          " · ".join(events), "/")
     return {"buys": buys, "sells": sells}
 
 

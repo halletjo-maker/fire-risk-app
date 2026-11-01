@@ -83,4 +83,6 @@ def access_request(payload: AccessRequestIn, request: Request, background: Backg
                              (email, message)).rowcount
     if added:
         background.add_task(_notify_admins, email, message)
+        from ..services import push
+        push.notify_admins("access", "Nouvelle demande d'accès", f"{email} demande une invitation à MM100.", "/")
     return DONE

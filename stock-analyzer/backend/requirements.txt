@@ -4,6 +4,7 @@ uvicorn[standard]==0.54.0
 pydantic==2.14.2
 email-validator==2.3.0
 cryptography>=44  # chiffrement des sauvegardes envoyées par mail
+pywebpush>=2.0,<3  # notifications sur le téléphone
 python-dotenv==1.2.4
 
 # --- Tâches planifiées ---

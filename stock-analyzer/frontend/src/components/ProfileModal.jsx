@@ -7,6 +7,7 @@ import PasswordChange from './PasswordChange'
 import ServerUpdate from './ServerUpdate'
 import DomainSettings from './DomainSettings'
 import BackupSettings from './BackupSettings'
+import PushSettings from './PushSettings'
 import { MailSettings, MonthlyReport } from './MailAndReport'
 
 const fmt = (iso) => {
@@ -75,6 +76,7 @@ export default function ProfileModal({ onClose, onLogout }) {
               ))}
             </div>
 
+            <PushSettings isAdmin={!!data.user.is_admin} />
             <AlertsSection />
             <p className="mt-4 text-xs text-muted">
               Les alertes mail sont envoyées à cette adresse. Tes données restent sur cette
