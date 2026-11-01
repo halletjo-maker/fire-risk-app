@@ -97,7 +97,31 @@ Unit=analyse-boursiere-domain.service
 WantedBy=multi-user.target
 EOF
 
+# --- Surveillance : toutes les 5 minutes, redémarre si besoin et prévient l'administrateur ---
+cat > /etc/systemd/system/analyse-boursiere-watchdog.service <<EOF
+[Unit]
+Description=Surveillance d'Analyse Boursiere (MM100)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash ${APP_DIR}/stock-analyzer/deploy/watchdog.sh
+StandardOutput=append:/var/log/analyse-boursiere-watchdog.log
+StandardError=append:/var/log/analyse-boursiere-watchdog.log
+EOF
+cat > /etc/systemd/system/analyse-boursiere-watchdog.timer <<EOF
+[Unit]
+Description=Surveillance d'Analyse Boursiere toutes les 5 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
+EOF
+
 [ -f "$APP_DIR/VERSION" ] || git -C "$APP_DIR" log -1 --format='%h|%cI|%s' > "$APP_DIR/VERSION" 2>/dev/null || true
 systemctl daemon-reload
-systemctl enable --now analyse-boursiere-update.timer analyse-boursiere-update.path analyse-boursiere-domain.path
+systemctl enable --now analyse-boursiere-update.timer analyse-boursiere-update.path analyse-boursiere-domain.path \
+  analyse-boursiere-watchdog.timer
 echo "Mises à jour automatiques activées (chaque nuit + bouton dans l'application)."
