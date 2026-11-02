@@ -1,9 +1,8 @@
 """Test de la méthode sur le passé (backtest).
 
 Rejoue les règles des portefeuilles fictifs sur l'historique d'une liste de titres :
-- chaque semaine : score technique (identique à l'outil), garde-fou MM200, zone d'achat,
-  stop-loss et objectif (mêmes calculs que les watchlists) ;
-- chaque jour : stop suiveur et objectif vérifiés à la clôture ;
+- chaque semaine : score technique (identique à l'outil), position par rapport à la MM200 ;
+- chaque jour : stop suiveur vérifié à la clôture ;
 - 10 lignes au plus d'environ 10 %, frais de 0,1 % (1 € minimum), 5 jours avant de racheter un titre vendu ;
 - filtre de marché : pas d'achat quand l'ETF MSCI World est sous sa MM100.
 
@@ -39,11 +38,16 @@ FEE_RATE, FEE_MIN = 0.001, 1.0
 COOLDOWN_DAYS = 5
 STOP_MIN_PCT, STOP_MAX_PCT = 3.0, 12.0
 
+# Règles des portefeuilles fictifs (services/paper.py), choisies en novembre 2026 avec ce test :
+# achat dès le signal ACHAT au-dessus de la MM200, stop suiveur 15 %, pas d'objectif, vente sous une MM200 qui baisse.
+RULES = {"guard": True, "market": True, "buy_min": FAVORABLE, "zone": False, "need_m200": True,
+         "target": False, "stop": "fixed", "stop_fixed": 15.0, "stop_max": 30.0, "exit": "guard"}
+OLD_RULES = {"guard": True, "market": True}  # jusqu'à novembre 2026 : zone d'achat, objectif, stop 3-12 %, sortie VENTE
 VARIANTS = [
-    {"key": "rules", "label": "Règles actuelles", "guard": True, "market": True},
-    {"key": "no_guard", "label": "Sans garde-fou MM200", "guard": False, "market": True},
-    {"key": "no_market", "label": "Sans filtre de marché", "guard": True, "market": False},
-    {"key": "threshold", "label": "Achat dès 6,5/10 (au lieu de 7,5)", "guard": True, "market": True, "buy_min": 6.5},
+    {"key": "rules", "label": "Règles actuelles", **RULES},
+    {"key": "old", "label": "Anciennes règles (jusqu'à nov. 2026)", **OLD_RULES},
+    {"key": "no_market", "label": "Sans filtre de marché", **RULES, "market": False},
+    {"key": "tight_stop", "label": "Stop suiveur plus serré (10 %)", **RULES, "stop_fixed": 10.0},
 ]
 
 _lock = threading.Lock()
@@ -75,13 +79,46 @@ def weekly_signals(df: pd.DataFrame) -> dict:
         lv = targets.compute({"product": {"type": "ACTION"}, "quote": {"price": price}, "technical": tech}) or {}
         out[sub.index[-1].strftime("%Y-%m-%d")] = {
             "score": score, "guard": bool(lt.get("guard")), "price": price,
+            "above_m100": bool(mm and mm["above"]), "m100_dist": mm["distance_pct"] if mm else None,
+            "above_m200": lt.get("below") is False, "atr_pct": report_atr(tech["chart"]),
             "buy_price": lv.get("buy_price"), "buy_kind": lv.get("buy_kind"),
             "stop_price": lv.get("stop_price"), "sell_price": lv.get("sell_price")}
     return out
 
 
+def report_atr(chart: list[dict]) -> float | None:
+    from .report import _atr_pct
+    return _atr_pct(chart)
+
+
+def stop_pct_for(s: dict, variant: dict) -> float:
+    """Écart du stop-loss suiveur à l'achat, selon la règle de la variante."""
+    mode = variant.get("stop", "levels")
+    lo, hi = variant.get("stop_min", STOP_MIN_PCT), variant.get("stop_max", STOP_MAX_PCT)
+    if mode == "atr" and s.get("atr_pct"):
+        raw = variant.get("atr_k", 3) * s["atr_pct"]
+    elif mode == "fixed":
+        raw = variant.get("stop_fixed", 10)
+    else:  # « levels » : stop des watchlists (support, ATR) comme aujourd'hui
+        raw = (1 - s["stop_price"] / s["price"]) * 100 if s.get("stop_price") else hi
+    return min(hi, max(lo, raw))
+
+
+def exit_signal(s: dict | None, variant: dict) -> bool:
+    if not s:
+        return False
+    rule = variant.get("exit", "score")
+    if rule == "score":
+        return s["score"] < CAUTION
+    if rule == "mm100":
+        return s.get("m100_dist") is not None and s["m100_dist"] < -variant.get("exit_margin", 0)
+    if rule == "guard":
+        return s["guard"]
+    return False
+
+
 def entry_ok(s: dict) -> bool:
-    """Même règle que les portefeuilles fictifs (paper._entry_ok)."""
+    """Zone d'achat des watchlists (anciennes règles : attendre le repli ou la confirmation)."""
     price, buy, kind, stop = s["price"], s["buy_price"], s["buy_kind"], s["stop_price"]
     if not price or not buy or not stop or stop >= price:
         return False
@@ -113,8 +150,8 @@ def simulate(closes: dict[str, pd.Series], signals: dict[str, dict], bench: pd.S
             p["high"] = max(p["high"], price)
             p["stop"] = max(p["stop"], p["high"] * (1 - p["stop_pct"] / 100))
             sig = signals[sym].get(day)
-            reason = ("stop" if price <= p["stop"] else "target" if price >= p["target"]
-                      else "signal" if sig and sig["score"] < CAUTION else None)
+            reason = ("stop" if price <= p["stop"] else "target" if p["target"] and price >= p["target"]
+                      else "signal" if exit_signal(sig, variant) else None)
             if reason:
                 proceeds = p["qty"] * price
                 f = fee(proceeds)
@@ -131,7 +168,8 @@ def simulate(closes: dict[str, pd.Series], signals: dict[str, dict], bench: pd.S
                 s = sigs.get(day)
                 if (not s or sym in positions or i - cooldown.get(sym, -99) < COOLDOWN_DAYS
                         or s["score"] < variant.get("buy_min", FAVORABLE) or (variant["guard"] and s["guard"])
-                        or not entry_ok(s)):
+                        or (variant.get("zone", True) and not entry_ok(s))
+                        or (variant.get("need_m200") and not s.get("above_m200"))):
                     continue
                 cands.append((s["score"], sym, s))
             equity = cash + sum(p["qty"] * last_px.get(s, p["entry"]) for s, p in positions.items())
@@ -147,9 +185,11 @@ def simulate(closes: dict[str, pd.Series], signals: dict[str, dict], bench: pd.S
                 if cost + f > cash:
                     continue
                 cash -= cost + f
-                stop_pct = min(STOP_MAX_PCT, max(STOP_MIN_PCT, (1 - s["stop_price"] / s["price"]) * 100))
-                target = s["sell_price"] if s["sell_price"] and s["sell_price"] > s["price"] * 1.02 \
-                    else s["price"] * (1 + max(5.0, stop_pct * 1.5) / 100)
+                stop_pct = stop_pct_for(s, variant)
+                target = None
+                if variant.get("target", True):
+                    target = s["sell_price"] if s["sell_price"] and s["sell_price"] > s["price"] * 1.02 \
+                        else s["price"] * (1 + max(5.0, stop_pct * 1.5) / 100)
                 positions[sym] = {"qty": qty, "entry": s["price"], "cost": cost + f, "day": day, "high": s["price"],
                                   "stop": s["price"] * (1 - stop_pct / 100), "stop_pct": stop_pct, "target": target}
         value = cash + sum(p["qty"] * last_px.get(s, p["entry"]) for s, p in positions.items())

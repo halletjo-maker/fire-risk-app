@@ -118,7 +118,8 @@ export const FICHES = [
       'Pente de la MM100 sur 10 séances : +0,5 si elle monte, −0,5 si elle baisse.',
       'Alignement des moyennes (15 % du score technique) : 9/10 si cours > MM50 > MM100 > MM200, 7 si MM50 > MM200, 5 si le cours repasse au-dessus de la MM50, 3 sinon.',
       'Les cours « Achat ≤ / ≥ » des watchlists sont calculés à partir de la MM100.',
-      '🛡️ Garde-fou MM200 : cours sous la MM200 et MM200 en baisse sur 20 séances → jamais de signal 🟢 ACHAT (au mieux 🟡 NEUTRE), même avec un score de 7,5 ou plus. Les portefeuilles fictifs n’achètent donc pas ces titres. Ne s’applique pas aux turbos put.',
+      '🛡️ Garde-fou MM200 : cours sous la MM200 et MM200 en baisse sur 20 séances → jamais de signal 🟢 ACHAT (au mieux 🟡 NEUTRE), même avec un score de 7,5 ou plus. Ne s’applique pas aux turbos put.',
+      'Portefeuilles fictifs : achat seulement au-dessus de la MM200 ; vente quand le cours passe sous une MM200 qui baisse, ou au stop suiveur de 15 %. Règles retenues après un test sur 10 ans : les objectifs de vente proches et les stops serrés coupaient les gains.',
       'Moyenne 3 ans (36 clôtures mensuelles) : affichée dans le rapport comme repère, sans effet sur le score.',
     ],
     traps: [
@@ -402,7 +403,8 @@ export const FICHES = [
       },
     ],
     inApp: [
-      'Portefeuilles fictifs : au plus 10 lignes d’environ 10 % chacune, stop suiveur, pas de rachat d’un titre vendu depuis moins de 5 jours, frais estimés 0,1 % par ordre (1 € minimum).',
+      'Portefeuilles fictifs : au plus 10 lignes d’environ 10 % chacune, stop suiveur à 15 % sous le plus haut, pas d’objectif de vente, pas de rachat d’un titre vendu depuis moins de 5 jours, frais estimés 0,1 % par ordre (1 € minimum).',
+      'Ce que le test sur 10 ans (~100 grandes actions, 2016-2026) a appris : avec des objectifs de vente proches et des stops serrés, la méthode ne gagnait presque rien (+1,3 % par an) ; en laissant courir les gains avec un stop suiveur de 15 % et en vendant quand la tendance de fond se retourne, +11,3 % par an, pour une pire chute de −20 % contre −34 % pour le MSCI World (+12,2 % par an). Garder simplement toutes les actions testées aurait rapporté davantage, mais avec de plus fortes chutes et un biais : ces sociétés sont celles qui ont réussi.',
       'Filtre de marché : aucun nouvel achat quand l’ETF MSCI World est sous sa MM100 (marché mondial baissier) ; les ventes continuent.',
       'Liste « Monde » : environ un tiers Amériques, un tiers Europe, un tiers Asie-Pacifique.',
       'Rapport mensuel : comparaison avec un ETF MSCI World, pour savoir si la méthode fait mieux qu’un placement passif.',

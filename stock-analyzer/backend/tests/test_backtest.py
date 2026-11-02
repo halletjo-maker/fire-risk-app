@@ -22,8 +22,9 @@ def test_simulation_buys_in_uptrend_and_respects_stops(monkeypatch):
     r = backtest.run(["UP"], 3)
     rules = r["variants"]["rules"]["stats"]
     assert r["tested"] == 1 and rules["trades"] >= 1 and 0 < rules["exposure_pct"] <= 100
+    assert r["variants"]["old"]["stats"]["trades"] >= 1
     assert rules["max_drawdown_pct"] > -40          # les stop-loss limitent la chute du krach
-    assert r["benchmark"]["stats"]["total_pct"] > 0 and set(r["variants"]) == {"rules", "no_guard", "no_market", "threshold"}
+    assert r["benchmark"]["stats"]["total_pct"] > 0 and set(r["variants"]) == {"rules", "old", "no_market", "tight_stop"}
     assert r["equal_weight"]["stats"]["total_pct"] is not None
 
 

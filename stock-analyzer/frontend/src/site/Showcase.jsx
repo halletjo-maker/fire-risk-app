@@ -115,10 +115,9 @@ export default function Showcase() {
             <section className="mt-6 card p-4 text-sm leading-relaxed text-gray-300">
               <h2 className="font-semibold text-gray-100">Les règles suivies</h2>
               <ul className="mt-2 list-disc space-y-1 pl-5">
-                <li>Achat d'un produit de la liste « {data.list || 'suivie'} » quand il obtient le signal 🟢 ACHAT et se trouve dans sa zone d'achat.</li>
+                <li>Achat d'un produit de la liste « {data.list || 'suivie'} » dès qu'il obtient le signal 🟢 ACHAT, s'il est au-dessus de sa moyenne 200 jours.</li>
                 <li>Au plus {data.max_positions} lignes d'environ 10 % chacune ; frais simulés à chaque opération.</li>
-                <li>Vente à l'objectif, au stop-loss (qui monte avec le cours pour protéger les gains), ou quand le signal passe à 🔴 VENTE.</li>
-                <li>Pas d'achat d'un titre sous une moyenne 200 jours qui baisse (tendance de fond baissière).</li>
+                <li>Vente au stop suiveur (15 % sous le plus haut : il monte avec le cours) ou quand la tendance de fond se retourne (cours sous une moyenne 200 jours qui baisse). Pas d'objectif : on laisse courir les gains.</li>
                 <li>Pas de nouvel achat quand le marché mondial passe sous sa moyenne 100 jours.</li>
                 <li>🔁 Rachats : la société réduit son nombre d'actions d'au moins 1 % par an sur 3 ans.</li>
               </ul>

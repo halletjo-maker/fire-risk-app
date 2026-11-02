@@ -211,6 +211,8 @@ CREATE TABLE IF NOT EXISTS watchlist_items (
     currency          TEXT,
     region            TEXT,       -- liste mondiale : pays (us, jp, fr…) ou crypto
     zone              TEXT,       -- liste mondiale : asia | europe | americas | crypto (calendrier)
+    above_m200        INTEGER,    -- 1 : cours au-dessus de la MM200 (condition d'achat des portefeuilles fictifs)
+    guard             INTEGER,    -- 1 : sous une MM200 qui baisse (tendance de fond baissière → vente)
     added_at          TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (watchlist_id, symbol)
 );
@@ -389,6 +391,8 @@ MIGRATIONS = [
     ("portfolios", "is_public", "INTEGER NOT NULL DEFAULT 0"),
     ("invitations", "anonymous", "INTEGER NOT NULL DEFAULT 0"),
     ("portfolio_positions", "shares_trend", "REAL"),
+    ("watchlist_items", "above_m200", "INTEGER"),
+    ("watchlist_items", "guard", "INTEGER"),
     ("portfolio_positions", "shares_checked_at", "TEXT"),
     ("users", "push_alerts", "INTEGER NOT NULL DEFAULT 1"),
     ("users", "push_trades", "INTEGER NOT NULL DEFAULT 1"),

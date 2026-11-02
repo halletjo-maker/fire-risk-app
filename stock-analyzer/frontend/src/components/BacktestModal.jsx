@@ -117,7 +117,7 @@ export default function BacktestModal({ onClose }) {
     <Modal title="Tester la méthode sur le passé" onClose={onClose}>
       <div className="mt-2 space-y-4">
         <p className="text-sm text-muted">
-          Les règles des portefeuilles fictifs (score, garde-fou MM200, zone d'achat, stop-loss, objectifs, filtre de marché)
+          Les règles des portefeuilles fictifs (signal d'achat, moyenne 200 jours, stop suiveur de 15 %, filtre de marché)
           sont rejouées semaine après semaine sur l'historique d'une liste, avec 10 000 € virtuels, puis comparées au MSCI World.
         </p>
         <div className="grid grid-cols-3 gap-2">

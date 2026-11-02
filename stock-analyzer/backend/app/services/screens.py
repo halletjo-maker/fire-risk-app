@@ -156,7 +156,10 @@ def evaluate(df) -> dict | None:
         return None
     full = {"product": {"type": "ACTION"}, "quote": {"price": t["price"]}, "technical": t}
     lv = targets.compute(full) or {}
+    lt = t.get("long_trend") or {}
     return {"price": t["price"], "change": t["change_pct"], "score": t["score"],
+            "above_m200": None if not lt else int(lt["below"] is False),
+            "guard": None if not lt else int(bool(lt.get("guard"))),
             "signal": signal_for(t["score"], bool((t.get("long_trend") or {}).get("guard"))),
             **{k: lv.get(k) for k in ("buy_price", "buy_kind", "buy_note", "sell_price", "sell_note", "stop_price")}}
 
@@ -219,10 +222,10 @@ def _update(conn, ids: list[int], sym: str, v: dict) -> None:
     conn.execute(
         "UPDATE watchlist_items SET last_price = ?, last_change_pct = ?, last_score = ?, last_signal = ?, "
         "buy_price = ?, buy_kind = ?, buy_note = ?, sell_price = ?, sell_note = ?, stop_price = ?, "
-        "last_refresh_at = datetime('now') "
+        "above_m200 = ?, guard = ?, last_refresh_at = datetime('now') "
         f"WHERE symbol = ? AND watchlist_id IN ({marks})",
         (v["price"], v["change"], v["score"], v["signal"], v["buy_price"], v["buy_kind"], v["buy_note"],
-         v["sell_price"], v["sell_note"], v["stop_price"], sym, *ids),
+         v["sell_price"], v["sell_note"], v["stop_price"], v.get("above_m200"), v.get("guard"), sym, *ids),
     )
 
 

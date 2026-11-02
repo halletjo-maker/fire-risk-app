@@ -38,8 +38,8 @@ def portfolio(client, monkeypatch):
     wl = client.post("/watchlists", json={"name": "W"}, headers=H).json()["watchlist"]["id"]
     with get_conn() as conn:
         conn.execute("INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, last_price, last_score, "
-                     "last_signal, buy_price, buy_kind, sell_price, stop_price, currency) "
-                     "VALUES (?, 'AAA', 'yf:AAA', 'AAA', 100, 8, 'ACHAT', 100, '≈', 120, 90, 'EUR')", (wl,))
+                     "last_signal, buy_price, buy_kind, sell_price, stop_price, currency, above_m200) "
+                     "VALUES (?, 'AAA', 'yf:AAA', 'AAA', 100, 8, 'ACHAT', 100, '≈', 120, 90, 'EUR', 1)", (wl,))
     return client, wl
 
 
@@ -55,9 +55,9 @@ def test_bear_market_blocks_buys_not_sells(portfolio, monkeypatch):
     d = client.get(f"/portfolios/{pid}", headers=H).json()["portfolio"]
     assert d["open_count"] == 1 and d["note"] is None
 
-    monkeypatch.setattr(regime, "closes", lambda: series(0.9))  # rechute : la vente à l'objectif reste possible
+    monkeypatch.setattr(regime, "closes", lambda: series(0.9))  # rechute : les ventes restent possibles
     with get_conn() as conn:
-        conn.execute("UPDATE watchlist_items SET last_price = 121")
+        conn.execute("UPDATE watchlist_items SET last_price = 84")  # sous le stop suiveur (85)
     paper.run(pid)
     d = client.get(f"/portfolios/{pid}", headers=H).json()["portfolio"]
     assert d["open_count"] == 0 and d["stats"]["closed"] == 1

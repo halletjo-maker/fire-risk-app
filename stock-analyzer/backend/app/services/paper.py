@@ -1,13 +1,18 @@
 """Portefeuille fictif : le programme achète et vend seul avec un capital virtuel.
 
+Règles revues en novembre 2026 avec le test sur 10 ans (services/backtest.py, variante « rules ») :
+achat dès le signal 🟢 ACHAT au-dessus de la MM200 (sans attendre de repli), pas d'objectif de vente
+(on laisse courir les gains), stop suiveur à 15 % sous le plus haut, vente quand la tendance de fond
+se retourne (cours sous une MM200 qui baisse).
+
+
 Règles (appliquées après chaque mise à jour des cours de la watchlist choisie) :
 - Ventes, vérifiées d'abord :
-  · stop-loss touché (le stop monte avec le plus haut atteint depuis l'achat : gains protégés) ;
-  · objectif de vente atteint ;
-  · signal de la watchlist passé à 🔴 VENTE.
-- Achats : produits au signal 🟢 ACHAT dont le cours est dans la zone d'achat affichée
-  (≈ : tout de suite ; ≤ : cours au niveau du repli ; ≥ : cours repassé au-dessus du seuil),
-  meilleur score d'abord, au plus `max_positions` lignes d'environ 1/`max_positions` du
+  · stop suiveur touché : 15 % sous le plus haut atteint depuis l'achat (gains protégés) ;
+  · tendance de fond baissière : cours sous une MM200 qui baisse (garde-fou de la watchlist).
+  Pas d'objectif de vente : on laisse courir les gains.
+- Achats : produits au signal 🟢 ACHAT dont le cours est au-dessus de la MM200, tout de suite
+  (sans attendre de repli), meilleur score d'abord, au plus `max_positions` lignes d'environ 1/`max_positions` du
   portefeuille chacune, en actions entières (cryptos : quantités fractionnées). Pas de rachat d'un
   titre vendu depuis moins de 5 jours.
 - Filtre de marché : aucun nouvel achat quand l'ETF MSCI World est sous sa MM100 (marché mondial
@@ -35,7 +40,8 @@ FEE_RATE = 0.001
 FEE_MIN = 1.0
 COOLDOWN_DAYS = 5
 MIN_ORDER_EUR = 100.0
-STOP_MIN_PCT, STOP_MAX_PCT = 3.0, 12.0
+STOP_MIN_PCT, STOP_MAX_PCT = 3.0, 12.0  # stop conseillé des watchlists (affichage)
+TRAIL_PCT = 15.0  # stop suiveur des portefeuilles fictifs : 15 % sous le plus haut atteint depuis l'achat
 FX_TTL = 3600
 QUOTE_TTL = 15 * 60
 
@@ -81,19 +87,6 @@ def _today() -> str:
     return datetime.now(ZoneInfo("Europe/Brussels")).strftime("%Y-%m-%d")
 
 
-def _entry_ok(it: dict) -> bool:
-    price, buy, kind = it["last_price"], it["buy_price"], it["buy_kind"]
-    if not price or not buy or not it["stop_price"] or it["stop_price"] >= price:
-        return False
-    if kind == "≈":
-        return True
-    if kind == "≤":
-        return price <= buy * 1.005
-    if kind == "≥":
-        return price >= buy
-    return False
-
-
 def run(portfolio_id: int) -> dict:
     """Applique les règles une fois. Renvoie le nombre d'achats et de ventes."""
     with _lock, get_conn() as conn:
@@ -103,7 +96,7 @@ def run(portfolio_id: int) -> dict:
         cash, fees = pf["cash"], pf["fees_paid"]
         items = [dict(r) for r in conn.execute(
             "SELECT symbol, product_id, name, product_type, last_price, last_score, last_signal, buy_price, buy_kind, "
-            "sell_price, stop_price, currency FROM watchlist_items WHERE watchlist_id = ?",
+            "sell_price, stop_price, currency, above_m200, guard FROM watchlist_items WHERE watchlist_id = ?",
             (pf["watchlist_id"],))] if pf["watchlist_id"] else []
         by_sym = {i["symbol"]: i for i in items}
         positions = [dict(r) for r in conn.execute(
@@ -127,14 +120,12 @@ def run(portfolio_id: int) -> dict:
                 held_value += pos["qty"] * (pos["last_price"] or pos["entry_price"]) / (pos["last_fx"] or pos["entry_fx"])
                 continue
             high = max(pos["high"] or pos["entry_price"], price)
-            stop = max(pos["stop"], high * (1 - pos["stop_pct"] / 100))
+            stop = high * (1 - TRAIL_PCT / 100)  # stop suiveur, aussi pour les lignes achetées avant ces règles
             reason = None
             if price <= stop:
                 reason = "Stop-loss touché" if stop <= pos["entry_price"] else "Stop suiveur touché (gains protégés)"
-            elif pos["target"] and price >= pos["target"]:
-                reason = "Objectif de vente atteint"
-            elif it and it["last_signal"] == "VENTE":
-                reason = "Signal passé à VENTE"
+            elif it and it.get("guard") == 1:
+                reason = "Tendance de fond baissière (sous une MM200 qui baisse)"
             if reason:
                 proceeds = pos["qty"] * price / fx
                 f = fee(proceeds)
@@ -162,8 +153,8 @@ def run(portfolio_id: int) -> dict:
             f"AND exit_at > datetime('now', '-{COOLDOWN_DAYS} days')", (portfolio_id,))}
         slot = (cash + held_value) / pf["max_positions"]
         candidates = sorted(
-            (i for i in items if i["last_signal"] == "ACHAT" and i["symbol"] not in open_syms
-             and i["symbol"] not in cooldown and _entry_ok(i)),
+            (i for i in items if i["last_signal"] == "ACHAT" and i.get("above_m200") == 1 and i["last_price"]
+             and i["symbol"] not in open_syms and i["symbol"] not in cooldown),
             key=lambda i: i["last_score"] or 0, reverse=True)
         note = None
         if not market["ok"]:  # marché mondial en tendance baissière : pas de nouvelle ligne
@@ -190,15 +181,13 @@ def run(portfolio_id: int) -> dict:
             f = fee(cost)
             if cost + f > cash:
                 continue
-            stop_pct = min(STOP_MAX_PCT, max(STOP_MIN_PCT, (1 - it["stop_price"] / price) * 100))
-            target = it["sell_price"] if it["sell_price"] and it["sell_price"] > price * 1.02 \
-                else price * (1 + max(5.0, stop_pct * 1.5) / 100)
+            stop_pct, target = TRAIL_PCT, None  # pas d'objectif : on laisse courir les gains
             conn.execute(
                 "INSERT INTO portfolio_positions (portfolio_id, symbol, product_id, name, currency, qty, entry_price, "
                 "entry_fx, entry_fee, entry_score, target, stop, stop_pct, high, last_price, last_fx) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (portfolio_id, it["symbol"], it["product_id"], it["name"], it["currency"] or "EUR", qty, price, fx, f,
-                 it["last_score"], rnd(target), rnd(price * (1 - stop_pct / 100)), round(stop_pct, 2),
+                 it["last_score"], target, rnd(price * (1 - stop_pct / 100)), round(stop_pct, 2),
                  price, price, fx))
             cash -= cost + f
             fees += f

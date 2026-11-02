@@ -74,11 +74,11 @@ function Rules() {
     <details className="rounded-lg bg-bg px-3 py-2 text-xs text-muted">
       <summary className="cursor-pointer select-none">Règles du programme</summary>
       <ul className="mt-2 list-disc space-y-1 pl-4">
-        <li><b className="text-gray-200">Achat</b> : produits au signal 🟢 ACHAT dont le cours est dans la zone d'achat affichée, meilleur score d'abord.</li>
+        <li><b className="text-gray-200">Achat</b> : produits au signal 🟢 ACHAT dont le cours est au-dessus de sa moyenne 200 jours, tout de suite (sans attendre de repli), meilleur score d'abord.</li>
         <li><b className="text-gray-200">Répartition</b> : jusqu'à 10 lignes d'environ 10 % du portefeuille, en actions entières (cryptos : quantités fractionnées).</li>
-        <li><b className="text-gray-200">Garde-fou</b> : pas d'achat quand le cours est sous une moyenne 200 jours qui baisse (tendance de fond baissière).</li>
         <li><b className="text-gray-200">🔁 Rachats</b> : la société a réduit son nombre d'actions d'au moins 1 % par an sur 3 ans (elle rachète ses propres actions).</li>
-        <li><b className="text-gray-200">Vente</b> : objectif atteint, stop-loss touché (le stop monte avec le cours pour protéger les gains), ou signal passé à 🔴 VENTE.</li>
+        <li><b className="text-gray-200">Vente</b> : stop suiveur touché (15 % sous le plus haut atteint depuis l'achat : il monte avec le cours et protège les gains), ou tendance de fond baissière (cours sous une moyenne 200 jours qui baisse). Pas d'objectif de vente : on laisse courir les gains.</li>
+        <li><b className="text-gray-200">Pourquoi ces règles</b> : retenues en novembre 2026 après un test sur 10 ans et ~100 grandes actions (menu → Tester la méthode sur le passé).</li>
         <li>Pas de rachat d'un titre vendu depuis moins de 5 jours.</li>
         <li><b className="text-gray-200">Filtre de marché</b> : aucun nouvel achat quand l'ETF MSCI World est sous sa MM100 (marché mondial baissier). Les ventes continuent.</li>
         <li>Frais estimés : 0,1 % par ordre (1 € minimum). Cours en dollars convertis en euros.</li>
@@ -167,7 +167,7 @@ export function PortfolioModal({ id, onClose }) {
             </h3>
             {p.positions.length === 0 && (
               <p className="mt-2 rounded-lg border border-dashed border-line p-3 text-sm text-muted">
-                Aucune ligne pour l'instant : le programme attend un produit au signal 🟢 ACHAT dans sa zone d'achat.
+                Aucune ligne pour l'instant : le programme attend un produit au signal 🟢 ACHAT au-dessus de sa moyenne 200 jours.
                 {p.last_run_at ? ` Dernière vérification : ${fmtDay(p.last_run_at)}.` : ' Première vérification en cours…'}
               </p>
             )}

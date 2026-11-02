@@ -13,13 +13,15 @@ def setup(client, monkeypatch):
     monkeypatch.setattr(paper, "_quote_price", lambda s: None)
     wl = client.post("/watchlists", json={"name": "Tech"}, headers=H).json()["watchlist"]["id"]
 
-    def item(sym, price, signal="ACHAT", score=8.0, kind="≈", buy=None, sell=None, stop=None, ccy="USD"):
+    def item(sym, price, signal="ACHAT", score=8.0, kind="≈", buy=None, sell=None, stop=None, ccy="USD",
+             above_m200=1, guard=0):
         with get_conn() as conn:
             conn.execute(
                 "INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, last_price, last_score, "
-                "last_signal, buy_price, buy_kind, sell_price, stop_price, currency) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                "last_signal, buy_price, buy_kind, sell_price, stop_price, currency, above_m200, guard) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (wl, sym, f"yf:{sym}", sym, price, score, signal, buy or price, kind, sell or price * 1.2,
-                 stop or price * 0.9, ccy))
+                 stop or price * 0.9, ccy, above_m200, guard))
 
     def set_item(sym, **kw):
         with get_conn() as conn:
@@ -41,15 +43,15 @@ def test_buys_best_scores_within_slots(setup):
     item("BBB", 50, score=8.0, ccy="EUR")       # 500 € → 9 actions (frais déduits)
     item("CCC", 2000, score=8.5)                # 1 action coûte 1 600 € > 500 € : ignoré
     item("DDD", 100, signal="NEUTRE")           # pas de signal ACHAT
-    item("EEE", 110, kind="≤", buy=100)         # attend un repli à 100
-    item("FFF", 95, kind="≥", buy=100)          # attend un retour au-dessus de 100
+    item("EEE", 110, above_m200=0)              # sous la MM200 : pas d'achat
+    item("FFF", 95, above_m200=None)            # MM200 inconnue (historique court) : pas d'achat
     r = client.post("/portfolios", json={"watchlist_id": wl}, headers=H)
     assert r.status_code == 201
     pid = r.json()["portfolio"]["id"]
     pos = positions(pid)
     assert set(pos) == {"AAA", "BBB"}
     assert pos["AAA"]["qty"] == 6 and pos["AAA"]["entry_fx"] == 1.25 and pos["BBB"]["qty"] == 9
-    assert pos["AAA"]["stop"] == pytest.approx(90) and pos["AAA"]["target"] == pytest.approx(120)
+    assert pos["AAA"]["stop"] == pytest.approx(85) and pos["AAA"]["target"] is None   # stop suiveur 15 %, pas d'objectif
     d = client.get(f"/portfolios/{pid}", headers=H).json()["portfolio"]
     spent = 6 * 100 / 1.25 + 9 * 50 + 2 * paper.FEE_MIN
     assert d["cash"] == pytest.approx(5000 - spent, abs=0.01)
@@ -61,33 +63,33 @@ def test_buys_best_scores_within_slots(setup):
 
 def test_sell_rules_and_cooldown(setup):
     client, wl, item, set_item = setup
-    item("TGT", 100)
+    item("WIN", 100)
     item("TRL", 100)
-    item("SIG", 100)
+    item("GRD", 100)
     pid = client.post("/portfolios", json={"watchlist_id": wl}, headers=H).json()["portfolio"]["id"]
     assert len(positions(pid)) == 3
 
-    set_item("TGT", last_price=121)                   # objectif 120 atteint
-    set_item("TRL", last_price=115)                   # monte : le stop suit (115 × 0,9 = 103,5)
-    set_item("SIG", last_signal="VENTE", last_price=101)
+    set_item("WIN", last_price=150, sell_price=120)   # bien au-delà de l'ancien objectif : on garde
+    set_item("TRL", last_price=120)                   # monte : le stop suit (120 × 0,85 = 102)
+    set_item("GRD", guard=1, last_price=101)          # tendance de fond baissière : vente
     paper.run(pid)
     closed = positions(pid, "CLOSED")
-    assert closed["TGT"]["exit_reason"] == "Objectif de vente atteint" and closed["TGT"]["pnl_eur"] > 0
-    assert closed["SIG"]["exit_reason"] == "Signal passé à VENTE"
-    assert positions(pid)["TRL"]["stop"] == pytest.approx(103.5)
+    assert "WIN" not in closed and positions(pid)["WIN"]["stop"] == pytest.approx(127.5)
+    assert closed["GRD"]["exit_reason"].startswith("Tendance de fond baissière")
+    assert positions(pid)["TRL"]["stop"] == pytest.approx(102)
 
-    set_item("TRL", last_price=103)
+    set_item("TRL", last_price=101)
     paper.run(pid)
     trl = positions(pid, "CLOSED")["TRL"]
     assert trl["exit_reason"] == "Stop suiveur touché (gains protégés)" and trl["pnl_eur"] > 0
 
-    # Toujours ACHAT et dans la zone, mais vendu il y a moins de 5 jours : pas de rachat
-    set_item("TGT", last_price=100, last_signal="ACHAT")
+    # Toujours ACHAT, mais vendu il y a moins de 5 jours : pas de rachat
+    set_item("GRD", last_price=100, guard=0)
     paper.run(pid)
-    assert "TGT" not in positions(pid)
+    assert "GRD" not in positions(pid)
     d = client.get(f"/portfolios/{pid}", headers=H).json()["portfolio"]
-    assert d["stats"]["closed"] == 3 and d["stats"]["wins"] >= 2 and d["trades"][0]["exit_reason"]
-    assert d["open_count"] == 0 and d["invested"] == 0
+    assert d["stats"]["closed"] == 2 and d["trades"][0]["exit_reason"]
+    assert d["open_count"] == 1
 
 
 def test_stop_loss_and_max_positions(setup):
@@ -97,7 +99,7 @@ def test_stop_loss_and_max_positions(setup):
     r = client.post("/portfolios", json={"watchlist_id": wl, "max_positions": 2}, headers=H).json()["portfolio"]
     pos = positions(r["id"])
     assert set(pos) == {"S3", "S2"}  # meilleurs scores, 2 lignes maximum
-    set_item("S3", last_price=89)    # sous le stop (90)
+    set_item("S3", last_price=84)    # sous le stop (85)
     paper.run(r["id"])
     c = positions(r["id"], "CLOSED")["S3"]
     assert c["exit_reason"] == "Stop-loss touché" and c["pnl_eur"] < 0

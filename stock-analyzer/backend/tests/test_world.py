@@ -110,13 +110,14 @@ def test_crypto_fractional_buy_with_tiny_price(client, monkeypatch):
         for sym, price in (("BTC-EUR", 68900.0), ("SHIB-EUR", 0.000004)):
             conn.execute(
                 "INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, product_type, last_price, last_score, "
-                "last_signal, buy_price, buy_kind, sell_price, stop_price, currency) VALUES (?,?,?,?, 'CRYPTO', ?, 8, 'ACHAT', ?, '≈', ?, ?, 'EUR')",
+                "last_signal, buy_price, buy_kind, sell_price, stop_price, currency, above_m200) "
+                "VALUES (?,?,?,?, 'CRYPTO', ?, 8, 'ACHAT', ?, '≈', ?, ?, 'EUR', 1)",
                 (wl, sym, f"yf:{sym}", sym, price, price, price * 1.2, price * 0.9))
     pid = client.post("/portfolios", json={"watchlist_id": wl}, headers=H).json()["portfolio"]["id"]
     with get_conn() as conn:
         pos = {r["symbol"]: dict(r) for r in conn.execute("SELECT * FROM portfolio_positions WHERE portfolio_id = ?", (pid,))}
     assert 0 < pos["BTC-EUR"]["qty"] < 1 and pos["BTC-EUR"]["qty"] * 68900 == pytest.approx(499, abs=1.5)
-    assert pos["SHIB-EUR"]["qty"] > 1e8 and pos["SHIB-EUR"]["stop"] == pytest.approx(0.0000036) and pos["SHIB-EUR"]["target"] > 0
+    assert pos["SHIB-EUR"]["qty"] > 1e8 and pos["SHIB-EUR"]["stop"] == pytest.approx(0.0000034) and pos["SHIB-EUR"]["target"] is None
 
 
 def test_tiny_price_crypto_technical_summary():
