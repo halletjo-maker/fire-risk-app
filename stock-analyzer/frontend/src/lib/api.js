@@ -97,6 +97,11 @@ export const api = {
   alertHistory: (limit = 10) => request(`/alerts/history?limit=${limit}`),
   testMail: () => request('/alerts/test', { method: 'POST' }),
   checkAlerts: () => request('/alerts/check', { method: 'POST' }),
+  quote: (id) => request(`/quote?id=${encodeURIComponent(id)}`),
+  holdings: () => request('/holdings'),
+  addHoldingTx: (body) => request('/holdings/tx', { method: 'POST', body }),
+  deleteHoldingTx: (id) => request(`/holdings/tx/${id}`, { method: 'DELETE' }),
+  setHoldingRef: (body) => request('/holdings/ref', { method: 'PUT', body }),
   search: (q, signal) => request(`/search?q=${encodeURIComponent(q)}`, { signal }),
   report: (id, isin) => {
     const p = new URLSearchParams({ id })

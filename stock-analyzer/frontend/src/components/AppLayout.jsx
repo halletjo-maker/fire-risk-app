@@ -6,6 +6,7 @@ import MainArea from './MainArea'
 import ProfileModal from './ProfileModal'
 import InviteModal from './InviteModal'
 import { NewPortfolioModal, PortfolioModal } from './PortfolioModals'
+import HoldingsModal from './HoldingsModal'
 
 export default function AppLayout({ user, onLogout }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -13,6 +14,7 @@ export default function AppLayout({ user, onLogout }) {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [portfolioId, setPortfolioId] = useState(null)
   const [newPortfolio, setNewPortfolio] = useState(false)
+  const [holdingsOpen, setHoldingsOpen] = useState(false)
   const sidebarProps = {
     user,
     onLogout,
@@ -20,6 +22,7 @@ export default function AppLayout({ user, onLogout }) {
     onInvite: () => { setDrawerOpen(false); setInviteOpen(true) },
     onPortfolio: (id) => { setDrawerOpen(false); setPortfolioId(id) },
     onNewPortfolio: () => { setDrawerOpen(false); setNewPortfolio(true) },
+    onHoldings: () => { setDrawerOpen(false); setHoldingsOpen(true) },
     onNavigate: () => setDrawerOpen(false),
   }
 
@@ -44,6 +47,7 @@ export default function AppLayout({ user, onLogout }) {
         {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} onLogout={onLogout} />}
         {inviteOpen && <InviteModal onClose={() => setInviteOpen(false)} />}
         {newPortfolio && <NewPortfolioModal onClose={() => setNewPortfolio(false)} onCreated={(id) => { setNewPortfolio(false); setPortfolioId(id) }} />}
+        {holdingsOpen && <HoldingsModal onClose={() => setHoldingsOpen(false)} />}
         {portfolioId && <PortfolioModal id={portfolioId} onClose={() => setPortfolioId(null)} />}
 
         <div className="flex min-w-0 flex-1 flex-col">

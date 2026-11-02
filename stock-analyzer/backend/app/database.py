@@ -53,6 +53,52 @@ CREATE TABLE IF NOT EXISTS invitations (
     used_at         TEXT
 );
 
+-- Mes vraies positions : opérations encodées à la main (montants dans la devise du titre)
+CREATE TABLE IF NOT EXISTS holding_tx (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_id      TEXT    NOT NULL,
+    symbol          TEXT,
+    name            TEXT    NOT NULL,
+    currency        TEXT    NOT NULL DEFAULT 'EUR',
+    kind            TEXT    NOT NULL CHECK (kind IN ('BUY', 'SELL')),
+    day             TEXT    NOT NULL,
+    qty             REAL    NOT NULL,
+    price           REAL    NOT NULL,
+    fx              REAL    NOT NULL DEFAULT 1,   -- unités de devise pour 1 € ce jour-là
+    fees_eur        REAL    NOT NULL DEFAULT 0,   -- courtage + TOB (non déductibles de la plus-value)
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+-- Valeur au 31/12/2025 des titres achetés avant 2026 (base de la taxe sur les plus-values)
+CREATE TABLE IF NOT EXISTS holding_refs (
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_id      TEXT    NOT NULL,
+    ref_price       REAL,
+    ref_fx          REAL,
+    source          TEXT,
+    PRIMARY KEY (user_id, product_id)
+);
+-- Dernier cours, stop et objectif des titres détenus (mis à jour avec les watchlists)
+CREATE TABLE IF NOT EXISTS holding_quotes (
+    product_id      TEXT PRIMARY KEY,
+    price           REAL,
+    change_pct      REAL,
+    fx              REAL,
+    stop_price      REAL,
+    sell_price      REAL,
+    signal          TEXT,
+    score           REAL,
+    refreshed_at    TEXT
+);
+CREATE TABLE IF NOT EXISTS holding_alerts (
+    user_id         INTEGER NOT NULL,
+    product_id      TEXT    NOT NULL,
+    kind            TEXT    NOT NULL,
+    day             TEXT    NOT NULL,
+    PRIMARY KEY (user_id, product_id, kind, day)
+);
+CREATE INDEX IF NOT EXISTS idx_holding_tx_user ON holding_tx(user_id, product_id, day);
+
 -- Appareils abonnés aux notifications (Web Push)
 CREATE TABLE IF NOT EXISTS push_subscriptions (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -284,6 +330,7 @@ TABLES = [
     "invitations",
     "invite_requests",
     "push_subscriptions",
+    "holding_tx",
     "site_stats",
     "password_resets",
     "portfolios",

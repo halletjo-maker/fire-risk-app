@@ -87,6 +87,17 @@ def send_monthly_reports() -> None:
         logger.exception("Échec de l'envoi des rapports mensuels")
 
 
+def refresh_holdings() -> None:
+    """Mes vraies positions : cours, stop-loss et objectifs, puis alertes (approche du stop, objectif)."""
+    from .services import holdings
+
+    try:
+        if holdings.refresh_quotes():
+            holdings.check_alerts()
+    except Exception:
+        logger.exception("Mise à jour des positions impossible")
+
+
 def nightly_backup() -> None:
     from .services import backup
     backup.nightly()
@@ -124,6 +135,11 @@ def start_scheduler() -> None:
     scheduler.add_job(
         send_monthly_reports, "cron", day="1-3", hour=8, minute=7, id="monthly_reports",
         name="Rapport mensuel des portefeuilles fictifs", replace_existing=True,
+    )
+    scheduler.add_job(
+        refresh_holdings, "interval", minutes=minutes, id="refresh_holdings",
+        name="Mes positions (cours, stop, alertes)", replace_existing=True,
+        next_run_time=datetime.now().astimezone() + timedelta(minutes=2),
     )
     scheduler.add_job(
         nightly_backup, "cron", hour=3, minute=40, id="nightly_backup",

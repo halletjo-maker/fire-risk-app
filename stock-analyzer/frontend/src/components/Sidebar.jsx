@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, ChevronDown, Home, LineChart, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
+import { BookOpen, Briefcase, ChevronDown, Home, LineChart, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
 import { WATCHLIST_COLORS } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { fmtScore, scoreColor } from '../lib/format'
@@ -161,7 +161,7 @@ function Portfolios({ onOpen, onNew }) {
   )
 }
 
-export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfolio, onNewPortfolio, onClose, onNavigate }) {
+export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfolio, onNewPortfolio, onHoldings, onClose, onNavigate }) {
   const wl = useWatchlists()
   const { watchlists, loading, error, selectedId } = wl
   const [creating, setCreating] = useState(false)
@@ -245,6 +245,13 @@ export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfol
           })}
         </ul>
         {!loading && !error && <Presets onDone={onNavigate} />}
+        {!loading && !error && (
+          <button onClick={onHoldings}
+            className="mx-2 mt-4 flex w-[calc(100%-1rem)] items-center gap-2.5 rounded-lg border border-line px-2.5 py-2 text-left text-sm hover:bg-panel2">
+            <Briefcase className="h-4 w-4 shrink-0 text-bull" />
+            <span className="flex-1">Mes positions <span className="block text-[11px] text-muted">vrais placements · taxe sur les plus-values</span></span>
+          </button>
+        )}
         {!loading && !error && <Portfolios onOpen={onPortfolio} onNew={onNewPortfolio} />}
         <div className="mx-2 mt-4">
           <p className="px-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Le site</p>
