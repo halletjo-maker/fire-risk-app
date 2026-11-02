@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, Briefcase, ChevronDown, FlaskConical, Home, LineChart, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
+import { BookOpen, Briefcase, ChevronDown, FlaskConical, MessageCircleHeart, Home, LineChart, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
 import { WATCHLIST_COLORS } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { fmtScore, scoreColor } from '../lib/format'
@@ -161,7 +161,7 @@ function Portfolios({ onOpen, onNew }) {
   )
 }
 
-export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfolio, onNewPortfolio, onHoldings, onBacktest, onClose, onNavigate }) {
+export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfolio, onNewPortfolio, onHoldings, onBacktest, onFeedback, onClose, onNavigate }) {
   const wl = useWatchlists()
   const { watchlists, loading, error, selectedId } = wl
   const [creating, setCreating] = useState(false)
@@ -276,6 +276,9 @@ export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfol
 
       {/* Profil : mail actif + changement d'utilisateur */}
       <div className="border-t border-line p-3">
+        <button className="btn-ghost mb-2 w-full justify-center border border-[#E8762F]/40 text-[#E8762F]" onClick={onFeedback}>
+          <MessageCircleHeart className="h-4 w-4" /> Votre avis m'intéresse
+        </button>
         {user.is_admin && (
           <button className="btn-ghost mb-2 w-full justify-center border border-line" onClick={onInvite}>
             <UserPlus className="h-4 w-4" /> Inviter un ami

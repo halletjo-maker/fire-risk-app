@@ -98,3 +98,24 @@ def test_access_request_decline_and_throttle(auth_client):
     assert c.delete(f"/users/access-requests/{rid}").json() == {"ok": True}
     codes = [v.post("/public/access-request", json={"email": f"x{i}@exemple.be"}).status_code for i in range(6)]
     assert codes[:4] == [202] * 4 and codes[-1] == 429
+
+
+def test_feedback_from_member_and_visitor(auth_client, tmp_path, monkeypatch):
+    from app.services import push
+
+    monkeypatch.setattr(push, "notify_admins", lambda *a, **k: None)
+    c = _admin(auth_client)
+    v = _visitor()
+    r = v.post("/public/feedback", json={"kind": "idee", "rating": 5, "message": "Ajouter les obligations !",
+                                         "email": "Fan@Exemple.be", "page": "/apprendre"})
+    assert r.status_code == 202 and r.json()["ok"]
+    assert v.post("/public/feedback", json={"message": "spam", "website": "x"}).json()["ok"]   # robot ignoré
+    assert v.post("/public/feedback", json={"message": "a"}).status_code == 422
+    lst = c.get("/users/feedback").json()
+    assert lst["unread"] == 1 and lst["feedback"][0]["email"] == "fan@exemple.be" and lst["feedback"][0]["rating"] == 5
+    mails = [BytesParser(policy=policy.default).parse(p.open("rb")) for p in (tmp_path / "outbox").glob("*.eml")]
+    assert any("Idée" in m["Subject"] for m in mails)
+    assert c.post("/users/feedback/read").json()["unread"] == 0
+    fid = lst["feedback"][0]["id"]
+    assert c.delete(f"/users/feedback/{fid}").json()["feedback"] == []
+    assert v.get("/users/feedback").status_code == 401

@@ -9,6 +9,7 @@ import DomainSettings from './DomainSettings'
 import BackupSettings from './BackupSettings'
 import PushSettings from './PushSettings'
 import SiteStats from './SiteStats'
+import FeedbackInbox from './FeedbackInbox'
 import { MailSettings, MonthlyReport } from './MailAndReport'
 
 const fmt = (iso) => {
@@ -87,6 +88,7 @@ export default function ProfileModal({ onClose, onLogout }) {
             {data.user.is_admin && <MailSettings />}
             {data.user.is_admin && <BackupSettings />}
             <PasswordChange />
+            {data.user.is_admin && <FeedbackInbox />}
             {data.user.is_admin && <SiteStats />}
             {data.user.is_admin && <ServerUpdate />}
             {data.user.is_admin && <DomainSettings />}

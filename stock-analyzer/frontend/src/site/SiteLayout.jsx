@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BookOpen, Info, LayoutDashboard, LineChart, LogIn } from 'lucide-react'
 import { api } from '../lib/api'
+import FeedbackModal from '../components/FeedbackModal'
 import { Logo } from '../components/ui'
 
 // Pages publiques : accueil, fiches « Apprendre », à propos, confidentialité
@@ -60,6 +61,7 @@ export function SiteHeader({ onLogin }) {
 
 export function SiteFooter() {
   const signedIn = useSignedIn()
+  const [feedback, setFeedback] = useState(false)
   return (
     <footer className="border-t border-line">
       <div className="mx-auto max-w-5xl px-4 py-6 text-sm">
@@ -70,6 +72,7 @@ export function SiteFooter() {
           <Link href="/a-propos" className="hover:text-gray-100">À propos</Link>
           <Link href="/confidentialite" className="hover:text-gray-100">Confidentialité</Link>
           <a href={signedIn ? '/' : LOGIN_URL} className="hover:text-gray-100">{signedIn ? 'Mon outil' : 'Se connecter'}</a>
+          <button type="button" className="text-[#E8762F] hover:underline" onClick={() => setFeedback(true)}>Votre avis m'intéresse</button>
         </nav>
         <p className="mt-4 text-[11px] leading-relaxed text-muted">
           Projet personnel et non commercial, sans publicité. Les informations et analyses fournies sont générées
@@ -78,6 +81,7 @@ export function SiteFooter() {
           de perte en capital.
         </p>
       </div>
+      {feedback && <FeedbackModal signedIn={signedIn} onClose={() => setFeedback(false)} />}
     </footer>
   )
 }

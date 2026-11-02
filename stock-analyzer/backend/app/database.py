@@ -147,6 +147,19 @@ CREATE TABLE IF NOT EXISTS daily_visitors (
     PRIMARY KEY (day, hash)
 );
 
+-- Avis des membres et des visiteurs (« Votre avis m'intéresse »)
+CREATE TABLE IF NOT EXISTS feedback (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    email           TEXT,
+    kind            TEXT    NOT NULL DEFAULT 'avis',   -- idee | probleme | avis
+    rating          INTEGER,
+    message         TEXT    NOT NULL,
+    page            TEXT,
+    read_at         TEXT,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Demandes d'accès déposées depuis la page d'accueil publique
 CREATE TABLE IF NOT EXISTS invite_requests (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -343,6 +356,7 @@ TABLES = [
     "sessions",
     "invitations",
     "invite_requests",
+    "feedback",
     "push_subscriptions",
     "holding_tx",
     "site_stats",

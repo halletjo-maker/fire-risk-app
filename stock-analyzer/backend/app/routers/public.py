@@ -106,3 +106,51 @@ def access_request(payload: AccessRequestIn, request: Request, background: Backg
         from ..services import push
         push.notify_admins("access", "Nouvelle demande d'accès", f"{email} demande une invitation à MM100.", "/")
     return DONE
+
+
+# ── « Votre avis m'intéresse » ──────────────────────────────────────────────
+class FeedbackIn(BaseModel):
+    kind: str = Field(default="avis", pattern="^(idee|probleme|avis)$")
+    rating: int | None = Field(default=None, ge=1, le=5)
+    message: str = Field(min_length=3, max_length=2000)
+    email: EmailStr | None = None
+    page: str | None = Field(default=None, max_length=200)
+    website: str | None = Field(default=None, max_length=200)  # piège à robots
+
+
+KIND_LABEL = {"idee": "💡 Idée", "probleme": "🐞 Problème", "avis": "💬 Avis"}
+
+
+def _notify_feedback(kind: str, rating: int | None, message: str, who: str) -> None:
+    from ..services import push
+
+    stars = f" · {'★' * rating}{'☆' * (5 - rating)}" if rating else ""
+    title = f"{KIND_LABEL[kind]} de {who}{stars}"
+    with get_conn() as conn:
+        admins = [r["email"] for r in conn.execute("SELECT email FROM users WHERE is_admin = 1")]
+    for to in admins:
+        sender.send(to, f"Nouvel avis sur MM100 : {KIND_LABEL[kind]}", f"{title}\n\n{message}\n\n"
+                    "Tous les avis : Profil → Avis reçus.\n")
+    push.notify_admins("access", title, message[:180], "/")
+
+
+@router.post("/feedback", status_code=202)
+def feedback(payload: FeedbackIn, request: Request, background: BackgroundTasks) -> dict:
+    """Avis d'un membre (connecté) ou d'un visiteur du site. Réponse identique dans tous les cas."""
+    done = {"ok": True, "message": "Merci ! Ton avis a bien été envoyé."}
+    if payload.website:
+        return done
+    ip = _client_ip(request)
+    if auth.throttle.blocked(f"feedback:{ip}", f"feedback:{ip}"):
+        raise HTTPException(status_code=429, detail="Beaucoup de messages depuis cette connexion : réessaie plus tard.")
+    auth.throttle.fail(f"feedback:{ip}", f"feedback:{ip}")
+    user = auth.user_for_token(auth.token_from_request(request))
+    email = user["email"] if user else (payload.email.lower() if payload.email else None)
+    message = payload.message.strip()
+    with get_conn() as conn:
+        conn.execute("INSERT INTO feedback (user_id, email, kind, rating, message, page) VALUES (?, ?, ?, ?, ?, ?)",
+                     (user["id"] if user else None, email, payload.kind, payload.rating, message, payload.page))
+    who = email or "un visiteur anonyme"
+    if not (user and user.get("is_admin")):
+        background.add_task(_notify_feedback, payload.kind, payload.rating, message, who)
+    return done

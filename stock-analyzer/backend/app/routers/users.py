@@ -361,3 +361,26 @@ def remove_member(user_id: int, admin: dict = Depends(admin_user)) -> dict:
             raise HTTPException(status_code=400, detail="Un administrateur ne peut pas être supprimé ici.")
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     return {"ok": True}
+
+
+# ── Avis reçus (administrateur) ─────────────────────────────────────────────
+@router.get("/feedback")
+def feedback_list(admin: dict = Depends(admin_user)) -> dict:
+    with get_conn() as conn:
+        rows = [dict(r) for r in conn.execute("SELECT * FROM feedback ORDER BY id DESC LIMIT 200")]
+        unread = conn.execute("SELECT COUNT(*) FROM feedback WHERE read_at IS NULL").fetchone()[0]
+    return {"feedback": rows, "unread": unread}
+
+
+@router.post("/feedback/read")
+def feedback_read(admin: dict = Depends(admin_user)) -> dict:
+    with get_conn() as conn:
+        conn.execute("UPDATE feedback SET read_at = datetime('now') WHERE read_at IS NULL")
+    return feedback_list(admin)
+
+
+@router.delete("/feedback/{fid}")
+def feedback_delete(fid: int, admin: dict = Depends(admin_user)) -> dict:
+    with get_conn() as conn:
+        conn.execute("DELETE FROM feedback WHERE id = ?", (fid,))
+    return feedback_list(admin)
