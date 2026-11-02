@@ -32,11 +32,23 @@ def level(score: float) -> str:
     return "FAVORABLE" if score >= FAVORABLE else "PRUDENCE" if score >= CAUTION else "DEFAVORABLE"
 
 
-def signal(score: float | None) -> str | None:
-    """Pastille des watchlists : 🟢 ACHAT · 🟡 NEUTRE · 🔴 VENTE."""
+def signal(score: float | None, guard: bool = False) -> str | None:
+    """Pastille des watchlists : 🟢 ACHAT · 🟡 NEUTRE · 🔴 VENTE.
+    guard : garde-fou MM200 (prix sous une MM200 qui baisse) → jamais ACHAT, au mieux NEUTRE."""
     if score is None:
         return None
-    return "ACHAT" if score >= FAVORABLE else "VENTE" if score < CAUTION else "NEUTRE"
+    if score >= FAVORABLE:
+        return "NEUTRE" if guard else "ACHAT"
+    return "VENTE" if score < CAUTION else "NEUTRE"
+
+
+GUARD_NOTE = ("🛡️ Garde-fou MM200 : le cours est sous sa moyenne 200 jours, qui baisse (tendance de fond "
+              "baissière). Pas de signal d'achat tant que la tendance ne se retourne pas, même avec un bon score.")
+
+
+def guard_active(technical: dict | None) -> bool:
+    t = technical or {}
+    return bool((t.get("long_trend") or {}).get("guard")) and not t.get("inverse")
 
 
 def _r(x: float) -> float:
@@ -152,6 +164,11 @@ def compute(fundamental: dict | None, technical: dict | None, sentiment: dict | 
         notes.append("Résultats trimestriels dans moins de 48 h : le cours peut fortement bouger.")
 
     buy_level = level(global_score)
+    guard = guard_active(technical)
+    if guard:
+        notes.insert(0, GUARD_NOTE)
+        if buy_level == "FAVORABLE":
+            buy_level = "PRUDENCE"
     sell_score = _r(10 - global_score)
     sell_level = level(sell_score)
 
@@ -178,7 +195,8 @@ def compute(fundamental: dict | None, technical: dict | None, sentiment: dict | 
         "score": global_score,
         "components": components,
         "missing": missing,
-        "signal": signal(global_score),
+        "signal": signal(global_score, guard),
+        "guard": guard,
         "buy": {"score": global_score, "level": buy_level, **_labels(buy_level, "À L'ACHAT"),
                 "summary": buy_summary, "warning": buy_warning, "pros": pros, "cons": cons, "neutral": neutral},
         "sell": {"score": sell_score, "level": sell_level, **_labels(sell_level, "À LA VENTE"),

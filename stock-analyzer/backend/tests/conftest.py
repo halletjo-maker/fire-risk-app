@@ -22,10 +22,14 @@ def _user_from_test_header(x_user_email: str | None = Header(default=None)) -> d
 
 @pytest.fixture(autouse=True)
 def _no_benchmark_network(monkeypatch):
-    """Pas d'appel réseau pour le repère MSCI World : indisponible = aucun achat bloqué."""
+    """Pas d'appel réseau pour le repère MSCI World : indisponible = aucun achat bloqué.
+    Idem pour les comptes annuels et la moyenne 3 ans (tests dédiés : test_long_term.py)."""
     from app.services import regime
+    from app.services.sources import yahoo
 
     monkeypatch.setattr(regime, "closes", lambda: [])
+    monkeypatch.setattr(yahoo, "financials", lambda symbol: None)
+    monkeypatch.setattr(yahoo, "long_average", lambda symbol, months=36: None)
 
 
 def _make_client(tmp_path, monkeypatch, override: bool):

@@ -108,6 +108,36 @@ def not_applicable(message: str) -> dict:
             "coverage": 0, "sources": [], "notes": [message]}
 
 
+# ---------------------------------------------------------------- comptes sur 3 ans
+BUYBACK_PCT = -1.0  # nombre d'actions en baisse d'au moins 1 %/an : la société rachète ses actions
+
+
+def share_trend(fin: dict | None) -> dict | None:
+    """Évolution annuelle moyenne du nombre d'actions sur ~3 ans (négatif = rachats, positif = dilution)."""
+    shares = [(y, v) for y, v in zip((fin or {}).get("shares_years") or [], (fin or {}).get("shares") or []) if v]
+    if len(shares) < 2:
+        return None
+    shares = shares[:4]  # le plus récent d'abord, au plus 3 ans d'écart
+    (y_new, new), (y_old, old) = shares[0], shares[-1]
+    years = max(1, int(y_new) - int(y_old)) if y_new.isdigit() and y_old.isdigit() else len(shares) - 1
+    per_year = ((new / old) ** (1 / years) - 1) * 100
+    repurchased = sum(v for v in ((fin or {}).get("repurchase") or [])[:3] if v)
+    return {"pct_per_year": round(per_year, 2), "years": years, "repurchased": repurchased or None,
+            "buyback": per_year <= BUYBACK_PCT}
+
+
+def fcf_average(fin: dict | None) -> dict | None:
+    """Free cash-flow moyen des 3 derniers exercices et sa tendance (plus récent vs plus ancien)."""
+    vals = [v for v in ((fin or {}).get("fcf") or [])[:3] if v is not None]
+    if len(vals) < 2:
+        return None
+    avg = sum(vals) / len(vals)
+    trend = None
+    if vals[-1] and vals[-1] > 0:
+        trend = (vals[0] / vals[-1] - 1) * 100
+    return {"avg": avg, "years": len(vals), "latest": vals[0], "trend_pct": trend}
+
+
 # ---------------------------------------------------------------- point d'entrée
 def analyze(product: dict, quote: dict, derivative: dict | None = None) -> dict:
     key = f"fund:{product['id']}"
@@ -238,8 +268,26 @@ def _stock(product: dict, quote: dict) -> dict:
     else:
         criteria.append(crit("debt", "Endettement (dette nette / EBITDA)", None, "—", None, 15, "Donnée indisponible."))
 
-    # 5. Flux de trésorerie
-    if y.get("freeCashflow") is not None and y.get("marketCap"):
+    fin = yahoo.financials(symbol) if pid.startswith("yf:") and symbol else None
+    fa = fcf_average(fin)
+    mcap_now = y.get("marketCap")
+
+    # 5. Flux de trésorerie : moyenne des 3 derniers exercices (plus stable qu'une seule année) + tendance
+    if fa and mcap_now:
+        fcf = fa["avg"] / mcap_now * 100
+        s = tier(fcf, [(0, 2), (2, 5), (4, 6.5), (6, 8)], 9)
+        comment = "L'entreprise consomme du cash." if fcf < 0 else (
+            "Génère peu de cash par rapport à sa valeur." if fcf < 4 else "Génère beaucoup de cash.")
+        t = fa["trend_pct"]
+        if t is not None and fa["avg"] > 0:
+            if t >= 15:
+                s, comment = s + 0.5, comment + " Free cash-flow en hausse sur la période."
+            elif t <= -25:
+                s, comment = s - 1, comment + " Attention : free cash-flow en net recul."
+        criteria.append(crit("fcf", f"Rendement du free cash-flow (moyenne {fa['years']} ans)", fcf,
+                             pct(fcf) + (f" · tendance {pct(t, 0, sign=True)}" if t is not None else ""),
+                             max(0, min(10, s)), 10, comment, yahoo.SOURCE))
+    elif y.get("freeCashflow") is not None and y.get("marketCap"):
         fcf = y["freeCashflow"] / y["marketCap"] * 100
         s = tier(fcf, [(0, 2), (2, 5), (4, 6.5), (6, 8)], 9)
         comment = "L'entreprise consomme du cash." if fcf < 0 else (
@@ -272,11 +320,32 @@ def _stock(product: dict, quote: dict) -> dict:
             comment = "Rendement très élevé : vérifier qu'il est soutenable." if div >= 7 else "Dividende versé."
         if payout and payout > 1:
             s, comment = 3, "Le dividende dépasse les bénéfices : risque de baisse."
+        divs = [v for v in ((fin or {}).get("dividends") or [])[:3] if v]
+        if div > 0 and fa and divs:
+            cover = fa["avg"] / (sum(divs) / len(divs))
+            if cover < 1:
+                s, comment = min(s, 3), "Le dividende n'est pas couvert par le cash généré : il est financé autrement (dette, réserves)."
+            elif cover >= 1.5:
+                comment += f" Couvert {num(cover, 1)} fois par le free cash-flow."
         criteria.append(crit("dividend", "Rendement du dividende", div, pct(div, 2), s, 5, comment, src))
     else:
         criteria.append(crit("dividend", "Rendement du dividende", None, "—", None, 5, "Donnée indisponible."))
 
-    # 7. Avis des analystes — potentiel + recommandation
+    # 7. Rachats d'actions / dilution : évolution du nombre d'actions sur ~3 ans
+    st = share_trend(fin)
+    if st:
+        r = st["pct_per_year"]
+        s = tier(r, [(-3, 9), (BUYBACK_PCT, 8), (1, 6), (3, 4), (6, 2.5)], 1.5)
+        comment = ("La société rachète activement ses actions : chaque action représente une part plus grande."
+                   if r < -3 else
+                   "La société rachète ses actions : le nombre d'actions diminue." if r <= BUYBACK_PCT else
+                   "Nombre d'actions stable." if r < 1 else
+                   "Légère dilution : de nouvelles actions sont créées (souvent pour rémunérer les salariés)." if r < 3 else
+                   "Forte dilution : chaque action représente une part de plus en plus petite.")
+        criteria.append(crit("shares", f"Rachats d'actions / dilution ({st['years']} ans)", r,
+                             f"{pct(r, 1, sign=True)} par an", s, 7, comment, yahoo.SOURCE))
+
+    # 8. Avis des analystes — potentiel + recommandation
     target, src = first((y.get("targetMeanPrice"), yahoo.SOURCE), (c.get("target_median"), boursorama.SOURCE),
                         (g.get("target_mean"), google_finance.SOURCE))
     upside = (target / price - 1) * 100 if target and price else None
@@ -307,6 +376,8 @@ def _stock(product: dict, quote: dict) -> dict:
 
     # Informations complémentaires (non notées)
     info = []
+    if st and st["buyback"] and st.get("repurchased"):
+        info.append({"label": "Rachats d'actions (3 derniers exercices)", "display": big(st["repurchased"], y.get("financialCurrency") or cur)})
     if y.get("sector"):
         info.append({"label": "Secteur", "display": f"{y['sector']} · {y.get('industry') or ''}".strip(" ·")})
     mcap, _ = first((y.get("marketCap"), None), (g.get("market_cap"), None))
@@ -331,7 +402,11 @@ def _stock(product: dict, quote: dict) -> dict:
         if days is not None and 0 <= days <= 7:
             notes.append(f"Résultats trimestriels dans {days} jour(s) : forte volatilité possible.")
 
-    return finalize(criteria, info, sources, note=" ".join(notes) or None)
+    if fin:
+        sources.append({"name": f"{yahoo.SOURCE} (comptes annuels)", "ok": True})
+    result = finalize(criteria, info, sources, note=" ".join(notes) or None)
+    result["shares_trend"] = st  # rachats d'actions : repris par le rapport et les portefeuilles fictifs
+    return result
 
 
 # ---------------------------------------------------------------- ETF

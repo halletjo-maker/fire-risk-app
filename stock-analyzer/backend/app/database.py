@@ -199,7 +199,9 @@ CREATE TABLE IF NOT EXISTS portfolio_positions (
     exit_fee        REAL,
     exit_at         TEXT,
     exit_reason     TEXT,
-    pnl_eur         REAL
+    pnl_eur         REAL,
+    shares_trend    REAL,       -- évolution du nombre d'actions (%/an, ~3 ans) : négatif = rachats
+    shares_checked_at TEXT
 );
 
 -- Valeur du portefeuille, une ligne par jour (courbe d'évolution)
@@ -327,6 +329,8 @@ MIGRATIONS = [
     ("watchlists", "screen_synced_at", "TEXT"),
     ("portfolios", "is_public", "INTEGER NOT NULL DEFAULT 0"),
     ("invitations", "anonymous", "INTEGER NOT NULL DEFAULT 0"),
+    ("portfolio_positions", "shares_trend", "REAL"),
+    ("portfolio_positions", "shares_checked_at", "TEXT"),
     ("users", "push_alerts", "INTEGER NOT NULL DEFAULT 1"),
     ("users", "push_trades", "INTEGER NOT NULL DEFAULT 1"),
     ("users", "push_access", "INTEGER NOT NULL DEFAULT 1"),

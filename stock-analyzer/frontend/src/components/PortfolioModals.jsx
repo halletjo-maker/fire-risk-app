@@ -76,6 +76,8 @@ function Rules() {
       <ul className="mt-2 list-disc space-y-1 pl-4">
         <li><b className="text-gray-200">Achat</b> : produits au signal 🟢 ACHAT dont le cours est dans la zone d'achat affichée, meilleur score d'abord.</li>
         <li><b className="text-gray-200">Répartition</b> : jusqu'à 10 lignes d'environ 10 % du portefeuille, en actions entières (cryptos : quantités fractionnées).</li>
+        <li><b className="text-gray-200">Garde-fou</b> : pas d'achat quand le cours est sous une moyenne 200 jours qui baisse (tendance de fond baissière).</li>
+        <li><b className="text-gray-200">🔁 Rachats</b> : la société a réduit son nombre d'actions d'au moins 1 % par an sur 3 ans (elle rachète ses propres actions).</li>
         <li><b className="text-gray-200">Vente</b> : objectif atteint, stop-loss touché (le stop monte avec le cours pour protéger les gains), ou signal passé à 🔴 VENTE.</li>
         <li>Pas de rachat d'un titre vendu depuis moins de 5 jours.</li>
         <li><b className="text-gray-200">Filtre de marché</b> : aucun nouvel achat quand l'ETF MSCI World est sous sa MM100 (marché mondial baissier). Les ventes continuent.</li>
@@ -174,7 +176,10 @@ export function PortfolioModal({ id, onClose }) {
                 <li key={x.id} className="py-2.5">
                   <button className="w-full text-left" onClick={() => { wl.analyze({ symbol: x.symbol, product_id: x.product_id }); onClose() }}>
                     <span className="flex items-center justify-between gap-2">
-                      <span className="min-w-0 truncate text-sm font-medium">{x.name}</span>
+                      <span className="min-w-0 truncate text-sm font-medium">
+                        {x.name}
+                        {x.buyback && <span className="ml-1.5 rounded-full bg-[#3987e5]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#7fb2f0]" title="Le nombre d'actions baisse depuis 3 ans : la société rachète ses actions">🔁 Rachats</span>}
+                      </span>
                       <span className={`shrink-0 text-sm font-semibold ${changeColor(x.pnl_eur)}`}>{fmtPct(x.pnl_pct)}</span>
                     </span>
                     <span className="flex justify-between gap-2 text-xs text-muted">

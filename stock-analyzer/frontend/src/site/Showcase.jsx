@@ -82,7 +82,10 @@ export default function Showcase() {
                     {data.positions.map((p) => (
                       <li key={p.symbol + p.entry_at} className="flex items-center justify-between gap-3 py-2 text-sm">
                         <span className="min-w-0">
-                          <span className="block truncate font-medium">{p.name}</span>
+                          <span className="block truncate font-medium">
+                            {p.name}
+                            {p.buyback && <span className="ml-1.5 rounded-full bg-[#3987e5]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#7fb2f0]" title="La société rachète ses propres actions">🔁 Rachats</span>}
+                          </span>
                           <span className="block text-xs text-muted">{p.symbol} · {num(p.weight_pct)} % · depuis le {short(p.entry_at)}</span>
                         </span>
                         <span className={`shrink-0 font-semibold ${changeColor(p.pnl_pct)}`}>{fmtPct(p.pnl_pct)}</span>
@@ -115,7 +118,9 @@ export default function Showcase() {
                 <li>Achat d'un produit de la liste « {data.list || 'suivie'} » quand il obtient le signal 🟢 ACHAT et se trouve dans sa zone d'achat.</li>
                 <li>Au plus {data.max_positions} lignes d'environ 10 % chacune ; frais simulés à chaque opération.</li>
                 <li>Vente à l'objectif, au stop-loss (qui monte avec le cours pour protéger les gains), ou quand le signal passe à 🔴 VENTE.</li>
+                <li>Pas d'achat d'un titre sous une moyenne 200 jours qui baisse (tendance de fond baissière).</li>
                 <li>Pas de nouvel achat quand le marché mondial passe sous sa moyenne 100 jours.</li>
+                <li>🔁 Rachats : la société réduit son nombre d'actions d'au moins 1 % par an sur 3 ans.</li>
               </ul>
               <Link href="/apprendre/diversifier-gerer-risque" className="mt-3 inline-flex items-center gap-1.5 text-bull hover:underline">
                 <BookOpen className="h-4 w-4" /> Comprendre la gestion du risque

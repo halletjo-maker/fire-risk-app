@@ -36,6 +36,7 @@ def showcase() -> dict:
         "positions": [{
             "name": p["name"], "symbol": p["symbol"], "entry_at": p["entry_at"], "pnl_pct": p["pnl_pct"],
             "weight_pct": round(p["value_eur"] / value * 100, 1) if value else None,
+            "buyback": p.get("buyback", False),
         } for p in s["positions"]],
         "trades": [{k: t[k] for k in ("name", "symbol", "entry_at", "exit_at", "exit_reason", "pnl_pct")}
                    for t in s["trades"][:15]],

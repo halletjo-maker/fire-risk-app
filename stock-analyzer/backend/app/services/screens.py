@@ -156,7 +156,8 @@ def evaluate(df) -> dict | None:
         return None
     full = {"product": {"type": "ACTION"}, "quote": {"price": t["price"]}, "technical": t}
     lv = targets.compute(full) or {}
-    return {"price": t["price"], "change": t["change_pct"], "score": t["score"], "signal": signal_for(t["score"]),
+    return {"price": t["price"], "change": t["change_pct"], "score": t["score"],
+            "signal": signal_for(t["score"], bool((t.get("long_trend") or {}).get("guard"))),
             **{k: lv.get(k) for k in ("buy_price", "buy_kind", "buy_note", "sell_price", "sell_note", "stop_price")}}
 
 

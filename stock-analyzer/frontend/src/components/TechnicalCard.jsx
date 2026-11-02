@@ -57,6 +57,35 @@ function Levels({ levels, currency }) {
   )
 }
 
+// Tendance de fond (MM200, garde-fou) et repère de long terme (moyenne 3 ans, non noté)
+function LongTerm({ lt, la, inverse }) {
+  if (!lt && !la) return null
+  return (
+    <div className="mt-3 space-y-2">
+      {lt && (
+        <div className={`rounded-lg px-3 py-2 text-sm ${lt.guard && !inverse ? 'border border-warn/40 bg-warn/10 text-warn' : 'bg-bg'}`}>
+          <p className="text-[11px] uppercase tracking-wide text-muted">Tendance de fond · MM200</p>
+          <p className="font-medium">
+            {lt.below ? 'Sous' : 'Au-dessus de'} la MM200 ({fmtPct(lt.distance_pct)}) · MM200 {lt.falling ? '↘ en baisse' : '↗ en hausse'}
+          </p>
+          {lt.guard && !inverse && <p className="mt-0.5 text-xs">🛡️ Garde-fou actif : pas de signal d'achat tant que la tendance de fond est baissière.</p>}
+        </div>
+      )}
+      {la && (
+        <div className="rounded-lg bg-bg px-3 py-2 text-sm">
+          <p className="text-[11px] uppercase tracking-wide text-muted">Repère long terme · moyenne 3 ans (non notée)</p>
+          <p className="font-medium">Cours {fmtPct(la.distance_pct)} par rapport à sa moyenne des 3 dernières années</p>
+          <p className="mt-0.5 text-xs text-muted">
+            {la.distance_pct >= 50 ? 'Très au-dessus de son niveau habituel : prudence, beaucoup de bonnes nouvelles sont déjà dans le prix.'
+              : la.distance_pct <= -30 ? 'Très en dessous de son niveau habituel : décote… ou problème de fond, à vérifier.'
+                : 'Dans la zone habituelle de ces dernières années.'}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function TechnicalCard({ data, loading, error }) {
   if (loading) {
     return (
@@ -92,6 +121,7 @@ export default function TechnicalCard({ data, loading, error }) {
       <Notes notes={t.notes} />
       {t.mm100 && <Mm100Banner mm={t.mm100} currency={t.currency} />}
       <Levels levels={t.levels} currency={t.currency} />
+      <LongTerm lt={t.long_trend} la={t.long_average} inverse={t.inverse} />
       {t.chart?.length > 0 && (
         <Suspense fallback={<div className="mt-4 flex h-60 items-center justify-center"><Spinner /></div>}>
           <TechnicalChart data={t.chart} support={t.levels?.support} resistance={t.levels?.resistance} />

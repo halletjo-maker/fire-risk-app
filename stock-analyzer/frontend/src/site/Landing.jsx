@@ -114,8 +114,8 @@ const FEATURES = [
 ]
 
 const STEPS = [
-  ['Fondamental', '35 %', 'L’entreprise est-elle solide ? Valorisation, croissance, rentabilité, dette, trésorerie, dividende, avis des analystes.'],
-  ['Technique', '45 %', 'Le cours est-il bien orienté ? La moyenne mobile 100 jours en critère principal, puis tendances, RSI, MACD, Bollinger, volumes.'],
+  ['Fondamental', '35 %', 'L’entreprise est-elle solide ? Valorisation, croissance, rentabilité, dette, trésorerie sur 3 ans, dividende, rachats d’actions, avis des analystes.'],
+  ['Technique', '45 %', 'Le cours est-il bien orienté ? La moyenne mobile 100 jours en critère principal, la MM200 en garde-fou, puis tendances, RSI, MACD, Bollinger, volumes.'],
   ['Sentiment', '20 %', 'Que dit l’actualité ? Le ton des titres de presse des 72 dernières heures, en français et en anglais.'],
 ]
 

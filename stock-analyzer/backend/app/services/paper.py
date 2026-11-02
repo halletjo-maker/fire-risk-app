@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 import threading
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -213,12 +214,44 @@ def run(portfolio_id: int) -> dict:
             "INSERT INTO portfolio_values (portfolio_id, day, value_eur) VALUES (?, ?, ?) "
             "ON CONFLICT(portfolio_id, day) DO UPDATE SET value_eur = excluded.value_eur",
             (portfolio_id, _today(), round(cash + held_value, 2)))
+    try:
+        refresh_share_trends(portfolio_id)
+    except Exception:
+        logger.exception("Rachats d'actions : mise à jour impossible (portefeuille %s)", portfolio_id)
     if buys or sells:
         logger.info("Portefeuille fictif %s : %s achat(s), %s vente(s)", portfolio_id, buys, sells)
         from . import push
         push.notify_later(pf["user_id"], "trades", f"{pf['name']} : {buys + sells} opération{'s' if buys + sells > 1 else ''}",
                           " · ".join(events), "/")
     return {"buys": buys, "sells": sells}
+
+
+CRYPTO_SYMBOL = re.compile(r"-(EUR|USD|USDT|GBP|CHF)$")
+
+
+def refresh_share_trends(portfolio_id: int) -> int:
+    """Rachats d'actions des lignes ouvertes (comptes annuels Yahoo, revus au plus une fois par mois)."""
+    from . import fundamentals
+    from .sources import yahoo
+
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT id, symbol FROM portfolio_positions WHERE portfolio_id = ? AND status = 'OPEN' AND "
+            "(shares_checked_at IS NULL OR shares_checked_at < datetime('now', '-30 days'))", (portfolio_id,)).fetchall()
+    done = 0
+    for r in rows:
+        trend = None
+        if not CRYPTO_SYMBOL.search(r["symbol"] or ""):
+            try:
+                st = fundamentals.share_trend(yahoo.financials(r["symbol"]))
+                trend = st["pct_per_year"] if st else None
+            except Exception:
+                logger.exception("Rachats d'actions illisibles : %s", r["symbol"])
+        with get_conn() as conn:
+            conn.execute("UPDATE portfolio_positions SET shares_trend = ?, shares_checked_at = datetime('now') "
+                         "WHERE id = ?", (trend, r["id"]))
+        done += 1
+    return done
 
 
 def run_all() -> int:
@@ -243,6 +276,8 @@ def summary(conn, pf) -> dict:
         p["cost_eur"] = round(p["qty"] * p["entry_price"] / p["entry_fx"] + p["entry_fee"], 2)
         p["pnl_eur"] = round(p["value_eur"] - p["cost_eur"], 2)
         p["pnl_pct"] = round(p["pnl_eur"] / p["cost_eur"] * 100, 2) if p["cost_eur"] else None
+        trend = p.get("shares_trend")
+        p["buyback"] = trend is not None and trend <= -1.0  # même seuil que fundamentals.BUYBACK_PCT
         invested += p["value_eur"]
     value = round(pf["cash"] + invested, 2)
     wl = conn.execute("SELECT id, name, kind FROM watchlists WHERE id = ?", (pf["watchlist_id"],)).fetchone() \

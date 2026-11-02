@@ -184,3 +184,64 @@ def history_many(symbols: list[str], period: str = "1y") -> dict:
         df.index = df.index.tz_localize(None) if getattr(df.index, "tz", None) is not None else df.index
         out[sym] = df
     return out
+
+
+FIN_TTL = 7 * 24 * 3600  # comptes annuels : une fois par semaine suffit
+
+
+def _row(df, *names):
+    for n in names:
+        if df is not None and n in df.index:
+            vals = []
+            for v in df.loc[n].tolist():
+                try:
+                    vals.append(None if v != v else float(v))  # NaN → None
+                except (TypeError, ValueError):
+                    vals.append(None)
+            return vals
+    return []
+
+
+def financials(symbol: str) -> dict | None:
+    """Comptes annuels (le plus récent d'abord) : free cash-flow, rachats d'actions, dividendes versés,
+    nombre d'actions. None si Yahoo ne les fournit pas."""
+    from . import cache
+
+    key = f"fin:{symbol}"
+    cached = cache.get(key, FIN_TTL)
+    if cached is not None:
+        return cached or None
+    try:
+        t = yf.Ticker(symbol)
+        cf, bs = t.cashflow, t.balance_sheet
+    except Exception as exc:
+        logger.info("Comptes annuels Yahoo impossibles (%s) : %s", symbol, exc)
+        return None
+    if cf is None or getattr(cf, "empty", True):
+        cache.put(key, {}, source="yahoo-financials")
+        return None
+    years = [str(c)[:4] for c in cf.columns]
+    shares_years = [str(c)[:4] for c in bs.columns] if bs is not None and not getattr(bs, "empty", True) else []
+    data = {
+        "years": years,
+        "fcf": _row(cf, "Free Cash Flow"),
+        "repurchase": [abs(v) if v is not None else None for v in _row(cf, "Repurchase Of Capital Stock")],
+        "dividends": [abs(v) if v is not None else None for v in _row(cf, "Cash Dividends Paid", "Common Stock Dividend Paid")],
+        "shares_years": shares_years,
+        "shares": _row(bs, "Ordinary Shares Number", "Share Issued"),
+    }
+    cache.put(key, data, source="yahoo-financials")
+    return data
+
+
+def long_average(symbol: str, months: int = 36) -> dict | None:
+    """Moyenne des clôtures mensuelles sur 3 ans (repère de long terme, non noté)."""
+    try:
+        hist = yf.Ticker(symbol).history(period="3y", interval="1mo", auto_adjust=False, raise_errors=False)
+    except Exception:
+        return None
+    closes = hist["Close"].dropna() if hist is not None and "Close" in hist else None
+    if closes is None or len(closes) < 30:
+        return None
+    closes = closes.iloc[-months:]
+    return {"value": float(closes.mean()), "months": int(len(closes))}

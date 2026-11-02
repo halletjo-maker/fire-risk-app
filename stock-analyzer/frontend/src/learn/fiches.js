@@ -37,7 +37,7 @@ export const FICHES = [
           'Score global = 35 % fondamental + 45 % technique + 20 % sentiment. Si une analyse ne s’applique pas (par exemple le fondamental d’un indice), son poids est réparti sur les autres.',
         ],
         bullets: [
-          '7,5 ou plus : conditions favorables — signal 🟢 ACHAT.',
+          '7,5 ou plus : conditions favorables — signal 🟢 ACHAT (sauf garde-fou : cours sous une MM200 qui baisse → 🟡 NEUTRE).',
           'De 5 à 7,4 : prudence — signal 🟡 NEUTRE.',
           'Moins de 5 : conditions défavorables — signal 🔴 VENTE.',
           "L'onglet VENTE (pour qui détient déjà le produit) affiche 10 − score global.",
@@ -96,6 +96,19 @@ export const FICHES = [
           'La MM50 réagit plus vite (court terme), la MM200 plus lentement (long terme). Quand la MM50 passe au-dessus de la MM200, on parle de « croix dorée » (plutôt positif) ; l’inverse s’appelle « croix de la mort ».',
         ],
       },
+      {
+        title: 'MM100 pour le moment, MM200 pour la tendance de fond',
+        paras: [
+          'Les études ne montrent pas de durée « magique » : entre 100 et 200 jours, les résultats sont proches, et l’apport principal d’une moyenne mobile est d’éviter les grosses chutes. L’application combine donc les deux : la MM100, plus réactive, pour choisir le moment d’acheter ; la MM200, plus lente et très suivie par les professionnels, comme garde-fou.',
+          'Garde-fou : quand le cours est sous sa MM200 et que cette MM200 baisse, la tendance de fond est baissière. Un rebond au-dessus de la MM100 n’y suffit pas : beaucoup de ces rebonds échouent (« couteau qui tombe »).',
+        ],
+      },
+      {
+        title: 'Et une moyenne sur 3 ans ?',
+        paras: [
+          'Trop lente pour décider : le cours la croise rarement et souvent bien après le retournement. Elle sert plutôt de repère : un cours 50 % au-dessus de sa moyenne des 3 dernières années a déjà intégré beaucoup de bonnes nouvelles.',
+        ],
+      },
     ],
     inApp: [
       'C’est le critère principal : 35 % du score technique.',
@@ -105,6 +118,8 @@ export const FICHES = [
       'Pente de la MM100 sur 10 séances : +0,5 si elle monte, −0,5 si elle baisse.',
       'Alignement des moyennes (15 % du score technique) : 9/10 si cours > MM50 > MM100 > MM200, 7 si MM50 > MM200, 5 si le cours repasse au-dessus de la MM50, 3 sinon.',
       'Les cours « Achat ≤ / ≥ » des watchlists sont calculés à partir de la MM100.',
+      '🛡️ Garde-fou MM200 : cours sous la MM200 et MM200 en baisse sur 20 séances → jamais de signal 🟢 ACHAT (au mieux 🟡 NEUTRE), même avec un score de 7,5 ou plus. Les portefeuilles fictifs n’achètent donc pas ces titres. Ne s’applique pas aux turbos put.',
+      'Moyenne 3 ans (36 clôtures mensuelles) : affichée dans le rapport comme repère, sans effet sur le score.',
     ],
     traps: [
       'C’est un indicateur en retard : il confirme une tendance, il ne l’annonce pas.',
@@ -314,19 +329,26 @@ export const FICHES = [
     emoji: '🩺',
     title: 'La santé financière d’une entreprise',
     minutes: 5,
-    oneLiner: 'Croissance, rentabilité, dette, trésorerie et dividende : le bilan de santé derrière le cours.',
+    oneLiner: 'Croissance, rentabilité, dette, trésorerie, dividende et rachats d’actions : le bilan de santé derrière le cours.',
     intro: [
       'Une entreprise solide vend de plus en plus, gagne de l’argent sur chaque vente, n’est pas étranglée par ses dettes et génère du cash. C’est ce que mesurent les critères fondamentaux de l’application.',
     ],
     sections: [
       {
-        title: 'Les cinq indicateurs',
+        title: 'Les six indicateurs',
         bullets: [
           'Croissance du chiffre d’affaires : l’évolution des ventes sur un an.',
           'Marge opérationnelle : ce qu’il reste du chiffre d’affaires après les coûts d’exploitation (résultat opérationnel / chiffre d’affaires). 20 % de marge = 20 € gagnés sur 100 € de ventes.',
           'Dette nette / EBITDA : le nombre d’années de bénéfice d’exploitation (avant amortissements) qu’il faudrait pour rembourser les dettes, trésorerie déduite.',
-          'Rendement du free cash-flow : le cash réellement généré, après investissements, rapporté à la valeur boursière.',
-          'Rendement du dividende : le dividende annuel rapporté au cours.',
+          'Rendement du free cash-flow : le cash réellement généré, après investissements, rapporté à la valeur boursière. L’application prend la moyenne des 3 derniers exercices : une seule année peut être faussée par une vente d’actifs ou un gros investissement.',
+          'Rendement du dividende : le dividende annuel rapporté au cours, et s’il est bien payé par le cash généré.',
+          'Rachats d’actions / dilution : l’évolution du nombre d’actions sur 3 ans. S’il baisse, la société rachète ses actions et chaque action représente une part plus grande de l’entreprise. S’il monte, il y a dilution (souvent pour payer les salariés en actions, fréquent chez les jeunes sociétés).',
+        ],
+      },
+      {
+        title: 'Les rachats d’actions : bonne nouvelle… à condition',
+        paras: [
+          'Un rachat est un bon usage du cash quand l’entreprise en génère largement et que l’action n’est pas trop chère. Financé par la dette, ou fait à prix élevé, il détruit de la valeur. C’est pourquoi ce critère pèse peu dans le score : il complète le free cash-flow et la dette, il ne les remplace pas.',
         ],
       },
     ],
@@ -334,13 +356,16 @@ export const FICHES = [
       'Croissance (15 %) : moins de −10 % : 2/10 · −10 à 0 % : 4 · 0 à 5 % : 5,5 · 5 à 10 % : 7 · 10 à 20 % : 8,5 · 20 % et plus : 9,5.',
       'Marge opérationnelle (15 %) : négative : 1,5/10 · 0 à 5 % : 4 · 5 à 10 % : 5,5 · 10 à 15 % : 7 · 15 à 25 % : 8,5 · 25 % et plus : 9,5.',
       'Dette nette / EBITDA (15 %) : plus de trésorerie que de dettes : 9,5/10 · moins de 1 × : 9 · 1 à 2 × : 7,5 · 2 à 3 × : 5,5 · 3 à 4 × : 3,5 · 4 × et plus : 2. Non calculé pour les banques et assurances.',
-      'Free cash-flow (10 %) : négatif : 2/10 · 0 à 2 % : 5 · 2 à 4 % : 6,5 · 4 à 6 % : 8 · 6 % et plus : 9.',
-      'Dividende (5 %) : aucun : 5/10 (normal pour une valeur de croissance) · moins de 2 % : 6,5 · 2 à 4 % : 7,5 · 4 à 7 % : 8 · 7 % et plus : 6 (vérifier qu’il est soutenable) · dividende supérieur aux bénéfices : 3.',
+      'Free cash-flow (10 %, moyenne des 3 derniers exercices) : négatif : 2/10 · 0 à 2 % : 5 · 2 à 4 % : 6,5 · 4 à 6 % : 8 · 6 % et plus : 9. Tendance : +0,5 si le free cash-flow a progressé d’au moins 15 % sur la période, −1 s’il a reculé de plus de 25 %.',
+      'Dividende (5 %) : aucun : 5/10 (normal pour une valeur de croissance) · moins de 2 % : 6,5 · 2 à 4 % : 7,5 · 4 à 7 % : 8 · 7 % et plus : 6 (vérifier qu’il est soutenable) · dividende supérieur aux bénéfices, ou non couvert par le free cash-flow : 3 au plus.',
+      'Rachats d’actions / dilution (7 %, évolution annuelle du nombre d’actions sur 3 ans) : baisse de plus de 3 %/an : 9/10 · baisse de 1 à 3 % : 8 · stable (−1 à +1 %) : 6 · hausse de 1 à 3 % : 4 · 3 à 6 % : 2,5 · plus de 6 % : 1,5.',
+      'Portefeuilles fictifs : le badge 🔁 Rachats signale les lignes dont le nombre d’actions baisse d’au moins 1 % par an.',
     ],
     traps: [
       'Une forte croissance avec des pertes qui se creusent n’est pas une bonne nouvelle.',
       'Un dividende très élevé est parfois le signe d’un cours qui s’est effondré, et le dividende risque d’être réduit.',
       'Les chiffres sont annuels : un mauvais trimestre peut ne pas encore apparaître.',
+      'Un rachat d’actions financé par la dette n’est pas un signe de bonne santé : regarde aussi l’endettement.',
     ],
     keyPoints: [
       'Vendre plus, gagner sur chaque vente, peu de dettes, du cash : la recette d’une entreprise solide.',

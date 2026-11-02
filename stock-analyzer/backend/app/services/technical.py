@@ -103,6 +103,20 @@ def mm100_status(d: pd.DataFrame) -> dict | None:
     }
 
 
+def long_trend(d: pd.DataFrame) -> dict | None:
+    """Tendance de fond : prix vs MM200 et pente de la MM200 sur 20 séances.
+    Garde-fou : sous une MM200 qui baisse, pas de signal d'achat."""
+    sub = d[["close", "m200"]].dropna()
+    if len(sub) < 21:
+        return None
+    last, m200 = sub.iloc[-1], sub["m200"]
+    slope = float((m200.iloc[-1] / m200.iloc[-21] - 1) * 100)
+    below = bool(last["close"] < last["m200"])
+    return {"below": below, "falling": slope < 0, "slope_pct": round(slope, 2),
+            "distance_pct": round(float((last["close"] / last["m200"] - 1) * 100), 2),
+            "guard": below and slope < 0}
+
+
 def supports_resistances(d: pd.DataFrame, price: float, window: int = 5, lookback: int = 130) -> dict:
     """Plus proches pivots (plus bas / plus hauts locaux) sous et au-dessus du prix."""
     sub = d.iloc[-lookback:]
@@ -245,6 +259,7 @@ def quick_summary(df: pd.DataFrame) -> dict | None:
         "price": round(price, 4) if price >= 1 else float(f"{price:.6g}"),
         "change_pct": round(change, 2) if change is not None else None,
         "mm100": mm,
+        "long_trend": long_trend(d),
         "levels": supports_resistances(d, price),
         "chart": chart_series(d, bars=40),  # suffisant pour la volatilité (ATR 14)
     }
@@ -309,6 +324,11 @@ def analyze(product: dict, quote: dict, derivative: dict | None = None) -> dict:
         score = (10 - raw) if (raw is not None and inverse) else raw
         levels = supports_resistances(d, price)
         last = d.iloc[-1]
+        long_avg = None
+        if str(target.get("id", "")).startswith("yf:"):
+            la = yahoo.long_average(target["id"][3:])
+            if la:
+                long_avg = {**la, "distance_pct": round((price / la["value"] - 1) * 100, 1)}
         result = {
             "applicable": True,
             "score": round(score, 1) if score is not None else None,
@@ -318,6 +338,8 @@ def analyze(product: dict, quote: dict, derivative: dict | None = None) -> dict:
             "analysed": {"name": target.get("name"), "symbol": target.get("symbol"), "id": target["id"]},
             "price": round(price, 4),
             "mm100": mm,
+            "long_trend": long_trend(d),
+            "long_average": long_avg,
             "levels": levels,
             "averages": {k: _val(last.get(k)) and round(_val(last.get(k)), 4) for k in ("m50", "m100", "m200")},
             "criteria": criteria,
