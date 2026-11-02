@@ -99,6 +99,18 @@ CREATE TABLE IF NOT EXISTS holding_alerts (
 );
 CREATE INDEX IF NOT EXISTS idx_holding_tx_user ON holding_tx(user_id, product_id, day);
 
+-- Tests de la méthode sur le passé (résultat JSON)
+CREATE TABLE IF NOT EXISTS backtests (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    params          TEXT,
+    status          TEXT    NOT NULL DEFAULT 'running',
+    progress        INTEGER NOT NULL DEFAULT 0,
+    result          TEXT,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+    finished_at     TEXT
+);
+
 -- Appareils abonnés aux notifications (Web Push)
 CREATE TABLE IF NOT EXISTS push_subscriptions (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -7,6 +7,7 @@ import ProfileModal from './ProfileModal'
 import InviteModal from './InviteModal'
 import { NewPortfolioModal, PortfolioModal } from './PortfolioModals'
 import HoldingsModal from './HoldingsModal'
+import BacktestModal from './BacktestModal'
 
 export default function AppLayout({ user, onLogout }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -15,6 +16,7 @@ export default function AppLayout({ user, onLogout }) {
   const [portfolioId, setPortfolioId] = useState(null)
   const [newPortfolio, setNewPortfolio] = useState(false)
   const [holdingsOpen, setHoldingsOpen] = useState(false)
+  const [backtestOpen, setBacktestOpen] = useState(false)
   const sidebarProps = {
     user,
     onLogout,
@@ -23,6 +25,7 @@ export default function AppLayout({ user, onLogout }) {
     onPortfolio: (id) => { setDrawerOpen(false); setPortfolioId(id) },
     onNewPortfolio: () => { setDrawerOpen(false); setNewPortfolio(true) },
     onHoldings: () => { setDrawerOpen(false); setHoldingsOpen(true) },
+    onBacktest: () => { setDrawerOpen(false); setBacktestOpen(true) },
     onNavigate: () => setDrawerOpen(false),
   }
 
@@ -47,6 +50,7 @@ export default function AppLayout({ user, onLogout }) {
         {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} onLogout={onLogout} />}
         {inviteOpen && <InviteModal onClose={() => setInviteOpen(false)} />}
         {newPortfolio && <NewPortfolioModal onClose={() => setNewPortfolio(false)} onCreated={(id) => { setNewPortfolio(false); setPortfolioId(id) }} />}
+        {backtestOpen && <BacktestModal onClose={() => setBacktestOpen(false)} />}
         {holdingsOpen && <HoldingsModal onClose={() => setHoldingsOpen(false)} />}
         {portfolioId && <PortfolioModal id={portfolioId} onClose={() => setPortfolioId(null)} />}
 

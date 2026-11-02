@@ -99,6 +99,8 @@ export const api = {
   checkAlerts: () => request('/alerts/check', { method: 'POST' }),
   quote: (id) => request(`/quote?id=${encodeURIComponent(id)}`),
   holdings: () => request('/holdings'),
+  backtest: () => request('/backtest'),
+  runBacktest: (body) => request('/backtest', { method: 'POST', body }),
   addHoldingTx: (body) => request('/holdings/tx', { method: 'POST', body }),
   deleteHoldingTx: (id) => request(`/holdings/tx/${id}`, { method: 'DELETE' }),
   setHoldingRef: (body) => request('/holdings/ref', { method: 'PUT', body }),

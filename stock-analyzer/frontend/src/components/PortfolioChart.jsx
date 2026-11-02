@@ -7,6 +7,8 @@ const C = { pf: '#3987e5', bench: '#d95926', grid: '#21262D', axis: '#8B949E', r
 const EUR = new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' })
 const EUR0 = new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 const fmtDay = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' })
+const fmtLong = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short', year: 'numeric' })
+const fmtMonth = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-BE', { month: 'short', year: 'numeric' })
 const pct = (v, base) => {
   const p = (v / base - 1) * 100
   return `${p > 0 ? '+' : p < 0 ? '−' : ''}${Math.abs(p).toFixed(2).replace('.', ',')} %`
@@ -25,7 +27,7 @@ function ChartTooltip({ active, payload, initial, benchLabel }) {
   const row = payload[0].payload
   return (
     <div className="rounded-lg border border-line bg-panel px-3 py-2 text-xs shadow-xl">
-      <p className="mb-1 font-semibold text-gray-100">{fmtDay(row.day)}</p>
+      <p className="mb-1 font-semibold text-gray-100">{fmtLong(row.day)}</p>
       <div className="flex items-center justify-between gap-4">
         <span className="flex items-center gap-1.5 text-muted"><Swatch color={C.pf} /> Portefeuille</span>
         <span className="font-semibold text-gray-100">{EUR.format(row.value_eur)} <span className="font-normal text-muted">{pct(row.value_eur, initial)}</span></span>
@@ -67,7 +69,7 @@ export default function PortfolioChart({ history, initial, benchLabel }) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={rows} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
             <CartesianGrid stroke={C.grid} vertical={false} />
-            <XAxis dataKey="day" tickFormatter={fmtDay} tick={{ fill: C.axis, fontSize: 10 }} axisLine={false} tickLine={false}
+            <XAxis dataKey="day" tickFormatter={rows.length > 300 || (rows.length > 1 && rows[0].day.slice(0, 4) !== rows[rows.length - 1].day.slice(0, 4) && rows.length > 120) ? fmtMonth : fmtDay} tick={{ fill: C.axis, fontSize: 10 }} axisLine={false} tickLine={false}
               minTickGap={24} />
             <YAxis domain={domain} orientation="right" width={58} tickFormatter={(v) => EUR0.format(v)}
               tick={{ fill: C.axis, fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -93,7 +95,7 @@ export default function PortfolioChart({ history, initial, benchLabel }) {
           <tbody>
             {[...rows].reverse().slice(0, 60).map((r) => (
               <tr key={r.day} className="border-t border-line">
-                <td className="py-1">{fmtDay(r.day)}</td>
+                <td className="py-1">{fmtLong(r.day)}</td>
                 <td className="py-1 text-right text-gray-100">{EUR.format(r.value_eur)}</td>
                 {hasBench && <td className="py-1 text-right text-gray-100">{r.benchmark_eur != null ? EUR.format(r.benchmark_eur) : '—'}</td>}
               </tr>

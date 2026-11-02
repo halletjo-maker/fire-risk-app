@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, Briefcase, ChevronDown, Home, LineChart, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
+import { BookOpen, Briefcase, ChevronDown, FlaskConical, Home, LineChart, LogOut, Plus, Settings, Sparkles, UserPlus, Wallet, X } from 'lucide-react'
 import { WATCHLIST_COLORS } from '../lib/api'
 import { useWatchlists } from '../lib/watchlists'
 import { fmtScore, scoreColor } from '../lib/format'
@@ -161,7 +161,7 @@ function Portfolios({ onOpen, onNew }) {
   )
 }
 
-export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfolio, onNewPortfolio, onHoldings, onClose, onNavigate }) {
+export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfolio, onNewPortfolio, onHoldings, onBacktest, onClose, onNavigate }) {
   const wl = useWatchlists()
   const { watchlists, loading, error, selectedId } = wl
   const [creating, setCreating] = useState(false)
@@ -253,6 +253,12 @@ export default function Sidebar({ user, onLogout, onProfile, onInvite, onPortfol
           </button>
         )}
         {!loading && !error && <Portfolios onOpen={onPortfolio} onNew={onNewPortfolio} />}
+        {!loading && !error && (
+          <button onClick={onBacktest}
+            className="mx-2 mt-1 flex w-[calc(100%-1rem)] items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted hover:bg-panel2 hover:text-gray-100">
+            <FlaskConical className="h-4 w-4 shrink-0 text-bull" /> Tester la méthode sur le passé
+          </button>
+        )}
         <div className="mx-2 mt-4">
           <p className="px-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Le site</p>
           {[

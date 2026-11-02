@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 import math
 
+import numpy as np
 import pandas as pd
 import pandas_ta as ta
 import warnings
@@ -121,10 +122,15 @@ def supports_resistances(d: pd.DataFrame, price: float, window: int = 5, lookbac
     """Plus proches pivots (plus bas / plus hauts locaux) sous et au-dessus du prix."""
     sub = d.iloc[-lookback:]
     lows, highs = sub["low"], sub["high"]
-    pivots_low = [lows.iloc[i] for i in range(window, len(sub) - window)
-                  if lows.iloc[i] == lows.iloc[i - window:i + window + 1].min()]
-    pivots_high = [highs.iloc[i] for i in range(window, len(sub) - window)
-                   if highs.iloc[i] == highs.iloc[i - window:i + window + 1].max()]
+    pivots_low, pivots_high = [], []
+    if len(sub) >= 2 * window + 1:  # calcul vectoriel (même résultat que la boucle, ~50× plus rapide)
+        lv, hv = lows.to_numpy(dtype=float), highs.to_numpy(dtype=float)
+        win = np.lib.stride_tricks.sliding_window_view
+        with np.errstate(all="ignore"), warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            lmin, hmax = np.nanmin(win(lv, 2 * window + 1), axis=1), np.nanmax(win(hv, 2 * window + 1), axis=1)
+        lc, hc = lv[window:len(lv) - window], hv[window:len(hv) - window]
+        pivots_low, pivots_high = list(lc[lc == lmin]), list(hc[hc == hmax])
     below = [p for p in pivots_low if p < price]
     above = [p for p in pivots_high if p > price]
     support = max(below) if below else (float(lows.iloc[-60:].min()) if float(lows.iloc[-60:].min()) < price else None)
