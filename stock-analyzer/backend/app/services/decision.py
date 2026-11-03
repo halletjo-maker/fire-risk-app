@@ -8,12 +8,15 @@ Score global = Fondamental × 0,35 + Technique × 0,45 + Sentiment × 0,20
 Onglet VENTE (pour qui détient déjà le produit) : score de vente = 10 − score global,
 mêmes seuils. Si une analyse n'est pas applicable (ex. fondamental d'un indice), les
 poids des autres sont répartis à proportion et l'interface le signale.
+Fondamentaux incomplets (moins de la moitié des critères disponibles, fréquent pour une petite
+société sans chiffre d'affaires) : leur poids est réduit à proportion des données présentes.
 """
 from __future__ import annotations
 
 WEIGHTS = {"fundamental": 0.35, "technical": 0.45, "sentiment": 0.20}
 LABELS = {"fundamental": "Fondamental", "technical": "Technique", "sentiment": "Sentiment"}
 FAVORABLE, CAUTION = 7.5, 5.0
+FULL_COVERAGE = 0.5  # part des critères fondamentaux à partir de laquelle leur poids est complet
 
 LEVELS = {
     "FAVORABLE": {"icon": "✅", "label": "CONDITIONS FAVORABLES"},
@@ -120,11 +123,17 @@ def compute(fundamental: dict | None, technical: dict | None, sentiment: dict | 
     if not available:
         return {"available": False, "message": "Aucune analyse disponible pour calculer une décision."}
 
-    total_w = sum(WEIGHTS[k] for k in available)
+    # Poids effectifs : fondamentaux réduits s'ils reposent sur trop peu de critères
+    eff = dict(WEIGHTS)
+    coverage = (fundamental or {}).get("coverage")
+    thin = scores["fundamental"] is not None and coverage is not None and coverage < FULL_COVERAGE
+    if thin:
+        eff["fundamental"] = WEIGHTS["fundamental"] * max(coverage, 0.05) / FULL_COVERAGE
+    total_w = sum(eff[k] for k in available)
     components = []
     for k in WEIGHTS:
         s = scores[k]
-        w = WEIGHTS[k] / total_w if s is not None else 0
+        w = eff[k] / total_w if s is not None else 0
         components.append({
             "key": k, "label": LABELS[k], "score": s,
             "weight": round(w, 3), "nominal_weight": WEIGHTS[k],
@@ -148,6 +157,12 @@ def compute(fundamental: dict | None, technical: dict | None, sentiment: dict | 
     neutral = [p for p, tone in phrases if tone == 0]
 
     notes = []
+    if thin:
+        crits = (fundamental or {}).get("criteria") or []
+        n_ok = sum(1 for c in crits if c.get("score") is not None)
+        notes.append(f"Fondamentaux trop incomplets ({n_ok} critère{'s' if n_ok > 1 else ''} sur {len(crits)}) : "
+                     f"leur poids passe de {round(WEIGHTS['fundamental'] * 100)} % à "
+                     f"{round(eff['fundamental'] / total_w * 100)} % du score global.")
     if missing:
         notes.append(f"Non applicable : {', '.join(missing)}. Poids répartis sur les autres analyses.")
     f, t = scores["fundamental"], scores["technical"]

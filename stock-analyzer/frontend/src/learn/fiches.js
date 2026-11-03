@@ -34,7 +34,7 @@ export const FICHES = [
       {
         title: 'Le score global',
         paras: [
-          'Score global = 35 % fondamental + 45 % technique + 20 % sentiment. Si une analyse ne s’applique pas (par exemple le fondamental d’un indice), son poids est réparti sur les autres.',
+          'Score global = 35 % fondamental + 45 % technique + 20 % sentiment. Si une analyse ne s’applique pas (par exemple le fondamental d’un indice), son poids est réparti sur les autres. Si moins de la moitié des critères fondamentaux sont disponibles (petite société sans chiffre d’affaires, par exemple), leur poids est réduit d’autant.',
         ],
         bullets: [
           '7,5 ou plus : conditions favorables — signal 🟢 ACHAT (sauf garde-fou : cours sous une MM200 qui baisse → 🟡 NEUTRE).',

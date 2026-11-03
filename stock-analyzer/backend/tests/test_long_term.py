@@ -86,3 +86,17 @@ def test_portfolio_flags_buybacks(client, monkeypatch):
         s = paper.summary(conn, conn.execute("SELECT * FROM portfolios WHERE id = ?", (pid,)).fetchone())
     flags = {p["symbol"]: p["buyback"] for p in s["positions"]}
     assert flags == {"AAPL": True, "BTC-EUR": False}
+
+
+def test_thin_fundamentals_weigh_less():
+    full = {"score": 1.5, "coverage": 1.0, "criteria": [{"score": 1.5}] * 8}
+    thin = {"score": 1.5, "coverage": 0.125, "criteria": [{"score": 1.5}] + [{"score": None}] * 7}
+    tech, sent = {"score": 5.4, "inverse": False}, {"score": 5.3}
+    d_full = decision.compute(full, tech, sent)
+    d_thin = decision.compute(thin, tech, sent)
+    w = {c["key"]: c["weight"] for c in d_thin["components"]}
+    assert w["fundamental"] < 0.15 and abs(sum(w.values()) - 1) < 0.01
+    assert d_thin["score"] > d_full["score"]
+    assert any("trop incomplets (1 critère sur 8)" in n for n in d_thin["notes"])
+    half = {"score": 6.0, "coverage": 0.5, "criteria": [{"score": 6}] * 4 + [{"score": None}] * 4}
+    assert {c["key"]: c["weight"] for c in decision.compute(half, tech, sent)["components"]}["fundamental"] == 0.35
