@@ -6,5 +6,5 @@ head, tail = (D / "_head.html").read_text(), (D / "_tail.html").read_text()
 for src in sys.argv[1:]:
     body = (D / src).read_text()
     total = re.search(r"TOTAL=(\d+)", body).group(1)
-    (D / src.replace("v_", "out_")).write_text(head + body + tail.replace("__TOTAL__", total))
+    (D / src.replace("v_", "out_", 1)).write_text(head + body + tail.replace("__TOTAL__", total))
     print(src, total)
