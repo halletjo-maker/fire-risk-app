@@ -33,7 +33,8 @@ export function NewPortfolioModal({ onClose, onCreated }) {
     setBusy(true)
     setError(null)
     try {
-      const { portfolio } = await api.createPortfolio({ watchlist_id: Number(watchlistId), capital: Number(capital) })
+      const body = watchlistId === 'all' ? { universe: 'all' } : { watchlist_id: Number(watchlistId) }
+      const { portfolio } = await api.createPortfolio({ ...body, capital: Number(capital) })
       notifyPortfolios()
       onCreated(portfolio.id)
     } catch (err) {
@@ -46,13 +47,21 @@ export function NewPortfolioModal({ onClose, onCreated }) {
     <Modal title="Nouveau portefeuille fictif" onClose={onClose}>
       <form onSubmit={submit} className="mt-3 space-y-4">
         <p className="text-sm text-muted">
-          Le programme achète et vend seul, avec de l'argent virtuel, dans la watchlist choisie. Aucun ordre réel n'est passé.
+          Le programme achète et vend seul, avec de l'argent virtuel, dans la liste choisie. Aucun ordre réel n'est passé.
         </p>
         <label className="block text-sm font-medium">
-          Watchlist où acheter
+          Où acheter
           <select className="input mt-2" value={watchlistId} onChange={(e) => setWatchlistId(e.target.value)} required>
+            <option value="all">🌍 Opportunités : toutes les listes larges + opportunités du jour</option>
             {wl.watchlists.map((w) => <option key={w.id} value={w.id}>{w.name} ({w.item_count})</option>)}
           </select>
+          {watchlistId === 'all' && (
+            <span className="mt-1 block text-xs font-normal text-muted">
+              Le programme choisit parmi plus de 1 000 titres : Monde 500 + cryptos, IPO 5 et 10 ans, et ~150 opportunités
+              du jour (plus échangées, plus fortes hausses, croissance sous-évaluée…). Les listes manquantes sont ajoutées
+              automatiquement à ton menu.
+            </span>
+          )}
         </label>
         <label className="block text-sm font-medium">
           Capital de départ (€)

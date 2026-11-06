@@ -129,3 +129,39 @@ def test_fx_rate_pence(monkeypatch):
     assert paper.fx_rate("EUR") == 1.0
     assert paper.fx_rate("GBp") == pytest.approx(85.0)
     assert paper.fx_rate("JPY") is None
+
+
+def test_opportunities_portfolio_uses_all_wide_lists(setup, monkeypatch):
+    from app.services import screens
+
+    client, wl, item, set_item = setup
+    created = []
+    monkeypatch.setattr(screens, "create_preset_watchlist", lambda uid, key: created.append(key) or 0)
+    monkeypatch.setattr(screens, "refresh_in_background", lambda wid: None)
+    with get_conn() as conn:
+        uid = conn.execute("SELECT id FROM users WHERE email = 'a@exemple.be'").fetchone()["id"]
+        for kind, sym, score, ts in (("screen:world", "MSFT", 8.0, "2026-11-06 10:00:00"),
+                                     ("screen:opportunites", "NVDA", 9.0, "2026-11-06 11:00:00"),
+                                     ("screen:ipo10", "MSFT", 4.0, "2026-11-05 10:00:00")):   # doublon plus ancien
+            wid = conn.execute("INSERT INTO watchlists (user_id, name, kind) VALUES (?, ?, ?)", (uid, kind, kind)).lastrowid
+            conn.execute("INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, last_price, last_score, "
+                         "last_signal, currency, above_m200, last_refresh_at) VALUES (?, ?, ?, ?, 100, ?, ?, 'USD', 1, ?)",
+                         (wid, sym, f"yf:{sym}", sym, score, "ACHAT" if score >= 7.5 else "NEUTRE", ts))
+    item("TECH", 100)   # watchlist manuelle : hors univers « toutes les listes larges »
+    r = client.post("/portfolios", json={"universe": "all"}, headers=H).json()["portfolio"]
+    assert r["name"] == "Opportunités" and r["watchlist"]["kind"] == "universe:all"
+    assert set(created) == {"ipo5"}                     # seule la liste manquante est créée
+    assert set(positions(r["id"])) == {"MSFT", "NVDA"}  # MSFT : la donnée la plus récente (ACHAT) l'emporte
+
+
+def test_opportunities_filter(monkeypatch):
+    from app.services import screens
+
+    fake = {"most_actives": [{"symbol": "BIG", "quoteType": "EQUITY", "marketCap": 5e10, "regularMarketPrice": 50,
+                              "longName": "Big Corp Common Stock", "currency": "USD", "region": "US"},
+                             {"symbol": "PENNY", "quoteType": "EQUITY", "marketCap": 2e8, "regularMarketPrice": 0.5}],
+            "day_gainers": [{"symbol": "BIG", "quoteType": "EQUITY", "marketCap": 5e10, "regularMarketPrice": 50},
+                            {"symbol": "ETF1", "quoteType": "ETF", "marketCap": 5e10, "regularMarketPrice": 50}]}
+    monkeypatch.setattr(screens.yahoo.yf, "screen", lambda q, count=25: {"quotes": fake.get(q, [])})
+    m = screens.opportunities()
+    assert [x["symbol"] for x in m] == ["BIG"] and m[0]["name"] == "Big Corp" and m[0]["zone"] == "americas"

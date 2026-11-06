@@ -91,6 +91,24 @@ def _today() -> str:
     return datetime.now(ZoneInfo("Europe/Brussels")).strftime("%Y-%m-%d")
 
 
+ITEM_COLS = ("i.symbol, i.product_id, i.name, i.product_type, i.last_price, i.last_score, i.last_signal, "
+             "i.buy_price, i.buy_kind, i.sell_price, i.stop_price, i.currency, i.above_m200, i.guard")
+
+
+def universe_items(conn, pf) -> list[dict]:
+    """Titres où le portefeuille peut acheter : sa watchlist, ou toutes les listes larges de son
+    propriétaire (portefeuille « Opportunités » : Monde, IPO, opportunités du jour), sans doublon."""
+    if (pf["universe"] if "universe" in pf.keys() else None) == "all":
+        rows = conn.execute(
+            f"SELECT {ITEM_COLS} FROM watchlist_items i JOIN watchlists w ON w.id = i.watchlist_id "
+            "WHERE w.user_id = ? AND w.kind LIKE 'screen:%' ORDER BY i.last_refresh_at", (pf["user_id"],))
+        return list({r["symbol"]: dict(r) for r in rows}.values())  # le plus récemment mis à jour l'emporte
+    if not pf["watchlist_id"]:
+        return []
+    return [dict(r) for r in conn.execute(
+        f"SELECT {ITEM_COLS} FROM watchlist_items i WHERE i.watchlist_id = ?", (pf["watchlist_id"],))]
+
+
 def run(portfolio_id: int) -> dict:
     """Applique les règles une fois. Renvoie le nombre d'achats et de ventes."""
     with _lock, get_conn() as conn:
@@ -98,10 +116,7 @@ def run(portfolio_id: int) -> dict:
         if pf is None:
             return {"buys": 0, "sells": 0}
         cash, fees = pf["cash"], pf["fees_paid"]
-        items = [dict(r) for r in conn.execute(
-            "SELECT symbol, product_id, name, product_type, last_price, last_score, last_signal, buy_price, buy_kind, "
-            "sell_price, stop_price, currency, above_m200, guard FROM watchlist_items WHERE watchlist_id = ?",
-            (pf["watchlist_id"],))] if pf["watchlist_id"] else []
+        items = universe_items(conn, pf)
         by_sym = {i["symbol"]: i for i in items}
         positions = [dict(r) for r in conn.execute(
             "SELECT * FROM portfolio_positions WHERE portfolio_id = ? AND status = 'OPEN'", (portfolio_id,))]
@@ -277,10 +292,12 @@ def summary(conn, pf) -> dict:
     value = round(pf["cash"] + invested, 2)
     wl = conn.execute("SELECT id, name, kind FROM watchlists WHERE id = ?", (pf["watchlist_id"],)).fetchone() \
         if pf["watchlist_id"] else None
+    if (pf["universe"] if "universe" in pf.keys() else None) == "all":
+        wl = {"id": None, "name": "Toutes les listes + opportunités du jour", "kind": "universe:all"}
     return {
         "id": pf["id"], "name": pf["name"], "created_at": pf["created_at"], "last_run_at": pf["last_run_at"],
         "note": pf["last_note"] if "last_note" in pf.keys() else None,
-        "watchlist": dict(wl) if wl else None,
+        "watchlist": dict(wl) if wl else None, "universe": pf["universe"] if "universe" in pf.keys() else None,
         "initial_cash": pf["initial_cash"], "cash": round(pf["cash"], 2), "invested": round(invested, 2),
         "value": value, "pnl_eur": round(value - pf["initial_cash"], 2),
         "pnl_pct": round((value / pf["initial_cash"] - 1) * 100, 2), "fees_paid": pf["fees_paid"],

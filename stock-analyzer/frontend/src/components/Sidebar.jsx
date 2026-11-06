@@ -92,6 +92,7 @@ export const PRESETS = [
   { key: 'ipo10', kind: 'screen:ipo10', label: 'IPO des 10 dernières années (500 sociétés)' },
   { key: 'ipo5', kind: 'screen:ipo5', label: 'IPO des 5 dernières années (100 sociétés)' },
   { key: 'world', kind: 'screen:world', label: 'Monde : 500 sociétés + 20 cryptos (24 h/24)' },
+  { key: 'opportunites', kind: 'screen:opportunites', label: 'Opportunités du jour (~150 titres, renouvelées chaque soir)' },
 ]
 
 function Presets({ onDone }) {

@@ -30,7 +30,14 @@ PRESETS = {
     "ipo10": {"kind": "screen:ipo10", "name": "IPO 10 ans", "years": 10, "size": 500, "color": "#06B6D4"},
     "ipo5": {"kind": "screen:ipo5", "name": "IPO 5 ans", "years": 5, "size": 100, "color": "#EC4899"},
     "world": {"kind": "screen:world", "name": "Monde 500 + cryptos", "years": None, "size": 520, "color": "#A855F7"},
+    "opportunites": {"kind": "screen:opportunites", "name": "Opportunités du jour", "years": None, "size": 150,
+                     "color": "#F59E0B"},
 }
+OPP_KIND = PRESETS["opportunites"]["kind"]
+# Filtres Yahoo Finance renouvelés chaque soir (sociétés d'au moins 1 Md$ et 2 $ par action : pas de « penny stocks »)
+OPP_QUERIES = ("most_actives", "day_gainers", "undervalued_growth_stocks", "growth_technology_stocks",
+               "undervalued_large_caps", "small_cap_gainers")
+OPP_MIN_CAP, OPP_MIN_PRICE = 1e9, 2.0
 WORLD_KIND = PRESETS["world"]["kind"]
 BY_KIND = {v["kind"]: v for v in PRESETS.values()}
 IPO_KIND = PRESETS["ipo10"]["kind"]
@@ -101,7 +108,31 @@ def fetch_universe() -> list[dict]:
     return rows
 
 
+def opportunities(count: int = 25) -> list[dict]:
+    """Titres du jour selon plusieurs filtres Yahoo (plus échangés, plus fortes hausses, croissance sous-évaluée…)."""
+    seen: dict[str, dict] = {}
+    for q in OPP_QUERIES:
+        try:
+            quotes = yahoo.yf.screen(q, count=count).get("quotes", [])
+        except Exception as exc:
+            logger.info("Filtre Yahoo %s indisponible : %s", q, exc)
+            continue
+        for x in quotes:
+            sym = x.get("symbol")
+            if (not sym or sym in seen or x.get("quoteType") != "EQUITY"
+                    or (x.get("marketCap") or 0) < OPP_MIN_CAP or (x.get("regularMarketPrice") or 0) < OPP_MIN_PRICE):
+                continue
+            seen[sym] = {"symbol": sym, "name": clean_name(x.get("longName") or x.get("shortName") or sym),
+                         "currency": x.get("currency") or "USD", "region": (x.get("region") or "").lower() or None,
+                         "zone": "americas" if (x.get("region") or "US") in ("US", "CA") else None}
+    if not seen:
+        raise RuntimeError("Filtres Yahoo indisponibles")
+    return list(seen.values())[:PRESETS["opportunites"]["size"]]
+
+
 def members_for(kind: str, rows: list[dict] | None) -> list[dict]:
+    if kind == OPP_KIND:
+        return opportunities()
     if kind == WORLD_KIND:
         from . import world
         return world.members()
@@ -230,22 +261,35 @@ def _update(conn, ids: list[int], sym: str, v: dict) -> None:
 
 
 def _resync(ids: list[int]) -> None:
-    """Composition revue au plus une fois par semaine (nouvelles IPO, sociétés retirées de la cote)."""
+    """Composition revue au plus une fois par semaine (IPO, Monde), chaque jour pour les opportunités."""
     with get_conn() as conn:
         due = [(r["id"], r["kind"]) for r in conn.execute(
-            f"SELECT id, kind FROM watchlists WHERE id IN ({','.join('?' * len(ids))}) AND "
-            f"(screen_synced_at IS NULL OR screen_synced_at < datetime('now', '-{RESYNC_DAYS} days'))", ids)
-            if r["kind"] in BY_KIND]
+            f"SELECT id, kind, screen_synced_at FROM watchlists WHERE id IN ({','.join('?' * len(ids))}) AND "
+            "(screen_synced_at IS NULL OR screen_synced_at < datetime('now', '-20 hours'))", ids)
+            if r["kind"] in BY_KIND and (r["kind"] == OPP_KIND or r["screen_synced_at"] is None or
+                                          r["screen_synced_at"] < _days_ago(RESYNC_DAYS))]
     if not due:
         return
-    try:
-        rows = fetch_universe()
-    except Exception as exc:
-        logger.warning("Composition des listes IPO non mise à jour : %s", exc)
-        return
-    with get_conn() as conn:
-        for wl_id, kind in due:
-            _write_members(conn, wl_id, members_for(kind, rows))
+    rows = None
+    if any(k not in (OPP_KIND, WORLD_KIND) for _, k in due):
+        try:
+            rows = fetch_universe()
+        except Exception as exc:
+            logger.warning("Composition des listes IPO non mise à jour : %s", exc)
+            due = [(i, k) for i, k in due if k in (OPP_KIND, WORLD_KIND)]
+    for wl_id, kind in due:
+        try:
+            members = members_for(kind, rows)
+        except Exception as exc:
+            logger.warning("Composition de la liste %s non mise à jour : %s", kind, exc)
+            continue
+        with get_conn() as conn:
+            _write_members(conn, wl_id, members)
+
+
+def _days_ago(days: int) -> str:
+    from datetime import timedelta, timezone
+    return (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def refresh_in_background(watchlist_id: int) -> None:

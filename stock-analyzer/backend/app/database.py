@@ -243,6 +243,7 @@ CREATE TABLE IF NOT EXISTS portfolios (
     last_run_at     TEXT,
     last_note       TEXT,       -- ex. « Achats suspendus : MSCI World sous sa MM100 »
     is_public       INTEGER NOT NULL DEFAULT 0,  -- 1 : « portefeuille témoin » visible sur le site public
+    universe        TEXT,       -- 'all' : toutes les listes larges de l'utilisateur (portefeuille « Opportunités »)
     created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -406,6 +407,7 @@ MIGRATIONS = [
     ("invitations", "anonymous", "INTEGER NOT NULL DEFAULT 0"),
     ("portfolio_positions", "shares_trend", "REAL"),
     ("watchlist_items", "above_m200", "INTEGER"),
+    ("portfolios", "universe", "TEXT"),
     ("watchlist_items", "guard", "INTEGER"),
     ("portfolio_positions", "shares_checked_at", "TEXT"),
     ("users", "push_alerts", "INTEGER NOT NULL DEFAULT 1"),

@@ -12,7 +12,8 @@ router = APIRouter(prefix="/portfolios", tags=["portefeuilles fictifs"])
 
 
 class PortfolioIn(BaseModel):
-    watchlist_id: int
+    watchlist_id: int | None = None
+    universe: str | None = Field(default=None, pattern="^all$")  # « all » : portefeuille Opportunités
     capital: float = Field(default=5000, ge=500, le=1_000_000)
     max_positions: int = Field(default=10, ge=1, le=30)
     name: str | None = Field(default=None, max_length=50)
@@ -39,16 +40,30 @@ def list_portfolios(user: dict = Depends(current_user)) -> dict:
 
 @router.post("", status_code=201)
 def create(payload: PortfolioIn, background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
+    if payload.universe == "all":
+        from ..services import screens
+        with get_conn() as conn:
+            have = {r["kind"] for r in conn.execute("SELECT kind FROM watchlists WHERE user_id = ?", (user["id"],))}
+        for key, preset in screens.PRESETS.items():  # les listes larges manquantes sont créées
+            if preset["kind"] not in have:
+                try:
+                    screens.refresh_in_background(screens.create_preset_watchlist(user["id"], key))
+                except Exception:
+                    pass  # source momentanément indisponible : la liste sera ajoutée plus tard
     with get_conn() as conn:
-        wl = conn.execute("SELECT id, name FROM watchlists WHERE id = ? AND user_id = ?",
-                          (payload.watchlist_id, user["id"])).fetchone()
-        if wl is None:
-            raise HTTPException(status_code=404, detail="Watchlist introuvable")
-        name = (payload.name or "").strip() or f"Fictif · {wl['name']}"
+        if payload.universe == "all":
+            wl_id, default_name = None, "Opportunités"
+        else:
+            wl = conn.execute("SELECT id, name FROM watchlists WHERE id = ? AND user_id = ?",
+                              (payload.watchlist_id, user["id"])).fetchone()
+            if wl is None:
+                raise HTTPException(status_code=404, detail="Watchlist introuvable")
+            wl_id, default_name = wl["id"], f"Fictif · {wl['name']}"
+        name = (payload.name or "").strip() or default_name
         pid = conn.execute(
-            "INSERT INTO portfolios (user_id, watchlist_id, name, initial_cash, cash, max_positions) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (user["id"], wl["id"], name, payload.capital, payload.capital, payload.max_positions)).lastrowid
+            "INSERT INTO portfolios (user_id, watchlist_id, name, initial_cash, cash, max_positions, universe) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user["id"], wl_id, name, payload.capital, payload.capital, payload.max_positions, payload.universe)).lastrowid
         pf = conn.execute("SELECT * FROM portfolios WHERE id = ?", (pid,)).fetchone()
         result = paper.summary(conn, pf)
     background.add_task(paper.run, pid)  # premiers achats sur les cours actuels
