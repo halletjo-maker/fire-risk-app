@@ -33,7 +33,8 @@ export function NewPortfolioModal({ onClose, onCreated }) {
     setBusy(true)
     setError(null)
     try {
-      const body = watchlistId === 'all' ? { universe: 'all' } : { watchlist_id: Number(watchlistId) }
+      const body = watchlistId === 'all' ? { universe: 'all' }
+        : watchlistId === 'turbo' ? { product: 'turbo' } : { watchlist_id: Number(watchlistId) }
       const { portfolio } = await api.createPortfolio({ ...body, capital: Number(capital) })
       notifyPortfolios()
       onCreated(portfolio.id)
@@ -51,8 +52,12 @@ export function NewPortfolioModal({ onClose, onCreated }) {
         </p>
         <label className="block text-sm font-medium">
           Où acheter
-          <select className="input mt-2" value={watchlistId} onChange={(e) => setWatchlistId(e.target.value)} required>
+          <select className="input mt-2" value={watchlistId} required onChange={(e) => {
+            setWatchlistId(e.target.value)
+            if (e.target.value === 'turbo' && Number(capital) === 5000) setCapital(1000)
+          }}>
             <option value="all">🌍 Opportunités : toutes les listes larges + opportunités du jour</option>
+            <option value="turbo">⚡ Turbos Call (levier 2) sur les actions de Monde 500</option>
             {wl.watchlists.map((w) => <option key={w.id} value={w.id}>{w.name} ({w.item_count})</option>)}
           </select>
           {watchlistId === 'all' && (
@@ -62,13 +67,20 @@ export function NewPortfolioModal({ onClose, onCreated }) {
               automatiquement à ton menu.
             </span>
           )}
+          {watchlistId === 'turbo' && (
+            <span className="mt-1 block text-xs font-normal text-warn">
+              Turbos Call open-end (sans date limite), levier 2, 5 lignes au plus. Le levier double les gains… et les pertes :
+              si l'action perd 50 %, le turbo est désactivé et ne vaut plus rien. Test sur 10 ans : ≈ +20 % par an, mais
+              une pire chute de −41 % (biais : sociétés qui ont réussi, marché surtout haussier).
+            </span>
+          )}
         </label>
         <label className="block text-sm font-medium">
           Capital de départ (€)
           <input className="input mt-2" type="number" min="500" max="1000000" step="100" value={capital}
             onChange={(e) => setCapital(e.target.value)} required />
         </label>
-        <Rules />
+        <Rules turbo={watchlistId === 'turbo'} />
         {error && <p className="text-sm text-bear" role="alert">{error}</p>}
         <button type="submit" className="btn-primary w-full" disabled={busy || !watchlistId}>
           {busy ? 'Création…' : <><Wallet className="h-4 w-4" /> Lancer la simulation</>}
@@ -78,7 +90,25 @@ export function NewPortfolioModal({ onClose, onCreated }) {
   )
 }
 
-function Rules() {
+function TurboRules() {
+  return (
+    <details className="rounded-lg bg-bg px-3 py-2 text-xs text-muted">
+      <summary className="cursor-pointer select-none">Règles du portefeuille turbos</summary>
+      <ul className="mt-2 list-disc space-y-1 pl-4">
+        <li><b className="text-gray-200">Produit</b> : turbo Call open-end (sans date limite), levier 2 à l'achat. La barrière est à la moitié du cours de l'action : si l'action la touche, le turbo est désactivé et ne vaut plus rien.</li>
+        <li><b className="text-gray-200">Achat</b> : actions de la liste Monde 500 au signal 🟢 ACHAT, au-dessus de leur moyenne 200 jours, meilleur score d'abord ; jusqu'à 5 lignes d'environ 20 % du portefeuille.</li>
+        <li><b className="text-gray-200">Vente</b> : action 15 % sous son plus haut depuis l'achat (le turbo perd alors environ 30 %), tendance de fond baissière (sous une moyenne 200 jours qui baisse), ou barrière touchée.</li>
+        <li><b className="text-gray-200">Filtre de marché</b> : aucun nouvel achat quand l'ETF MSCI World est sous sa MM100. Les ventes continuent.</li>
+        <li><b className="text-gray-200">Pas de Put</b> : dans le test sur 10 ans, ajouter des turbos Put (même seulement sur les indices) faisait passer le résultat de ≈ +20 % à ≈ +8 % par an, avec une pire chute de −65 %.</li>
+        <li><b className="text-gray-200">Frais</b> : 1 € par ordre (turbos Saxo), TOB 0,35 %, écart achat/vente de l'émetteur estimé à 0,25 %, coût de financement estimé à 3 % par an (la barrière monte un peu chaque jour).</li>
+        <li>Simplifications : turbo calculé à partir du cours de l'action (parité 1, quantités fractionnées) ; les vrais turbos varient selon l'émetteur, et leur cours suit l'action en direct, nuit comprise pour les actions américaines.</li>
+      </ul>
+    </details>
+  )
+}
+
+function Rules({ turbo = false }) {
+  if (turbo) return <TurboRules />
   return (
     <details className="rounded-lg bg-bg px-3 py-2 text-xs text-muted">
       <summary className="cursor-pointer select-none">Règles du programme</summary>
@@ -90,7 +120,7 @@ function Rules() {
         <li><b className="text-gray-200">Pourquoi ces règles</b> : retenues en novembre 2026 après un test sur 10 ans et ~100 grandes actions (menu → Tester la méthode sur le passé).</li>
         <li>Pas de rachat d'un titre vendu depuis moins de 5 jours.</li>
         <li><b className="text-gray-200">Filtre de marché</b> : aucun nouvel achat quand l'ETF MSCI World est sous sa MM100 (marché mondial baissier). Les ventes continuent.</li>
-        <li>Frais estimés : 0,1 % par ordre (1 € minimum). Cours en dollars convertis en euros.</li>
+        <li>Frais réels Saxo (niveau Bronze) : courtage 0,08 % (minimum 2 € sur Euronext, 1 $ aux États-Unis…), change 0,25 % pour une devise, plus la TOB (0,35 % actions, 0,12 % ETF). Cours en dollars convertis en euros.</li>
         <li>Décisions prises à chaque mise à jour des cours : 15 min, toutes les 30 min selon les Bourses ouvertes pour la liste Monde, 1×/jour pour les listes IPO.</li>
         <li>Simplification : la simulation ignore les lots minimums (100 actions au Japon et à Hong Kong).</li>
       </ul>
@@ -192,13 +222,19 @@ export function PortfolioModal({ id, onClose }) {
                       <span className={`shrink-0 text-sm font-semibold ${changeColor(x.pnl_eur)}`}>{fmtPct(x.pnl_pct)}</span>
                     </span>
                     <span className="flex justify-between gap-2 text-xs text-muted">
-                      <span>{x.symbol} · {x.qty} × {fmtPrice(x.entry_price, x.currency)} → {fmtPrice(x.last_price, x.currency)}</span>
+                      {x.barrier != null ? (
+                        <span>⚡ Turbo Call · {x.symbol} {fmtPrice(x.under_entry, x.currency)} → {fmtPrice(x.under_last ?? x.under_entry, x.currency)}</span>
+                      ) : (
+                        <span>{x.symbol} · {x.qty} × {fmtPrice(x.entry_price, x.currency)} → {fmtPrice(x.last_price, x.currency)}</span>
+                      )}
                       <span className={changeColor(x.pnl_eur)}>{x.pnl_eur >= 0 ? '+' : ''}{eur(x.pnl_eur)}</span>
                     </span>
                     <span className="mt-0.5 block text-[11px]">
                       <span className="text-bear">Stop {fmtPrice(x.stop, x.currency)}</span>
                       <span className="text-muted"> · </span>
-                      <span className="text-warn">Objectif {fmtPrice(x.target, x.currency)}</span>
+                      {x.barrier != null
+                        ? <span className="text-warn">Barrière {fmtPrice(x.barrier, x.currency)}</span>
+                        : <span className="text-warn">Objectif {fmtPrice(x.target, x.currency)}</span>}
                       <span className="text-muted"> · acheté le {fmtDay(x.entry_at)}</span>
                     </span>
                   </button>
@@ -230,7 +266,7 @@ export function PortfolioModal({ id, onClose }) {
             </div>
           )}
 
-          <Rules />
+          <Rules turbo={p.product === 'turbo'} />
           {p.can_publish && (
             <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 text-sm">
               <input type="checkbox" className="mt-1 h-4 w-4 accent-[#00FF88]" checked={!!p.is_public}

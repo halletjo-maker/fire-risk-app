@@ -244,6 +244,7 @@ CREATE TABLE IF NOT EXISTS portfolios (
     last_note       TEXT,       -- ex. « Achats suspendus : MSCI World sous sa MM100 »
     is_public       INTEGER NOT NULL DEFAULT 0,  -- 1 : « portefeuille témoin » visible sur le site public
     universe        TEXT,       -- 'all' : toutes les listes larges de l'utilisateur (portefeuille « Opportunités »)
+    product         TEXT,       -- 'turbo' : turbos Call open-end simulés (levier 2) au lieu des actions
     created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -275,7 +276,11 @@ CREATE TABLE IF NOT EXISTS portfolio_positions (
     exit_reason     TEXT,
     pnl_eur         REAL,
     shares_trend    REAL,       -- évolution du nombre d'actions (%/an, ~3 ans) : négatif = rachats
-    shares_checked_at TEXT
+    shares_checked_at TEXT,
+    financing       REAL,       -- turbos : niveau de financement (= barrière) à l'achat, en devise du sous-jacent
+    leverage        REAL,       -- turbos : levier à l'achat
+    under_entry     REAL,       -- turbos : cours du sous-jacent à l'achat
+    under_last      REAL        -- turbos : dernier cours du sous-jacent
 );
 
 -- Valeur du portefeuille, une ligne par jour (courbe d'évolution)
@@ -408,6 +413,11 @@ MIGRATIONS = [
     ("portfolio_positions", "shares_trend", "REAL"),
     ("watchlist_items", "above_m200", "INTEGER"),
     ("portfolios", "universe", "TEXT"),
+    ("portfolios", "product", "TEXT"),
+    ("portfolio_positions", "financing", "REAL"),
+    ("portfolio_positions", "leverage", "REAL"),
+    ("portfolio_positions", "under_entry", "REAL"),
+    ("portfolio_positions", "under_last", "REAL"),
     ("watchlist_items", "guard", "INTEGER"),
     ("portfolio_positions", "shares_checked_at", "TEXT"),
     ("users", "push_alerts", "INTEGER NOT NULL DEFAULT 1"),

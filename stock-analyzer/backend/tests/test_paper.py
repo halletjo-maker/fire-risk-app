@@ -165,3 +165,53 @@ def test_opportunities_filter(monkeypatch):
     monkeypatch.setattr(screens.yahoo.yf, "screen", lambda q, count=25: {"quotes": fake.get(q, [])})
     m = screens.opportunities()
     assert [x["symbol"] for x in m] == ["BIG"] and m[0]["name"] == "Big Corp" and m[0]["zone"] == "americas"
+
+
+def test_turbo_call_portfolio(setup):
+    """Turbos Call levier 2 sur la liste Monde 500 : barrière, stop suiveur sur le sous-jacent, frais."""
+    from app.services import turbo
+
+    client, wl, item, set_item = setup
+    with get_conn() as conn:
+        uid = conn.execute("SELECT id FROM users WHERE email = 'a@exemple.be'").fetchone()["id"]
+        wid = conn.execute("INSERT INTO watchlists (user_id, name, kind) VALUES (?, 'Monde', 'screen:world')",
+                           (uid,)).lastrowid
+        for sym, ccy, score in (("AAPL", "USD", 9.0), ("ASML.AS", "EUR", 8.5), ("BTC-EUR", "EUR", 9.5)):
+            conn.execute("INSERT INTO watchlist_items (watchlist_id, symbol, product_id, name, last_price, last_score, "
+                         "last_signal, currency, above_m200, guard) VALUES (?, ?, ?, ?, 100, ?, 'ACHAT', ?, 1, 0)",
+                         (wid, sym, f"yf:{sym}", sym, score, ccy))
+    item("TECH", 100)   # liste manuelle : pas utilisée par les turbos
+    r = client.post("/portfolios", json={"product": "turbo", "capital": 1000}, headers=H).json()["portfolio"]
+    assert r["name"] == "Turbos Call" and r["product"] == "turbo" and r["max_positions"] == 5
+    pos = positions(r["id"])
+    assert set(pos) == {"AAPL", "ASML.AS"}   # pas de turbo sur les cryptos
+    a = pos["ASML.AS"]
+    # 200 € par ligne : 1 € + TOB 0,35 % + écart 0,25 % ; levier 2 → barrière à 50, turbo à 50 €
+    assert a["financing"] == pytest.approx(50) and a["entry_price"] == pytest.approx(50)
+    assert a["entry_fee"] == pytest.approx(1 + 200 * 0.0035 + (200 - 1.7) * 0.0025, abs=0.02)
+    assert a["qty"] * 50 + a["entry_fee"] == pytest.approx(200, abs=0.05)
+    assert a["stop"] == pytest.approx(85) and a["under_entry"] == 100
+
+    set_item("ASML.AS", last_price=110)   # +10 % sur le sous-jacent ≈ +20 % sur le turbo
+    set_item("AAPL", last_price=84)        # sous le stop de 15 % : vente
+    paper.run(r["id"])
+    d = client.get(f"/portfolios/{r['id']}", headers=H).json()["portfolio"]
+    a = next(p for p in d["positions"] if p["symbol"] == "ASML.AS")
+    assert a["last_price"] == pytest.approx(60, abs=0.01) and a["under_last"] == 110
+    assert a["pnl_pct"] == pytest.approx(18.8, abs=0.5) and a["barrier"] == pytest.approx(50, abs=0.01)
+    t = d["trades"][0]
+    assert t["symbol"] == "AAPL" and t["exit_price"] == pytest.approx(34, abs=0.01)   # 84 − 50
+    assert t["pnl_pct"] == pytest.approx(-33, abs=1.5)                                 # −16 % × levier 2 + frais
+
+    set_item("ASML.AS", last_price=49)    # sous la barrière : turbo désactivé, perte totale
+    paper.run(r["id"])
+    closed = positions(r["id"], "CLOSED")["ASML.AS"]
+    assert closed["exit_reason"].startswith("Barrière") and closed["exit_price"] == 0
+    assert closed["pnl_eur"] == pytest.approx(-200, abs=0.05)
+
+
+def test_turbo_financing_rises():
+    from app.services import turbo
+
+    pos = {"financing": 50.0, "entry_at": "2025-11-06 00:00:00"}
+    assert turbo.financing_level(pos) > 51.4   # ≈ +3 % en un an

@@ -31,7 +31,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from ..database import get_conn
-from . import regime
+from . import regime, turbo
 from .sources import cache, yahoo
 from .targets import rnd
 
@@ -116,6 +116,7 @@ def run(portfolio_id: int) -> dict:
         if pf is None:
             return {"buys": 0, "sells": 0}
         cash, fees = pf["cash"], pf["fees_paid"]
+        is_turbo = (pf["product"] if "product" in pf.keys() else None) == "turbo"
         items = universe_items(conn, pf)
         by_sym = {i["symbol"]: i for i in items}
         positions = [dict(r) for r in conn.execute(
@@ -138,32 +139,40 @@ def run(portfolio_id: int) -> dict:
             if not price:
                 held_value += pos["qty"] * (pos["last_price"] or pos["entry_price"]) / (pos["last_fx"] or pos["entry_fx"])
                 continue
-            high = max(pos["high"] or pos["entry_price"], price)
+            under = price  # turbos : cours du sous-jacent ; `price` devient le prix du turbo
+            ref = (pos["under_entry"] or pos["entry_price"]) if is_turbo else pos["entry_price"]
+            high = max(pos["high"] or ref, under)
             stop = high * (1 - TRAIL_PCT / 100)  # stop suiveur, aussi pour les lignes achetées avant ces règles
             reason = None
-            if price <= stop:
-                reason = "Stop-loss touché" if stop <= pos["entry_price"] else "Stop suiveur touché (gains protégés)"
+            if is_turbo:
+                level = turbo.financing_level(pos)
+                price = turbo.price(under, level)
+            if is_turbo and under <= level:
+                reason = "Barrière touchée : turbo désactivé"
+            elif under <= stop:
+                reason = "Stop-loss touché" if stop <= ref else "Stop suiveur touché (gains protégés)"
             elif it and it.get("guard") == 1:
                 reason = "Tendance de fond baissière (sous une MM200 qui baisse)"
             if reason:
                 proceeds = pos["qty"] * price / fx
                 ptype = "CRYPTO" if CRYPTO_SYMBOL.search(pos["symbol"] or "") else "ACTION"
-                f = fee(proceeds, pos["currency"], ptype, pos["symbol"])
+                f = turbo.sell_fee(proceeds) if is_turbo else fee(proceeds, pos["currency"], ptype, pos["symbol"])
                 cost = pos["qty"] * pos["entry_price"] / pos["entry_fx"] + pos["entry_fee"]
                 cash += proceeds - f
                 fees += f
                 conn.execute(
                     "UPDATE portfolio_positions SET status = 'CLOSED', exit_price = ?, exit_fx = ?, exit_fee = ?, "
                     "exit_at = datetime('now'), exit_reason = ?, pnl_eur = ?, high = ?, stop = ?, last_price = ?, "
-                    "last_fx = ? WHERE id = ?",
-                    (price, fx, f, reason, round(proceeds - f - cost, 2), high, stop, price, fx, pos["id"]))
+                    "last_fx = ?, under_last = ? WHERE id = ?",
+                    (price, fx, f, reason, round(proceeds - f - cost, 2), high, stop, price, fx,
+                     under if is_turbo else None, pos["id"]))
                 pos["status"] = "CLOSED"
                 sells += 1
                 gain = (proceeds - f) / cost * 100 - 100 if cost else 0
                 events.append(f"Vente {pos['name'] or pos['symbol']} ({f'{gain:+.1f}'.replace('.', ',')} %) : {reason.lower()}")
             else:
-                conn.execute("UPDATE portfolio_positions SET high = ?, stop = ?, last_price = ?, last_fx = ? WHERE id = ?",
-                             (high, stop, price, fx, pos["id"]))
+                conn.execute("UPDATE portfolio_positions SET high = ?, stop = ?, last_price = ?, last_fx = ?, "
+                             "under_last = ? WHERE id = ?", (high, stop, price, fx, under if is_turbo else None, pos["id"]))
                 held_value += pos["qty"] * price / fx
         open_syms = {p["symbol"] for p in positions if p["status"] == "OPEN"}
 
@@ -174,7 +183,8 @@ def run(portfolio_id: int) -> dict:
         slot = (cash + held_value) / pf["max_positions"]
         candidates = sorted(
             (i for i in items if i["last_signal"] == "ACHAT" and i.get("above_m200") == 1 and i["last_price"]
-             and i["symbol"] not in open_syms and i["symbol"] not in cooldown),
+             and i["symbol"] not in open_syms and i["symbol"] not in cooldown
+             and not (is_turbo and (i.get("product_type") == "CRYPTO" or CRYPTO_SYMBOL.search(i["symbol"] or "")))),
             key=lambda i: i["last_score"] or 0, reverse=True)
         note = None
         if not market["ok"]:  # marché mondial en tendance baissière : pas de nouvelle ligne
@@ -186,12 +196,28 @@ def run(portfolio_id: int) -> dict:
             if len(open_syms) >= pf["max_positions"]:
                 break
             budget = min(slot, cash)
-            if budget < MIN_ORDER_EUR:
+            if budget < (turbo.MIN_ORDER_EUR if is_turbo else MIN_ORDER_EUR):
                 break
             fx = rates.get(it["currency"])
             if not fx:
                 continue
             price = it["last_price"]
+            if is_turbo:
+                b = turbo.buy(budget, price, fx)
+                conn.execute(
+                    "INSERT INTO portfolio_positions (portfolio_id, symbol, product_id, name, currency, qty, entry_price, "
+                    "entry_fx, entry_fee, entry_score, stop, stop_pct, high, last_price, last_fx, financing, leverage, "
+                    "under_entry, under_last) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (portfolio_id, it["symbol"], it["product_id"], it["name"], it["currency"] or "EUR", b["qty"],
+                     b["price"], fx, b["fee"], it["last_score"], rnd(price * (1 - TRAIL_PCT / 100)), TRAIL_PCT,
+                     price, b["price"], fx, b["financing"], turbo.LEVERAGE, price, price))
+                cash -= b["cost"]
+                fees += b["fee"]
+                held_value += b["cost"] - b["fee"]
+                open_syms.add(it["symbol"])
+                buys += 1
+                events.append(f"Achat turbo Call {it['name'] or it['symbol']} ({round(b['cost'])} €)")
+                continue
             ptype = it.get("product_type") or "ACTION"
             raw_qty = (budget - fee(budget, it["currency"], ptype, it["symbol"])) * fx / price
             # Cryptos : achat fractionné (un bitcoin coûte bien plus qu'une ligne) ; actions : entières
@@ -288,6 +314,8 @@ def summary(conn, pf) -> dict:
         p["pnl_pct"] = round(p["pnl_eur"] / p["cost_eur"] * 100, 2) if p["cost_eur"] else None
         trend = p.get("shares_trend")
         p["buyback"] = trend is not None and trend <= -1.0  # même seuil que fundamentals.BUYBACK_PCT
+        if p.get("financing"):  # turbo : barrière du jour (elle monte avec le coût de financement)
+            p["barrier"] = rnd(turbo.financing_level(p))
         invested += p["value_eur"]
     value = round(pf["cash"] + invested, 2)
     wl = conn.execute("SELECT id, name, kind FROM watchlists WHERE id = ?", (pf["watchlist_id"],)).fetchone() \
@@ -298,6 +326,7 @@ def summary(conn, pf) -> dict:
         "id": pf["id"], "name": pf["name"], "created_at": pf["created_at"], "last_run_at": pf["last_run_at"],
         "note": pf["last_note"] if "last_note" in pf.keys() else None,
         "watchlist": dict(wl) if wl else None, "universe": pf["universe"] if "universe" in pf.keys() else None,
+        "product": pf["product"] if "product" in pf.keys() else None,
         "initial_cash": pf["initial_cash"], "cash": round(pf["cash"], 2), "invested": round(invested, 2),
         "value": value, "pnl_eur": round(value - pf["initial_cash"], 2),
         "pnl_pct": round((value / pf["initial_cash"] - 1) * 100, 2), "fees_paid": pf["fees_paid"],

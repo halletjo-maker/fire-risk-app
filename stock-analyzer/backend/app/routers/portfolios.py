@@ -14,6 +14,7 @@ router = APIRouter(prefix="/portfolios", tags=["portefeuilles fictifs"])
 class PortfolioIn(BaseModel):
     watchlist_id: int | None = None
     universe: str | None = Field(default=None, pattern="^all$")  # « all » : portefeuille Opportunités
+    product: str | None = Field(default=None, pattern="^turbo$")  # « turbo » : turbos Call levier 2 sur Monde 500
     capital: float = Field(default=5000, ge=500, le=1_000_000)
     max_positions: int = Field(default=10, ge=1, le=30)
     name: str | None = Field(default=None, max_length=50)
@@ -50,6 +51,23 @@ def create(payload: PortfolioIn, background: BackgroundTasks, user: dict = Depen
                     screens.refresh_in_background(screens.create_preset_watchlist(user["id"], key))
                 except Exception:
                     pass  # source momentanément indisponible : la liste sera ajoutée plus tard
+    max_positions = payload.max_positions
+    if payload.product == "turbo":  # sous-jacents : la liste Monde 500 (actions avec turbos), créée si besoin
+        from ..services import screens
+        with get_conn() as conn:
+            row = conn.execute("SELECT id FROM watchlists WHERE user_id = ? AND kind = ? ORDER BY id LIMIT 1",
+                               (user["id"], screens.PRESETS["world"]["kind"])).fetchone()
+        if row is None:
+            try:
+                wid = screens.create_preset_watchlist(user["id"], "world")
+                screens.refresh_in_background(wid)
+            except Exception:
+                raise HTTPException(status_code=503, detail="Liste Monde 500 indisponible pour l'instant, réessaie plus tard.")
+        else:
+            wid = row["id"]
+        payload = payload.model_copy(update={"watchlist_id": wid, "universe": None,
+                                             "name": payload.name or "Turbos Call"})
+        max_positions = min(max_positions, 5)
     with get_conn() as conn:
         if payload.universe == "all":
             wl_id, default_name = None, "Opportunités"
@@ -61,9 +79,10 @@ def create(payload: PortfolioIn, background: BackgroundTasks, user: dict = Depen
             wl_id, default_name = wl["id"], f"Fictif · {wl['name']}"
         name = (payload.name or "").strip() or default_name
         pid = conn.execute(
-            "INSERT INTO portfolios (user_id, watchlist_id, name, initial_cash, cash, max_positions, universe) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (user["id"], wl_id, name, payload.capital, payload.capital, payload.max_positions, payload.universe)).lastrowid
+            "INSERT INTO portfolios (user_id, watchlist_id, name, initial_cash, cash, max_positions, universe, product) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (user["id"], wl_id, name, payload.capital, payload.capital, max_positions, payload.universe,
+             payload.product)).lastrowid
         pf = conn.execute("SELECT * FROM portfolios WHERE id = ?", (pid,)).fetchone()
         result = paper.summary(conn, pf)
     background.add_task(paper.run, pid)  # premiers achats sur les cours actuels

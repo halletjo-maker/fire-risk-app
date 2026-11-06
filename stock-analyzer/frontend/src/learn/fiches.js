@@ -403,7 +403,7 @@ export const FICHES = [
       },
     ],
     inApp: [
-      'Portefeuilles fictifs : au plus 10 lignes d’environ 10 % chacune, stop suiveur à 15 % sous le plus haut, pas d’objectif de vente, pas de rachat d’un titre vendu depuis moins de 5 jours, frais estimés 0,1 % par ordre (1 € minimum).',
+      'Portefeuilles fictifs : au plus 10 lignes d’environ 10 % chacune, stop suiveur à 15 % sous le plus haut, pas d’objectif de vente, pas de rachat d’un titre vendu depuis moins de 5 jours, frais réels Saxo (courtage, change) et TOB comptés.',
       'Ce que le test sur 10 ans (~100 grandes actions, 2016-2026) a appris : avec des objectifs de vente proches et des stops serrés, la méthode perdait même de l’argent une fois les frais réels comptés (−4,6 % par an : beaucoup de petites opérations, chacune payant courtage et TOB) ; en laissant courir les gains avec un stop suiveur de 15 % et en vendant quand la tendance de fond se retourne, +10,4 % par an frais Saxo et TOB inclus, pour une pire chute de −21 % contre −34 % pour le MSCI World (+12,2 % par an, sans frais). Garder simplement toutes les actions testées aurait rapporté davantage, mais avec de plus fortes chutes et un biais : ces sociétés sont celles qui ont réussi.',
       'Filtre de marché : aucun nouvel achat quand l’ETF MSCI World est sous sa MM100 (marché mondial baissier) ; les ventes continuent.',
       'Liste « Monde » : environ un tiers Amériques, un tiers Europe, un tiers Asie-Pacifique.',
