@@ -3,7 +3,7 @@
 Rejoue les règles des portefeuilles fictifs sur l'historique d'une liste de titres :
 - chaque semaine : score technique (identique à l'outil), position par rapport à la MM200 ;
 - chaque jour : stop suiveur vérifié à la clôture ;
-- 10 lignes au plus d'environ 10 %, frais de 0,1 % (1 € minimum), 5 jours avant de racheter un titre vendu ;
+- 10 lignes au plus d'environ 10 %, frais réels Saxo Bronze + TOB (0,08 % min. 2 € + 0,35 %), 5 jours avant de racheter un titre vendu ;
 - filtre de marché : pas d'achat quand l'ETF MSCI World est sous sa MM100.
 
 Limites, affichées avec le résultat : seule l'analyse technique peut être rejouée (fondamentaux et
@@ -54,7 +54,9 @@ _lock = threading.Lock()
 
 
 def fee(amount: float) -> float:
-    return max(FEE_MIN, amount * FEE_RATE)
+    """Frais Saxo Bronze + TOB d'une action (services/costs.py) ; sans change : rendements en devise locale."""
+    from .costs import order_cost
+    return order_cost(amount, "EUR", "ACTION")
 
 
 # ── Étape 1 : signaux hebdomadaires de chaque titre ─────────────────────────

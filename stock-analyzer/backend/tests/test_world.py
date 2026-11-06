@@ -116,7 +116,7 @@ def test_crypto_fractional_buy_with_tiny_price(client, monkeypatch):
     pid = client.post("/portfolios", json={"watchlist_id": wl}, headers=H).json()["portfolio"]["id"]
     with get_conn() as conn:
         pos = {r["symbol"]: dict(r) for r in conn.execute("SELECT * FROM portfolio_positions WHERE portfolio_id = ?", (pid,))}
-    assert 0 < pos["BTC-EUR"]["qty"] < 1 and pos["BTC-EUR"]["qty"] * 68900 == pytest.approx(499, abs=1.5)
+    assert 0 < pos["BTC-EUR"]["qty"] < 1 and pos["BTC-EUR"]["qty"] * 68900 == pytest.approx(496, abs=2)
     assert pos["SHIB-EUR"]["qty"] > 1e8 and pos["SHIB-EUR"]["stop"] == pytest.approx(0.0000034) and pos["SHIB-EUR"]["target"] is None
 
 

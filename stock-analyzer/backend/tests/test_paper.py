@@ -53,11 +53,15 @@ def test_buys_best_scores_within_slots(setup):
     assert pos["AAA"]["qty"] == 6 and pos["AAA"]["entry_fx"] == 1.25 and pos["BBB"]["qty"] == 9
     assert pos["AAA"]["stop"] == pytest.approx(85) and pos["AAA"]["target"] is None   # stop suiveur 15 %, pas d'objectif
     d = client.get(f"/portfolios/{pid}", headers=H).json()["portfolio"]
-    spent = 6 * 100 / 1.25 + 9 * 50 + 2 * paper.FEE_MIN
+    spent = sum(p["qty"] * p["entry_price"] / p["entry_fx"] + p["entry_fee"] for p in pos.values())
+    fees = sum(p["entry_fee"] for p in pos.values())
     assert d["cash"] == pytest.approx(5000 - spent, abs=0.01)
-    assert d["fees_paid"] == 2.0 and d["open_count"] == 2
-    assert d["value"] == pytest.approx(5000 - 2, abs=0.01)  # seuls les frais sont perdus au départ
-    assert d["history"][0]["value_eur"] == pytest.approx(4998, abs=0.01)
+    # Frais Saxo Bronze + TOB : AAA (USD) 480 € → courtage 0,9 € min + change 0,25 % + TOB 0,35 %
+    assert pos["AAA"]["entry_fee"] == pytest.approx(0.9 + 480 * (0.0025 + 0.0035), abs=0.02)
+    assert pos["BBB"]["entry_fee"] == pytest.approx(2 + 450 * 0.0035, abs=0.02)   # EUR : min. 2 € + TOB
+    assert d["fees_paid"] == pytest.approx(fees, abs=0.01) and d["open_count"] == 2
+    assert d["value"] == pytest.approx(5000 - fees, abs=0.01)  # seuls les frais sont perdus au départ
+    assert d["history"][0]["value_eur"] == pytest.approx(5000 - fees, abs=0.01)
     assert client.get(f"/portfolios/{pid}", headers={"X-User-Email": "b@exemple.be"}).status_code == 404
 
 
@@ -70,15 +74,15 @@ def test_sell_rules_and_cooldown(setup):
     assert len(positions(pid)) == 3
 
     set_item("WIN", last_price=150, sell_price=120)   # bien au-delà de l'ancien objectif : on garde
-    set_item("TRL", last_price=120)                   # monte : le stop suit (120 × 0,85 = 102)
+    set_item("TRL", last_price=125)                   # monte : le stop suit (125 × 0,85 = 106,25)
     set_item("GRD", guard=1, last_price=101)          # tendance de fond baissière : vente
     paper.run(pid)
     closed = positions(pid, "CLOSED")
     assert "WIN" not in closed and positions(pid)["WIN"]["stop"] == pytest.approx(127.5)
     assert closed["GRD"]["exit_reason"].startswith("Tendance de fond baissière")
-    assert positions(pid)["TRL"]["stop"] == pytest.approx(102)
+    assert positions(pid)["TRL"]["stop"] == pytest.approx(106.25)
 
-    set_item("TRL", last_price=101)
+    set_item("TRL", last_price=106)
     paper.run(pid)
     trl = positions(pid, "CLOSED")["TRL"]
     assert trl["exit_reason"] == "Stop suiveur touché (gains protégés)" and trl["pnl_eur"] > 0

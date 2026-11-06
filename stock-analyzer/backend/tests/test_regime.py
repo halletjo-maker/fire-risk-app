@@ -72,4 +72,4 @@ def test_detail_has_benchmark_curve(portfolio, monkeypatch):
     monkeypatch.setattr(regime, "closes", lambda: [(created, 50.0), ("2099-01-01", 60.0)])
     d = client.get(f"/portfolios/{pid}", headers=H).json()["portfolio"]
     assert d["benchmark_label"] == "ETF MSCI World"
-    assert d["history"] == [{"day": day, "value_eur": pytest.approx(4999, abs=1), "benchmark_eur": 5000.0}]
+    assert d["history"] == [{"day": day, "value_eur": pytest.approx(4997, abs=3), "benchmark_eur": 5000.0}]

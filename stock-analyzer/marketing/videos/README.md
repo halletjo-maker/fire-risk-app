@@ -21,3 +21,4 @@ prononciation) ; les scènes s'allongent automatiquement pour suivre la voix.
 
     pip install piper-tts
     python narrate.py v_taxe.html narration_taxe.json fr_FR-siwis-medium.onnx mm100-taxe-voix.mp4
+Note : les chiffres des vidéos (1,3 % / 11,3 %) sont ceux du test avant l'ajout des frais Saxo réels (novembre 2026) ; à mettre à jour avant publication : anciennes règles −4,6 %/an, nouvelles +10,4 %/an (pire chute −21 %) frais et TOB inclus.

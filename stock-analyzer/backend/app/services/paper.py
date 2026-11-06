@@ -17,7 +17,8 @@ Règles (appliquées après chaque mise à jour des cours de la watchlist choisi
   titre vendu depuis moins de 5 jours.
 - Filtre de marché : aucun nouvel achat quand l'ETF MSCI World est sous sa MM100 (marché mondial
   baissier) ; les ventes continuent. Repris dès que l'ETF repasse au-dessus.
-- Frais estimés : 0,1 % du montant, 1 € minimum par ordre. Cours en devise convertis en euros.
+- Frais réels Saxo (niveau Bronze) : courtage 0,08 % (min. 2 € Euronext, 1 $ USA…), change 0,25 % pour
+  une devise, plus la TOB (0,35 % actions, 0,12 % ETF). Cours en devise convertis en euros.
 Aucun ordre réel n'est passé : c'est une simulation.
 """
 from __future__ import annotations
@@ -48,8 +49,11 @@ QUOTE_TTL = 15 * 60
 _lock = threading.Lock()
 
 
-def fee(amount_eur: float) -> float:
-    return round(max(FEE_MIN, amount_eur * FEE_RATE), 2)
+def fee(amount_eur: float, currency: str | None = "EUR", product_type: str | None = "ACTION",
+        symbol: str | None = None) -> float:
+    """Frais réels Saxo Bronze + TOB (services/costs.py)."""
+    from .costs import order_cost
+    return order_cost(amount_eur, currency, product_type, symbol)
 
 
 def fx_rate(currency: str | None) -> float | None:
@@ -128,7 +132,8 @@ def run(portfolio_id: int) -> dict:
                 reason = "Tendance de fond baissière (sous une MM200 qui baisse)"
             if reason:
                 proceeds = pos["qty"] * price / fx
-                f = fee(proceeds)
+                ptype = "CRYPTO" if CRYPTO_SYMBOL.search(pos["symbol"] or "") else "ACTION"
+                f = fee(proceeds, pos["currency"], ptype, pos["symbol"])
                 cost = pos["qty"] * pos["entry_price"] / pos["entry_fx"] + pos["entry_fee"]
                 cash += proceeds - f
                 fees += f
@@ -172,13 +177,14 @@ def run(portfolio_id: int) -> dict:
             if not fx:
                 continue
             price = it["last_price"]
-            raw_qty = (budget - fee(budget)) * fx / price
+            ptype = it.get("product_type") or "ACTION"
+            raw_qty = (budget - fee(budget, it["currency"], ptype, it["symbol"])) * fx / price
             # Cryptos : achat fractionné (un bitcoin coûte bien plus qu'une ligne) ; actions : entières
             qty = math.floor(raw_qty * 1e6) / 1e6 if it.get("product_type") == "CRYPTO" else math.floor(raw_qty)
             if qty <= 0 or qty * price / fx < MIN_ORDER_EUR / 2:
                 continue
             cost = qty * price / fx
-            f = fee(cost)
+            f = fee(cost, it["currency"], ptype, it["symbol"])
             if cost + f > cash:
                 continue
             stop_pct, target = TRAIL_PCT, None  # pas d'objectif : on laisse courir les gains
