@@ -1,0 +1,565 @@
+# 📈 Analyse Boursière
+
+Application web d'analyse boursière personnelle : recherche d'un produit (action, ETF, turbo,
+warrant, crypto, indice), score global /10, recommandation d'achat ou de vente, stop-loss,
+watchlists multiples et alertes par mail.
+
+Elle tourne **sur ton PC** et reste accessible **depuis ton téléphone** via le réseau local (Wi-Fi).
+
+> ⚠️ Les informations produites sont indicatives et ne constituent pas un conseil en
+> investissement au sens de la directive MiFID II.
+
+---
+
+## 🧱 Stack
+
+| Partie | Technologie |
+|---|---|
+| Backend | Python 3.11+ · FastAPI · APScheduler · SQLite |
+| Données | yfinance · Google Finance / Boursorama / ZoneBourse (scraping) · Google News RSS · NewsAPI |
+| Analyse technique | pandas-ta |
+| Mail | smtplib (Python natif) |
+| Frontend | React 18 · Vite · TailwindCSS · Recharts · lucide-react |
+
+---
+
+## ✅ Prérequis
+
+- **Python 3.11 ou plus récent** — https://www.python.org/downloads/
+  (Windows : cocher *« Add Python to PATH »* à l'installation)
+- **Node.js 20 ou plus récent** — https://nodejs.org/ (version LTS)
+- Git (facultatif)
+
+Vérifier :
+```bash
+python --version     # ou python3 --version
+node --version
+```
+
+---
+
+## 🪟 Installation rapide sous Windows
+
+**Seul Python est nécessaire** : l'interface est livrée déjà fabriquée dans `backend/web/`
+et servie par le backend sur le port **8000** (pas besoin de Node.js).
+
+1. Installe **Python 3.13** ou 3.12 (https://www.python.org/downloads/windows/ — coche
+   « Add python.exe to PATH »). Python 3.14 n'est pas encore supporté (numba / pandas-ta).
+2. Dans le dossier `stock-analyzer`, double-clique sur **`install.bat`** (2 à 5 minutes).
+3. Double-clique sur **`start.bat`** : le navigateur s'ouvre sur http://localhost:8000.
+   Téléphone (même Wi-Fi) : `http://IP-DU-PC:8000`.
+
+Tes données (comptes, watchlists, alertes) sont rangées dans
+`%LOCALAPPDATA%\AnalyseBoursiere\` (tape ce chemin dans l'Explorateur), **hors du dossier de
+l'application** : une mise à jour par ZIP ne les touche pas. Une base laissée par une ancienne
+version dans `backend\data\` est reprise automatiquement au premier démarrage.
+
+Après une modification du frontend, régénère `backend/web/` avec `cd frontend && npm run build`.
+Node.js reste utile uniquement pour développer l'interface (`npm run dev`, port 3000).
+
+## 🚀 Installation (une seule fois)
+
+### 1. Configuration
+```bash
+cd stock-analyzer
+cp .env.example .env          # Windows : copy .env.example .env
+```
+Ouvre `.env` et complète au minimum les lignes SMTP si tu veux les alertes mail
+(voir [Configurer Gmail](#-configurer-lenvoi-de-mails-gmail)). Tout le reste fonctionne sans.
+
+### 2. Backend
+```bash
+cd backend
+python -m venv .venv
+# macOS / Linux :
+source .venv/bin/activate
+# Windows (PowerShell) :
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 3. Frontend
+```bash
+cd ../frontend
+npm install
+```
+
+---
+
+## ▶️ Lancement
+
+**Le plus simple :**
+- Windows : double-clic sur `start.bat`
+- macOS / Linux : `./start.sh`
+
+**Ou manuellement, dans deux terminaux :**
+```bash
+# Terminal 1 — backend (http://localhost:8000)
+cd backend
+source .venv/bin/activate            # Windows : .venv\Scripts\activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Terminal 2 — frontend (http://localhost:3000)
+cd frontend
+npm run dev
+```
+
+Puis ouvre **http://localhost:3000**.
+La documentation interactive de l'API est sur **http://localhost:8000/docs**.
+
+---
+
+## 📱 Accès depuis le téléphone (réseau local)
+
+1. Le PC et le téléphone doivent être sur le **même Wi-Fi**.
+2. Trouve l'adresse IP du PC :
+   - Windows : `ipconfig` → ligne *Adresse IPv4* (ex. `192.168.1.20`)
+   - macOS : `ipconfig getifaddr en0`
+   - Linux : `hostname -I`
+3. Sur le téléphone, ouvre `http://192.168.1.20:3000`.
+4. Si ça ne charge pas : autorise **Python** et **Node.js** dans le pare-feu
+   (Windows le demande au premier lancement → cocher *Réseaux privés*).
+
+Le téléphone n'a besoin que du port **3000** : le frontend relaie les appels `/api/...` vers le
+backend (port 8000) de la même machine.
+
+Pense à mettre cette adresse dans `APP_PUBLIC_URL` du `.env` pour que les liens des mails
+d'alerte fonctionnent depuis le téléphone.
+
+---
+
+## ☁️ Mise en ligne sur un serveur (Hetzner Cloud)
+
+`deploy/hetzner-cloud-init.sh` installe tout sur un serveur Ubuntu 24.04 neuf, au premier démarrage :
+Python, l'application (service systemd, utilisateur dédié, code en lecture seule), Caddy avec
+certificat https automatique sur `https://IP.sslip.io`, pare-feu (22/80/443), fail2ban, swap 2 Go.
+
+1. Crée un jeton GitHub *fine-grained* en lecture seule (Contents: Read-only) limité à ce dépôt.
+2. Hetzner Cloud → nouveau serveur Ubuntu 24.04 (4 Go de RAM) → colle le script dans **Cloud config**
+   après avoir rempli `EMAIL` et `GITHUB_TOKEN`.
+3. Environ 10 minutes plus tard : `https://IP-DU-SERVEUR.sslip.io` → « Crée ton accès ».
+
+Mises à jour : automatiques **chaque nuit vers 04:30**, ou bouton **Profil → Application →
+« Mettre à jour maintenant »** (administrateur). Le bouton dépose `update.request` dans le dossier
+de données ; une unité systemd `.path` (root) lance alors `update.sh`. Installation sur un serveur
+créé avant cette fonction : `bash /opt/analyse-boursiere/update.sh; bash
+/opt/analyse-boursiere/stock-analyzer/deploy/enable-autoupdate.sh` · Journal des mises à jour :
+`/var/log/analyse-boursiere-update.log` · Journal : `journalctl -u analyse-boursiere -f` ·
+Rapport d'installation : `/root/INSTALLATION.txt` et `/var/log/analyse-boursiere-install.log`.
+
+## 📲 Installer sur téléphone
+
+L'interface est installable (manifest, icônes, plein écran) : sur iPhone, Safari → Partager →
+« Sur l'écran d'accueil » ; sur Android, Chrome propose « Installer ». Un bandeau l'explique dans
+l'outil (masquable), et le mail d'invitation contient les deux procédures.
+
+## 🌐 Nom de domaine
+
+Chez le registraire : zone DNS → entrée **A** (sous-domaine vide) et **A** `www` vers l'IPv4 du
+serveur. Puis Profil → **Nom de domaine** (administrateur) : l'application vérifie que le nom
+pointe bien vers le serveur, dépose `domain.request` ; l'unité systemd `analyse-boursiere-domain.path`
+lance `deploy/apply-domain.sh` (root) qui valide les noms, réécrit le Caddyfile (domaine + www +
+ancienne adresse IP.sslip.io, certificats https automatiques), met à jour `APP_PUBLIC_URL` et
+`CORS_ORIGINS`, recharge Caddy et redémarre l'application.
+
+## 🔐 Mot de passe et sécurité
+
+- **Première ouverture** : l'écran « Crée ton accès » demande ton adresse mail et un mot de passe
+  (10 caractères minimum). Si tu utilisais déjà l'application avec cette adresse, tes watchlists
+  sont conservées. Ensuite, **la création de compte est fermée** : personne d'autre ne peut s'inscrire.
+- Pour autoriser d'autres adresses (ou réserver l'inscription à la tienne sur un serveur Internet),
+  renseigne `ALLOWED_EMAILS=ton@mail.be` dans `.env` **avant** le premier lancement.
+- Le mot de passe est haché (scrypt) ; la session est un cookie HttpOnly valable 30 jours
+  (prolongé à chaque utilisation). Après 5 essais ratés, la connexion est bloquée 15 minutes.
+- **Inviter un ami** (administrateur uniquement : le premier compte, ou une adresse de
+  `ALLOWED_EMAILS`) : menu → « Inviter un ami » → son adresse mail → lien personnel à usage unique,
+  valable 7 jours, envoyé par mail si le SMTP est configuré, sinon à copier / partager (WhatsApp…).
+  Chaque ami a son propre compte, ses watchlists et alertes, invisibles des autres. La même fenêtre
+  liste les membres (retirer un accès supprime son compte et ses données) et les invitations en attente.
+- **Changer le mot de passe** : Profil → « Changer le mot de passe » (les autres appareils sont déconnectés).
+- **Mot de passe oublié** : écran de connexion → « Mot de passe oublié ? » → lien par mail (valable
+  1 heure, usage unique, 5 demandes max. par 15 min ; la réponse ne révèle pas si le compte existe).
+  Sans envoi de mails configuré : `reset_password.bat` (Windows) ou
+  `cd backend && python -m app.reset_password ton@mail.be` sur la machine qui fait tourner l'application.
+
+## ✉️ Configurer l'envoi de mails (Gmail)
+
+1. Active la **validation en 2 étapes** sur ton compte Google.
+2. Va sur https://myaccount.google.com/apppasswords et crée un mot de passe d'application.
+3. Dans `.env` :
+   ```env
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=ton_mail@gmail.com
+   SMTP_PASSWORD=xxxx xxxx xxxx xxxx
+   SMTP_FROM=ton_mail@gmail.com
+   ```
+Outlook / Hotmail : `SMTP_HOST=smtp-mail.outlook.com`, port `587`.
+
+L'encart **« État du serveur »** de l'application indique si le SMTP est bien détecté.
+Ensuite : **Mon profil → Alertes mail → « Mail de test »**.
+
+Tant que le SMTP n'est pas configuré, les alertes ne sont pas perdues : elles apparaissent
+dans l'historique (profil) et sont enregistrées en fichiers `.eml` dans `backend/data/outbox/`.
+
+---
+
+## 🗂️ Structure du projet
+
+```
+stock-analyzer/
+├── .env.example            Variables de configuration (à copier en .env)
+├── start.sh / start.bat    Lancement en un clic
+├── backend/
+│   ├── requirements.txt
+│   ├── data/               Base SQLite (créée automatiquement)
+│   ├── app/
+│   │   ├── main.py         Application FastAPI (CORS, démarrage, routes)
+│   │   ├── config.py       Lecture du .env + constantes
+│   │   ├── database.py     Connexion SQLite + schéma complet
+│   │   ├── scheduler.py    Tâches de fond APScheduler (toutes les 15 min)
+│   │   ├── deps.py         Utilisateur de la session (cookie HttpOnly)
+│   │   ├── routers/        health · users · watchlists · analyze
+│   │   └── services/
+│   │       ├── sources/    yfinance, scraping, actualités (Modules 2-5)
+│   │       ├── analysis/   scores, décision, rapport (Modules 3-7)
+│   │       └── mail/       alertes SMTP (Module 9)
+│   └── tests/              Tests pytest
+└── frontend/
+    ├── vite.config.js      Port 3000, accès LAN, relais /api → backend
+    ├── tailwind.config.js  Thème sombre (#0D1117, #00FF88, #FF4444)
+    └── src/
+        ├── App.jsx         Démarrage : utilisateur mémorisé ou écran d'accueil
+        ├── lib/api.js      Client HTTP
+        └── components/     LoginScreen, AppLayout, Sidebar, MobileHeader,
+                            WatchlistSelector, MainArea, BackendStatus
+```
+
+### Base de données
+
+| Table | Contenu |
+|---|---|
+| `users` | Utilisateurs (identifiés par mail) |
+| `app_settings` | Utilisateur actif mémorisé |
+| `watchlists` | Nom, couleur (8 choix), ordre |
+| `watchlist_items` | Produits suivis + dernier prix / score / signal |
+| `alerts` | Alertes par produit : type, activée, fréquence, jeton de désinscription |
+| `analysis_history` | Historique des analyses (scores, verdict, sources, rapport) |
+| `data_cache` | Cache des réponses des sources (limite le scraping) |
+
+Supprimer une watchlist supprime ses produits ; supprimer un produit supprime ses alertes
+(cascade SQLite).
+
+### API (étape actuelle)
+
+| Méthode | Route | Rôle |
+|---|---|---|
+| GET | `/health` | État : base, tâches de fond, configuration — public |
+| GET | `/users/current` | Session en cours + état (première utilisation, inscription ouverte) — public |
+| POST | `/users/register` | Création du mot de passe (premier compte ou `ALLOWED_EMAILS`) — public |
+| POST | `/users/login` | Connexion mail + mot de passe → cookie de session — public |
+| POST | `/users/logout` | Déconnexion (session supprimée) |
+| POST | `/users/password` | Changer le mot de passe (déconnecte les autres appareils) |
+| GET | `/users/me` | Profil + statistiques |
+| GET | `/users/invitation/{jeton}` | Adresse liée à un lien d'invitation — public |
+| GET | `/users/members` | Membres et invitations en attente (admin) |
+| POST / DELETE | `/users/invitations[/{id}]` | Inviter un ami (lien 7 jours, mail si SMTP) / annuler (admin) |
+| DELETE | `/users/members/{id}` | Retirer l'accès d'un membre et ses données (admin) |
+| GET / POST | `/admin/version`, `/admin/update` | Version installée / mise à jour à la demande (admin, serveur) |
+| GET / POST | `/watchlists` | Lister / créer |
+| PATCH / DELETE | `/watchlists/{id}` | Renommer, changer la couleur / supprimer (produits + alertes) |
+| POST | `/watchlists/{id}/duplicate` | Dupliquer (produits copiés, alertes non copiées) |
+| GET / POST | `/watchlists/{id}/items` | Produits suivis / ajouter un produit (score calculé en arrière-plan) |
+| DELETE | `/watchlists/{id}/items/{item}` | Retirer un produit (ses alertes sont supprimées) |
+| PUT | `/watchlists/{id}/items/order` | Nouvel ordre (glisser-déposer) |
+| POST | `/watchlists/{id}/refresh` | Rafraîchissement immédiat |
+| POST | `/watchlists/presets/{ipo10\|ipo5\|world}` | Listes thématiques : IPO 10 ans (500), IPO 5 ans (100), Monde 500 + 20 cryptos |
+| GET | `/watchlists/{id}/suggestions` | Suggestions d'achat inspirées de la watchlist (`pending` puis `ready`) |
+| GET / PUT | `/alerts/item/{item}` | Alertes d'un produit (5 types, activée, fréquence) |
+| GET | `/alerts/history` | Dernières alertes déclenchées |
+| POST | `/alerts/test` | Envoie un mail de test (vérifie le SMTP) |
+| POST | `/alerts/check` | Vérifie les alertes tout de suite |
+| GET | `/alerts/unsubscribe/{jeton}` | Lien de désinscription (pied de mail) — public |
+
+Toutes les autres routes exigent une session (cookie `ab_session`, ou en-tête `Authorization: Bearer`).
+| GET | `/search?q=...` | Propositions (nom, ticker, ISIN, mot-clé) avec type détecté |
+| GET | `/quote?id=...` | Cours d'un produit (`yf:NOW`, `bo:/bourse/...`) avec fallback |
+| GET | `/fundamentals?id=...` | Module 3 — analyse fondamentale et score /10 |
+| GET | `/technical?id=...` | Module 4 — analyse technique (MM100), score /10 et données du graphique |
+| GET | `/sentiment?id=...` | Module 5 — actualités 72 h, sentiment par titre, événements, score /10 |
+| GET | `/decision?id=...` | Module 6 — score global, décision ACHAT / VENTE (+ historique) |
+| GET | `/report?id=...` | Module 7 — rapport justificatif complet |
+| GET | `/analyze?q=...` | Identification + cours (+ enregistrement dans l'historique). Scores aux Modules 3 à 6 |
+
+---
+
+## 📱 Démo hors ligne
+
+Une version de démonstration, sans serveur, peut être générée en un seul fichier HTML :
+l'API est simulée dans la page (`frontend/src/demo/mockApi.js`) à partir de réponses réelles
+enregistrées, injectées dans `window.__DEMO_DATA__`. Compte, watchlists et alertes y sont
+conservés dans le navigateur ; aucun mail n'est envoyé et les cours ne sont pas mis à jour.
+
+```bash
+cd frontend
+npm run build:demo        # → dist-demo/index.html (il reste à y injecter les données)
+```
+
+## 🧪 Tests
+
+```bash
+cd backend
+source .venv/bin/activate
+python -m pytest -q
+```
+
+---
+
+## 🎯 Cours d'achat / de vente et suggestions
+
+Chaque produit d'une watchlist affiche, recalculés toutes les 15 min (actions, ETF, cryptos ;
+pas les turbos) :
+- **Achat ≤ X** : tendance haussière (au-dessus de la MM100) → achat sur repli vers le plus
+  proche appui sous le cours (MM100 ou support) ; **Achat ≈** si le cours y est déjà (< 1,5 %).
+- **Achat ≥ X** : tendance baissière → attendre un retour au-dessus de la MM100 (+1 %).
+- **Vente Y** : prochaine résistance (si ≥ 2 % de marge), sinon objectif de volatilité
+  (3 × ATR quotidien, 5 % minimum).
+
+Le bloc **Suggestions d'achat** part des produits suivis (meilleurs signaux d'abord), récupère
+les valeurs similaires selon Yahoo Finance, écarte celles déjà suivies et garde celles dont le
+score technique est ≥ 5,5/10 (4 au maximum) ; un ETF monde est proposé si la watchlist n'en
+contient aucun. Calcul en arrière-plan, mis en cache 6 h (`services/suggestions.py`).
+
+## 📋 Listes « IPO 10 ans » (500 sociétés) et « IPO 5 ans » (100 sociétés)
+
+Menu → **Listes thématiques** → IPO des 10 dernières années (500) ou des 5 dernières années (100). Composition : outil de filtrage public
+de Nasdaq (actions NYSE / Nasdaq / AMEX avec leur année d'IPO) → introductions depuis 10 ans, hors
+obligations, actions préférentielles, warrants, droits et unités de SPAC, une classe d'actions par
+société, les **500** (10 ans) ou **100** (5 ans) **plus fortes capitalisations**. L'année est celle de la première cotation aux USA
+(elle inclut donc des scissions et des cotations d'ADR, ex. GE Vernova, Shell).
+
+Mise à jour **1×/jour** (22 h 45, Bruxelles, du lundi au vendredi) : historiques téléchargés par
+lots de 100, puis score **technique**, signal, cours Achat / Vente (≈ 1 min pour 500 titres) ;
+composition revue chaque semaine. Ces lignes sont exclues du rafraîchissement « 15 minutes ».
+Affichage : recherche, filtres par signal, tri (score, variation, capitalisation, IPO, nom),
+50 lignes à la fois. Touche une société pour son analyse complète.
+
+## 🌍 Liste « Monde 500 + cryptos » (24 h/24 en semaine)
+
+Menu → Listes thématiques → **Monde**. ≈ 1/3 Amériques (USA, Canada), 1/3 Europe (Pays-Bas,
+Belgique, France, Espagne, Italie, Suisse, Royaume-Uni, Suède, Danemark, Finlande, Allemagne),
+1/3 Asie-Pacifique (Japon, Hong Kong, Australie, Singapour) + 20 grandes cryptos en euros.
+Composition (`services/world.py`) : sociétés américaines d'après Nasdaq (pays « United States »),
+puis filtre d'actions Yahoo pays par pays (Bourse principale, devise locale, sans CDR/SDR,
+obligations ni doubles cotations) ; liste de référence `app/data/world500.json` si Yahoo ne
+répond pas. Mise à jour **toutes les 30 min des zones dont la Bourse est ouverte** (Asie 0 h–10 h 30,
+Europe 8 h 45–18 h, Amériques 14 h 15–22 h 30, heure de Bruxelles ; cryptos 7 j/7), puis
+simulation des portefeuilles fictifs. Cryptos achetées en quantités fractionnées.
+
+## 💼 Portefeuilles fictifs (simulation)
+
+Menu → **Portefeuilles fictifs → +** : capital virtuel (5 000 € par défaut) et une watchlist. Après
+chaque mise à jour des cours (15 min, ou 1×/jour pour les listes IPO), `services/paper.py` :
+- **vend** d'abord : stop-loss touché (stop suiveur : il monte avec le plus haut depuis l'achat),
+  objectif de vente atteint, ou signal passé à 🔴 VENTE ;
+- **achète** ensuite les produits au signal 🟢 ACHAT dont le cours est dans la zone d'achat
+  (≈ / ≤ / ≥), meilleur score d'abord, 10 lignes maximum d'≈ 10 % du portefeuille, actions
+  entières, pas de rachat d'un titre vendu depuis moins de 5 jours ;
+- **filtre de marché** (`services/regime.py`) : aucun nouvel achat quand l'ETF MSCI World (IWDA.AS)
+  clôture sous sa MM100 (marché mondial baissier) ; les ventes continuent ; reprise automatique ;
+- frais estimés 0,1 % (1 € minimum) par ordre, conversion des devises en euros (Yahoo `EURUSD=X`…) ;
+- enregistre la valeur du jour (historique), affichée en courbe face à la même somme placée dans
+  l'ETF MSCI World le jour de la création.
+Aucun ordre réel n'est passé. API : `GET/POST /portfolios`, `GET/DELETE /portfolios/{id}`,
+`POST /portfolios/{id}/run`.
+
+## 📊 Rapport mensuel par mail
+
+Le **1er de chaque mois à 8 h** (nouvel essai les 2 jours suivants en cas d'échec), chaque
+utilisateur ayant un portefeuille fictif reçoit le rapport du mois précédent (`services/monthly.py`) :
+valeur début → fin de mois, performance du mois et depuis le départ, achats / ventes, meilleure
+et pire vente, frais, lignes ouvertes, repère ETF MSCI World (sur la même période pour un
+portefeuille créé en cours de mois). Un envoi réussi n'est jamais répété.
+Profil → **Rapport mensuel** : activer / désactiver, « M'envoyer le rapport maintenant ».
+
+**Compte d'envoi sans toucher au serveur** : Profil → **Réglages mail** (administrateur) → adresse
+Gmail + mot de passe d'application (myaccount.google.com/apppasswords, validation en deux étapes
+requise). Les identifiants sont vérifiés auprès de Gmail avant d'être enregistrés et ne sont
+jamais renvoyés par l'API ; ils priment sur les variables SMTP du `.env`.
+
+## 🏠 Site public
+
+Visiteur non connecté : page d'accueil (`site/Landing.jsx` : présentation, fonctions, méthode,
+limites, accès sur invitation), plus `/a-propos` et `/confidentialite` (`site/StaticPages.jsx`),
+en-tête et pied de page communs avec les fiches (`site/SiteLayout.jsx`). « Se connecter » =
+`/?connexion=1`. Les liens d'invitation, la première utilisation et « session expirée » vont
+directement à l'écran de connexion. Site anonyme : aucun nom d'auteur.
+
+## 📘 Apprendre : fiches de vulgarisation (public, sans compte)
+
+`/apprendre` : 12 fiches (lire les scores, diversifier et gérer le risque, action / ETF / crypto,
+turbos et warrants, MM100, RSI, MACD, Bollinger et volumes, supports / résistances / stop-loss,
+PER et valorisation, santé financière, sentiment des actualités), avec schémas, pièges à éviter
+et la règle exacte appliquée par l'outil (`frontend/src/learn/fiches.js` — à mettre à jour si les
+règles de calcul changent). Petits « ? » à côté de chaque critère de l'analyse, liens « Comment
+lire ce score ? », menu et pied de page. Le backend renvoie la page unique pour ces adresses
+(`SPAStaticFiles`) ; l'outil reste réservé aux personnes connectées.
+
+## 🗺️ Avancement
+
+- [x] **Étape 0** — Structure, backend FastAPI, SQLite, APScheduler, layout React
+- [x] **Module 1** — Compte utilisateur : mail + mot de passe, sessions, profil
+- [x] **Module 2** — Recherche et identification du produit
+- [x] **Module 3** — Analyse fondamentale
+- [x] **Module 4** — Analyse technique (MM100)
+- [x] **Module 5** — Actualités et sentiment
+- [x] **Module 6** — Décision Achat / Vente
+- [x] **Module 7** — Rapport justificatif
+- [x] **Module 8** — Watchlists multiples
+- [x] **Module 9** — Alertes mail
+
+### Sources de données (Module 2)
+
+| Ordre | Source | Utilisée pour |
+|---|---|---|
+| 1 | Yahoo Finance (yfinance) | Actions, ETF, crypto, indices — recherche par nom, ticker ou ISIN |
+| 2 | Google Finance | Secours si Yahoo ne répond pas (prix + variation) |
+| 3 | Boursorama | Turbos et warrants (émetteur, barrière, levier, parité…) + dernier secours |
+
+- Si une source échoue, la suivante est essayée sans erreur visible ; l'interface indique la
+  source utilisée (✓) et celles qui n'ont pas répondu (barrées).
+- La variation du jour est **recalculée** à partir de l'historique : la « clôture veille »
+  fournie directement par Yahoo est parfois fausse.
+- Les cryptos sont proposées d'abord en **EUR** (BTC-EUR avant BTC-USD).
+- Un délai de `SCRAPING_DELAY_SECONDS` est respecté entre deux requêtes vers un même site,
+  et les résultats sont mis en cache (recherche : 30 min, cours : 1 min).
+- Les ETF sont proposés d'abord sur une place en euros (Amsterdam, Bruxelles, Paris, XETRA),
+  y compris lors d'une recherche par ISIN.
+
+### Analyse fondamentale (Module 3)
+
+| Produit | Critères notés /10 (poids) | Sources |
+|---|---|---|
+| Action | PER (20) · croissance du CA (15) · marge opérationnelle (15) · dette nette/EBITDA (15) · free cash-flow (10) · dividende (5) · avis des analystes (20) | Yahoo Finance → consensus Boursorama → Google Finance |
+| ETF | TER (30) · taille du fonds (25) · nombre de positions (20) · performance depuis le 1er janvier (15) · réplication (10) | justETF → Boursorama → Yahoo |
+| Turbo / warrant | distance à la barrière (40) · levier (25) · spread achat/vente (20) · émetteur (15) · échéance (warrants) | Boursorama |
+| Crypto | capitalisation (45) · liquidité (30) · offre en circulation / maximale (25) — plafonné à 8/10 | CoinGecko → Yahoo |
+| Indice | non applicable (le score global reposera sur la technique et le sentiment) | — |
+
+- Score = moyenne pondérée des critères disponibles ; la part de données trouvées est affichée.
+- ETF à levier ou inverse : score plafonné à 4/10 avec avertissement.
+- Résultats trimestriels dans les 7 jours : avertissement de volatilité.
+- Les fondamentaux sont mis en cache 6 heures.
+- **ZoneBourse** bloque les accès automatiques (HTTP 403) : il est remplacé par le
+  consensus Boursorama (avis, objectif de cours, prévisions), **justETF** (ETF européens)
+  et **CoinGecko** (cryptos, API publique gratuite).
+
+### Analyse technique (Module 4)
+
+| Critère | Poids | Lecture |
+|---|---|---|
+| ★ **Position vs MM100** | 35 | ✅ AU-DESSUS · ❌ EN-DESSOUS · ⚡ CROISEMENT (dans les 5 dernières séances) + écart en % et pente |
+| Tendance MM50 / MM200 | 15 | moyennes alignées à la hausse ou à la baisse |
+| RSI (14) | 15 | survente < 30, surachat > 70 |
+| MACD (12, 26, 9) | 15 | position vs signal, croisement du jour |
+| Bollinger (20, 2) | 10 | position dans les bandes |
+| Volume vs moyenne 20 j | 10 | mouvement confirmé ou non par les volumes |
+
+- Historique : Yahoo Finance (2 ans), secours Boursorama.
+- Supports / résistances : plus proches plus bas / plus hauts locaux des 6 derniers mois
+  (réutilisés pour les stop-loss du Module 7).
+- **Turbos / warrants** : l'analyse porte sur le **sous-jacent** (ex. LVMH → MC.PA) ;
+  pour un **put**, le score est inversé (10 − score), car un sous-jacent baissier lui est favorable.
+- Graphique interactif : chandeliers + MM50 / MM100 / MM200 (+ Bollinger en option),
+  MACD et RSI dans des panneaux séparés synchronisés, périodes 3M / 6M / 1A, infobulle,
+  vue tableau des 10 dernières séances. Couleurs des moyennes validées pour le daltonisme.
+
+### Actualités et sentiment (Module 5)
+
+- **Sources** : Google News RSS en français (édition Belgique) et en anglais ; NewsAPI en
+  plus si `NEWSAPI_KEY` est renseignée dans `.env`.
+- **Sélection** : les 10 titres les plus récents (72 h) qui **citent le produit**. Les pages
+  de cotation, les doublons et, en anglais, les homonymes sans contexte boursier
+  (ex. la ville de Solvay, NY) sont écartés.
+- **Sentiment par titre** 🟢 🟡 🔴 : lexique financier FR/EN (« plonge », « abaisse son
+  objectif », « beats estimates »…), négations gérées ; les mots repérés sont affichés.
+- **Score /10** = 5 + 5 × moyenne (titres de moins de 24 h plus lourds), ramené vers 5 s'il
+  y a moins de 5 articles. Verdict : Positif ≥ 6 · Négatif ≤ 4.
+- **Événements à venir** (30 jours) : résultats trimestriels, détachement / versement du
+  dividende ; avertissement si les résultats tombent dans les 48 h.
+- Produit dérivé : actualités du **sous-jacent** ; pour un **put**, score inversé.
+- ETF : actualités de l'indice suivi (souvent peu nombreuses → score proche de 5).
+
+### Décision (Module 6)
+
+**Score global = Fondamental × 0,35 + Technique × 0,45 + Sentiment × 0,20**
+
+| Score | Onglet ACHAT | Onglet VENTE (score de vente = 10 − score global) |
+|---|---|---|
+| ≥ 7,5 | ✅ CONDITIONS FAVORABLES À L'ACHAT | ✅ CONDITIONS FAVORABLES À LA VENTE |
+| 5 à 7,4 | ⚠️ PRUDENCE | ⚠️ PRUDENCE (conserver avec stop-loss) |
+| < 5 | ❌ CONDITIONS DÉFAVORABLES + **avertissement fort** | ❌ CONDITIONS DÉFAVORABLES À LA VENTE (conserver) |
+
+- Analyse non applicable (ex. fondamental d'un indice) : poids redistribués et signalés.
+- Points d'appui / de vigilance en langage clair (position vs MM100, qualité, actualité),
+  alerte si fondamental et technique divergent de 3 points ou plus, et si des résultats
+  tombent dans les 48 h.
+- Signal des watchlists : 🟢 ACHAT ≥ 7,5 · 🟡 NEUTRE · 🔴 VENTE < 5.
+- L'enchaînement complet (`services/analysis.py`) est réutilisé par les watchlists et les
+  alertes ; chaque décision est enregistrée dans `analysis_history`.
+
+### Rapport justificatif (Module 7)
+
+- **Résumé exécutif** en 3 phrases (score et verdict, tendance vs MM100 + qualité, actualité / résultats).
+- **Forces / faiblesses** : critères notés ≥ 7 / ≤ 4 des trois analyses.
+- **Position vs MM100** expliquée en langage clair.
+- **Stop-loss** : 1 % sous le support technique, −5 %, −8 %, −12 %. Le niveau ★ conseillé est le
+  support s'il est entre −3 % et −12 %, sinon le % le plus proche de 2 × la volatilité
+  quotidienne (ATR 14). Turbos : stop calculé sur le support/la résistance du sous-jacent
+  et traduit en prix du turbo ; volatilité multipliée par le levier.
+- **3 alternatives** cliquables : même secteur (valeurs proches selon Yahoo, la mieux placée
+  techniquement), ETF sectoriel MSCI World en euros (Xtrackers, XETRA) ou ETF monde,
+  valeur défensive cotée en euros (Ahold Delhaize, Sanofi, Iberdrola, Unilever, Elia).
+- **Sources + horodatage + avertissement MiFID II** ; bouton « Partager » (texte copié ou
+  partage natif sur téléphone).
+
+### Watchlists (Module 8)
+
+- Watchlists illimitées, nom + couleur (8 choix) ; créer, renommer, dupliquer, supprimer
+  (confirmation « Supprimer la watchlist [NOM] et ses [X] produits ? »).
+- Ajout depuis la fiche produit (bouton « Ajouter à une watchlist », création possible à la volée).
+- Chaque produit : 🟢 achat (≥ 7,5) · 🟡 neutre · 🔴 vente (< 5), prix, variation du jour,
+  score global /10 ; 🔔 si des alertes sont actives.
+- Rafraîchissement : tâche de fond APScheduler toutes les 15 min (chaque produit analysé une
+  seule fois même s'il est dans plusieurs watchlists) + rechargement automatique de l'écran.
+- Retrait : ✕ (au survol sur PC, toujours visible sur mobile) avec confirmation ; les alertes
+  du produit sont supprimées.
+- Glisser-déposer : `@hello-pangea/dnd` (suite maintenue de `react-beautiful-dnd`, même API),
+  au doigt, à la souris ou au clavier (Espace + flèches).
+- PC : barre latérale avec chaque watchlist dépliable (menu déroulant de ses produits) ;
+  mobile : sélecteur en haut d'écran, watchlist affichée en premier.
+
+### Alertes mail (Module 9)
+
+| Type | Se déclenche quand… |
+|---|---|
+| 🚨 Signal fort | le score global **passe** à 7,5/10 ou plus |
+| 📉 Alerte baisse | le score global **passe** sous 5/10 |
+| 📊 Croisement MM100 | le prix croise sa MM100 (hausse ou baisse) |
+| 📰 Actualité importante | le sentiment des titres passe sous 3/10 |
+| 💰 Résultats à venir | des résultats trimestriels tombent dans moins de 48 h (une fois par date) |
+
+- Réglage par produit (🔔 dans la watchlist) : chaque type activable séparément, fréquence
+  max. **immédiate · 1×/jour · 1×/semaine** (une alerte trop rapprochée reste en attente et
+  part à la fin du délai si la condition tient toujours).
+- Un mail part quand la condition **devient** vraie, pas à chaque vérification.
+- Vérification toutes les 15 min (APScheduler), 3 min après le rafraîchissement des watchlists.
+- Mail : objet `[SIGNAL ACHAT ✅] ServiceNow (NOW) — Score 8,2/10`, résumé en 5 lignes,
+  bouton « Voir l'analyse complète » (`APP_PUBLIC_URL/?analyse=…`), lien de désinscription.
+- Envoi : `smtplib` (STARTTLS port 587 ou SSL port 465), paramètres dans `.env`.
+
+### Choix techniques à noter
+- **Vite** au lieu de Create React App (abandonné par l'équipe React) — même React, démarrage plus rapide.
+- **@hello-pangea/dnd** pour le glisser-déposer : suite maintenue de `react-beautiful-dnd`
+  (archivé), avec exactement la même API.
+- **pandas-ta 0.4.71b0** (compatible numpy 2 / pandas 3).

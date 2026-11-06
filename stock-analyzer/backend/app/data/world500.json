@@ -1,0 +1,4013 @@
+{
+"generated_at": "2026-10-30",
+"members": [
+{
+"symbol": "NVDA",
+"name": "NVIDIA Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "AAPL",
+"name": "Apple Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MSFT",
+"name": "Microsoft Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "GOOGL",
+"name": "Alphabet Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "AMZN",
+"name": "Amazon.com Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SPCX",
+"name": "Space Exploration Technologies Corp.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "AVGO",
+"name": "Broadcom Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "META",
+"name": "Meta Platforms Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "TSLA",
+"name": "Tesla Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "LLY",
+"name": "Eli Lilly and Company",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "BRK-A",
+"name": "Berkshire Hathaway Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MU",
+"name": "Micron Technology Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "WMT",
+"name": "Walmart Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "AMD",
+"name": "Advanced Micro Devices Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "JPM",
+"name": "JP Morgan Chase & Co.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "XOM",
+"name": "ExxonMobil Holdings Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "V",
+"name": "Visa Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "JNJ",
+"name": "Johnson & Johnson",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MA",
+"name": "Mastercard Incorporated",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ABBV",
+"name": "AbbVie Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "INTC",
+"name": "Intel Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PLTR",
+"name": "Palantir Technologies Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CVX",
+"name": "Chevron Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "COST",
+"name": "Costco Wholesale Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CSCO",
+"name": "Cisco Systems Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ORCL",
+"name": "Oracle Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "KO",
+"name": "Coca-Cola Company (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PG",
+"name": "Procter & Gamble Company (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "UNH",
+"name": "UnitedHealth Group Incorporated",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MRK",
+"name": "Merck & Company Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "BAC",
+"name": "Bank of America Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "AMAT",
+"name": "Applied Materials Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "HD",
+"name": "Home Depot Inc. (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PM",
+"name": "Philip Morris International Inc",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "GE",
+"name": "GE Aerospace",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "LRCX",
+"name": "Lam Research Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PANW",
+"name": "Palo Alto Networks Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "DELL",
+"name": "Dell Technologies Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MS",
+"name": "Morgan Stanley",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CAT",
+"name": "Caterpillar Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "TXN",
+"name": "Texas Instruments Incorporated",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "GS",
+"name": "Goldman Sachs Group Inc. (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "RTX",
+"name": "RTX Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CRWD",
+"name": "CrowdStrike Holdings Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "TMO",
+"name": "Thermo Fisher Scientific Inc",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "NFLX",
+"name": "Netflix Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "WFC",
+"name": "Wells Fargo & Company",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "AMGN",
+"name": "Amgen Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "IBM",
+"name": "International Business Machines Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "GEV",
+"name": "GE Vernova Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ANET",
+"name": "Arista Networks Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "LIN",
+"name": "Linde plc",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CCZ",
+"name": "Comcast Holdings ZONES",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "KLAC",
+"name": "KLA Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "AXP",
+"name": "American Express Company",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "C",
+"name": "Citigroup Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ADI",
+"name": "Analog Devices Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "GILD",
+"name": "Gilead Sciences Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "APH",
+"name": "Amphenol Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "QCOM",
+"name": "QUALCOMM Incorporated",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SNDK",
+"name": "Sandisk Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "DIS",
+"name": "Walt Disney Company (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MRVL",
+"name": "Marvell Technology Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CRM",
+"name": "Salesforce Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PEP",
+"name": "PepsiCo Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "BLK",
+"name": "BlackRock Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MCD",
+"name": "McDonald's Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "VZ",
+"name": "Verizon Communications Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ABT",
+"name": "Abbott Laboratories",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "COP",
+"name": "ConocoPhillips",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "UNP",
+"name": "Union Pacific Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "DE",
+"name": "Deere & Company",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "NEE",
+"name": "NextEra Energy Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "WELL",
+"name": "Welltower Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PFE",
+"name": "Pfizer Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "DHR",
+"name": "Danaher Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SCCO",
+"name": "Southern Copper Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "TMUS",
+"name": "T-Mobile US Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ISRG",
+"name": "Intuitive Surgical Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "TJX",
+"name": "TJX Companies Inc. (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SCHW",
+"name": "Charles Schwab Corporation (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "LMT",
+"name": "Lockheed Martin Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "WDC",
+"name": "Western Digital Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "T",
+"name": "AT&T Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "VRTX",
+"name": "Vertex Pharmaceuticals Incorporated",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "BA",
+"name": "Boeing Company (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MNST",
+"name": "Monster Beverage Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "UBER",
+"name": "Uber Technologies Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PGR",
+"name": "Progressive Corporation (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SPGI",
+"name": "S&P Global Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MO",
+"name": "Altria Group Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "COF",
+"name": "Capital One Financial Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "BMY",
+"name": "Bristol-Myers Squibb Company",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MDT",
+"name": "Medtronic plc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PLD",
+"name": "Prologis Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MPC",
+"name": "Marathon Petroleum Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SBUX",
+"name": "Starbucks Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SYK",
+"name": "Stryker Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PH",
+"name": "Parker-Hannifin Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SNOW",
+"name": "Snowflake Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "LOW",
+"name": "Lowe's Companies Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "NEM",
+"name": "Newmont Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CVS",
+"name": "CVS Health Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MCK",
+"name": "McKesson Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "NOW",
+"name": "ServiceNow Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ADP",
+"name": "Automatic Data Processing Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "BKNG",
+"name": "Booking Holdings Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "GLW",
+"name": "Corning Incorporated",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "NET",
+"name": "Cloudflare Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "VLO",
+"name": "Valero Energy Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SO",
+"name": "Southern Company (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PSX",
+"name": "Phillips 66",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CME",
+"name": "CME Group Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MAR",
+"name": "Marriott International",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "HCA",
+"name": "HCA Healthcare Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "EQIX",
+"name": "Equinix Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "FTNT",
+"name": "Fortinet Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "BNY",
+"name": "The Bank of New York Mellon Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "GD",
+"name": "General Dynamics Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ABNB",
+"name": "Airbnb Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "DUK",
+"name": "Duke Energy Corporation (Holding Company)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ADBE",
+"name": "Adobe Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CSX",
+"name": "CSX Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "DDOG",
+"name": "Datadog Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "EMR",
+"name": "Emerson Electric Company",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "FCX",
+"name": "Freeport-McMoRan Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "VRT",
+"name": "Vertiv Holdings LLC",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "USB",
+"name": "U.S. Bancorp",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CDNS",
+"name": "Cadence Design Systems Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "SNPS",
+"name": "Synopsys Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "CEG",
+"name": "Constellation Energy Corporation",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MRSH",
+"name": "Marsh",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PWR",
+"name": "Quanta Services Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "PNC",
+"name": "PNC Financial Services Group Inc. (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "WM",
+"name": "Waste Management Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "MMM",
+"name": "3M Company",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "WMB",
+"name": "Williams Companies Inc. (The)",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ICE",
+"name": "Intercontinental Exchange Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "UPS",
+"name": "United Parcel Service Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "ELV",
+"name": "Elevance Health Inc.",
+"region": "us",
+"zone": "americas",
+"currency": "USD",
+"type": "ACTION"
+},
+{
+"symbol": "8306.T",
+"name": "Mitsubishi UFJ Financial Group, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7203.T",
+"name": "Toyota Motor Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6098.T",
+"name": "Recruit Holdings Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "9984.T",
+"name": "SoftBank Group Corp.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6857.T",
+"name": "Advantest Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8316.T",
+"name": "Sumitomo Mitsui Financial Group, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "9983.T",
+"name": "Fast Retailing Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6758.T",
+"name": "Sony Group Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6501.T",
+"name": "Hitachi, Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8035.T",
+"name": "Tokyo Electron Limited",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "285A.T",
+"name": "Kioxia Holdings Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6861.T",
+"name": "Keyence Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8411.T",
+"name": "Mizuho Financial Group, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8058.T",
+"name": "Mitsubishi Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8766.T",
+"name": "Tokio Marine Holdings, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8001.T",
+"name": "ITOCHU Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8031.T",
+"name": "Mitsui & Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "9432.T",
+"name": "NTT, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "2914.T",
+"name": "Japan Tobacco Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6981.T",
+"name": "Murata Manufacturing Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7011.T",
+"name": "Mitsubishi Heavy Industries, Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4519.T",
+"name": "Chugai Pharmaceutical Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4063.T",
+"name": "Shin-Etsu Chemical Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7182.T",
+"name": "JAPAN POST BANK Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4502.T",
+"name": "Takeda Pharmaceutical Company Limited",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "9433.T",
+"name": "KDDI Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7974.T",
+"name": "Nintendo Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6503.T",
+"name": "Mitsubishi Electric Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7741.T",
+"name": "HOYA Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6752.T",
+"name": "Panasonic Holdings Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8002.T",
+"name": "Marubeni Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8053.T",
+"name": "Sumitomo Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8725.T",
+"name": "MS&AD Insurance Group Holdings, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7267.T",
+"name": "Honda Motor Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6178.T",
+"name": "Japan Post Holdings Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8750.T",
+"name": "Daiichi Life Group, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "5803.T",
+"name": "Fujikura Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6701.T",
+"name": "NEC Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8015.T",
+"name": "Toyota Tsusho Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4578.T",
+"name": "Otsuka Holdings Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8591.T",
+"name": "ORIX Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8630.T",
+"name": "Sompo Holdings, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6702.T",
+"name": "Fujitsu Limited",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6367.T",
+"name": "Daikin Industries,Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4661.T",
+"name": "Oriental Land Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "5802.T",
+"name": "Sumitomo Electric Industries, Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6301.T",
+"name": "Komatsu Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6146.T",
+"name": "Disco Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6954.T",
+"name": "Fanuc Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6723.T",
+"name": "Renesas Electronics Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4568.T",
+"name": "Daiichi Sankyo Company, Limited",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8308.T",
+"name": "Resona Holdings, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "5108.T",
+"name": "Bridgestone Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6762.T",
+"name": "TDK Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "2802.T",
+"name": "Ajinomoto Co., Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "3382.T",
+"name": "Seven & i Holdings Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4062.T",
+"name": "Ibiden Co.,Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "1605.T",
+"name": "Inpex Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6902.T",
+"name": "DENSO Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4503.T",
+"name": "Astellas Pharma Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8802.T",
+"name": "Mitsubishi Estate Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8309.T",
+"name": "Sumitomo Mitsui Trust Group, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8604.T",
+"name": "Nomura Holdings, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6971.T",
+"name": "Kyocera Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "8801.T",
+"name": "Mitsui Fudosan Co., Ltd.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4901.T",
+"name": "FUJIFILM Holdings Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "9020.T",
+"name": "East Japan Railway Company",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7269.T",
+"name": "Suzuki Motor Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7832.T",
+"name": "BANDAI NAMCO Holdings Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "6273.T",
+"name": "SMC Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "7751.T",
+"name": "Canon Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "5020.T",
+"name": "ENEOS Holdings, Inc.",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "9022.T",
+"name": "Central Japan Railway Company",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "9766.T",
+"name": "Konami Group Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "4543.T",
+"name": "Terumo Corporation",
+"region": "jp",
+"zone": "asia",
+"currency": "JPY",
+"type": "ACTION"
+},
+{
+"symbol": "0700.HK",
+"name": "Tencent Holdings Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "1398.HK",
+"name": "Industrial and Commercial Bank of China Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0939.HK",
+"name": "China Construction Bank Corporation",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "1288.HK",
+"name": "Agricultural Bank of China Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0005.HK",
+"name": "HSBC Holdings plc",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0857.HK",
+"name": "PetroChina Company Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "3988.HK",
+"name": "Bank of China Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "9988.HK",
+"name": "Alibaba Group Holding Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0941.HK",
+"name": "China Mobile Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "3750.HK",
+"name": "Contemporary Amperex Technology Co., Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "3968.HK",
+"name": "China Merchants Bank Co., Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0883.HK",
+"name": "CNOOC Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "1088.HK",
+"name": "China Shenhua Energy Company Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2318.HK",
+"name": "Ping An Insurance (Group) Company of China, Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "3308.HK",
+"name": "Zhongji Innolight Co., Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "1299.HK",
+"name": "AIA Group Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "3328.HK",
+"name": "Bank of Communications Co., Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2899.HK",
+"name": "Zijin Mining Group Company Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0300.HK",
+"name": "Midea Group Co., Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "1810.HK",
+"name": "Xiaomi Corporation",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2628.HK",
+"name": "China Life Insurance Company Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "1658.HK",
+"name": "Postal Savings Bank of China Co., Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "1211.HK",
+"name": "BYD Company Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0386.HK",
+"name": "China Petroleum & Chemical Corporation",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0945.HK",
+"name": "Manulife Financial Corporation",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "9999.HK",
+"name": "NetEase, Inc.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2359.HK",
+"name": "WuXi AppTec Co., Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2388.HK",
+"name": "BOC Hong Kong (Holdings) Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0998.HK",
+"name": "China CITIC Bank Corporation Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2888.HK",
+"name": "Standard Chartered PLC",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "9633.HK",
+"name": "Nongfu Spring Co., Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0388.HK",
+"name": "Hong Kong Exchanges and Clearing Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "3690.HK",
+"name": "Meituan",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0728.HK",
+"name": "China Telecom Corporation Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0019.HK",
+"name": "Swire Pacific Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0981.HK",
+"name": "Semiconductor Manufacturing International Corporation",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2328.HK",
+"name": "PICC Property and Casualty Company Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0267.HK",
+"name": "CITIC Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2475.HK",
+"name": "Luxshare Precision Industry Co., Ltd.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "1276.HK",
+"name": "Jiangsu Hengrui Pharmaceuticals Co.,Ltd",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "6160.HK",
+"name": "BeOne Medicines AG",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "2259.HK",
+"name": "Zijin Gold International Company Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "0016.HK",
+"name": "Sun Hung Kai Properties Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "6030.HK",
+"name": "CITIC Securities Company Limited",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "9618.HK",
+"name": "JD.com, Inc.",
+"region": "hk",
+"zone": "asia",
+"currency": "HKD",
+"type": "ACTION"
+},
+{
+"symbol": "BHP.AX",
+"name": "BHP Group Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "CBA.AX",
+"name": "Commonwealth Bank of Australia",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "RIO.AX",
+"name": "Rio Tinto Group",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "WBC.AX",
+"name": "Westpac Banking Corporation",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "GLC.AX",
+"name": "Glencore plc",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "CSL.AX",
+"name": "CSL Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "WES.AX",
+"name": "Wesfarmers Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "XYZ.AX",
+"name": "Block, Inc.",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "WDS.AX",
+"name": "Woodside Energy Group Ltd",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "GMG.AX",
+"name": "Goodman Group",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "TLS.AX",
+"name": "Telstra Group Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "RMD.AX",
+"name": "ResMed Inc.",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "FMG.AX",
+"name": "Fortescue Ltd",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "TCL.AX",
+"name": "Transurban Group",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "QBE.AX",
+"name": "QBE Insurance Group Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "ALL.AX",
+"name": "Aristocrat Leisure Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "NST.AX",
+"name": "Northern Star Resources Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "SGH.AX",
+"name": "SGH Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "SIG.AX",
+"name": "Sigma Healthcare Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "AMC.AX",
+"name": "Amcor plc",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "COL.AX",
+"name": "Coles Group Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "BXB.AX",
+"name": "Brambles Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "NWS.AX",
+"name": "News Corporation",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "EVN.AX",
+"name": "Evolution Mining Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "FPH.AX",
+"name": "Fisher & Paykel Healthcare Corporation Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "JHX.AX",
+"name": "James Hardie Industries plc",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "ORG.AX",
+"name": "Origin Energy Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "REA.AX",
+"name": "REA Group Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "SUN.AX",
+"name": "Suncorp Group Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "IAG.AX",
+"name": "Insurance Australia Group Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "PME.AX",
+"name": "Pro Medicus Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "S32.AX",
+"name": "South32 Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "SCG.AX",
+"name": "Scentre Group",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "SOL.AX",
+"name": "Washington H. Soul Pattinson and Company Limited",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "APA.AX",
+"name": "APA Group",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "AAI.AX",
+"name": "Alcoa Corporation",
+"region": "au",
+"zone": "asia",
+"currency": "AUD",
+"type": "ACTION"
+},
+{
+"symbol": "D05.SI",
+"name": "DBS Group Holdings Ltd",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "O39.SI",
+"name": "Oversea-Chinese Banking Corporation Limited",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "Z77.SI",
+"name": "Singapore Telecommunications Limited",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "U11.SI",
+"name": "United Overseas Bank Limited",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "S63.SI",
+"name": "Singapore Technologies Engineering Ltd",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "Q0F.SI",
+"name": "IHH Healthcare Berhad",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "TKKD.SI",
+"name": "Kasikornbank Public Company Limited",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "S68.SI",
+"name": "Singapore Exchange Limited",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "C6L.SI",
+"name": "Singapore Airlines Limited",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "F34.SI",
+"name": "Wilmar International Limited",
+"region": "sg",
+"zone": "asia",
+"currency": "SGD",
+"type": "ACTION"
+},
+{
+"symbol": "ASML.AS",
+"name": "ASML Holding N.V.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SHELL.AS",
+"name": "Shell plc",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "UNA.AS",
+"name": "Unilever PLC",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "INGA.AS",
+"name": "ING Groep N.V.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "PRX.AS",
+"name": "Prosus N.V.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "REN.AS",
+"name": "RELX PLC",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "CCEP.AS",
+"name": "Coca-Cola Europacific Partners PLC",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "HEIA.AS",
+"name": "Heineken N.V.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "MT.AS",
+"name": "ArcelorMittal S.A.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ASM.AS",
+"name": "ASM International NV",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ABN.AS",
+"name": "ABN AMRO Bank N.V.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "UMG.AS",
+"name": "Universal Music Group N.V.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "AD.AS",
+"name": "Koninklijke Ahold Delhaize N.V.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ADYEN.AS",
+"name": "Adyen N.V.",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "DSFIR.AS",
+"name": "DSM-Firmenich AG",
+"region": "nl",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ABI.BR",
+"name": "Anheuser-Busch InBev SA/NV",
+"region": "be",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "UCB.BR",
+"name": "UCB SA",
+"region": "be",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ARGX.BR",
+"name": "argenx SE",
+"region": "be",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ELI.BR",
+"name": "Elia Group SA/NV",
+"region": "be",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "LOTB.BR",
+"name": "Lotus Bakeries NV",
+"region": "be",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "OR.PA",
+"name": "L'Oréal S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "MC.PA",
+"name": "LVMH Moët Hennessy - Louis Vuitton, Société Européenne",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "TTE.PA",
+"name": "TotalEnergies SE",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "AIR.PA",
+"name": "Airbus SE",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SU.PA",
+"name": "Schneider Electric S.E.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "RMS.PA",
+"name": "Hermès International Société en commandite par actions",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "AI.PA",
+"name": "L'Air Liquide S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SAF.PA",
+"name": "Safran SA",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SAN.PA",
+"name": "Sanofi",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "BNP.PA",
+"name": "BNP Paribas SA",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "CS.PA",
+"name": "AXA SA",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "EL.PA",
+"name": "EssilorLuxottica Société anonyme",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "DG.PA",
+"name": "Vinci SA",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ENGI.PA",
+"name": "Engie SA",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "CRAP.PA",
+"name": "Caisse Régionale de Crédit Agricole Mutuel Alpes Provence Société coopérative",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "HO.PA",
+"name": "Thales S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ACA.PA",
+"name": "Crédit Agricole S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "GLE.PA",
+"name": "Société Générale Société anonyme",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "BN.PA",
+"name": "Danone S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ORA.PA",
+"name": "Orange S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "STMPA.PA",
+"name": "STMicroelectronics N.V.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "LR.PA",
+"name": "Legrand SA",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "DSY.PA",
+"name": "Dassault Systèmes SE",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SGO.PA",
+"name": "Compagnie de Saint-Gobain S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "VIE.PA",
+"name": "Veolia Environnement SA",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "AM.PA",
+"name": "Dassault Aviation société anonyme",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "KER.PA",
+"name": "Kering SA",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "DIM.PA",
+"name": "Sartorius Stedim Biotech S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "CAP.PA",
+"name": "Capgemini SE",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "AMUN.PA",
+"name": "Amundi S.A.",
+"region": "fr",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ITX.MC",
+"name": "Industria de Diseño Textil, S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "IBE.MC",
+"name": "Iberdrola, S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SAN.MC",
+"name": "Banco Santander, S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "BBVA.MC",
+"name": "Banco Bilbao Vizcaya Argentaria, S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "CABK.MC",
+"name": "CaixaBank, S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ELE.MC",
+"name": "Endesa, S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "AENA.MC",
+"name": "Aena S.M.E., S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "FER.MC",
+"name": "Ferrovial N.V.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "REP.MC",
+"name": "Repsol, S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "NTGY.MC",
+"name": "Naturgy Energy Group, S.A.",
+"region": "es",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "UCG.MI",
+"name": "UniCredit S.p.A.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ISP.MI",
+"name": "Intesa Sanpaolo S.p.A.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ENEL.MI",
+"name": "Enel SpA",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "ENI.MI",
+"name": "Eni S.p.A.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "G.MI",
+"name": "Assicurazioni Generali S.p.A.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "RACE.MI",
+"name": "Ferrari N.V.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "PST.MI",
+"name": "Poste Italiane S.p.A.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "PRY.MI",
+"name": "Prysmian S.p.A.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "BMPS.MI",
+"name": "Banca Monte dei Paschi di Siena S.p.A.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "LDO.MI",
+"name": "Leonardo S.p.a.",
+"region": "it",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "RO.SW",
+"name": "Roche Holding AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "NOVN.SW",
+"name": "Novartis AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "NESN.SW",
+"name": "Nestlé S.A.",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "ABBN.SW",
+"name": "ABB Ltd",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "UBSG.SW",
+"name": "UBS Group AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "ENR.SW",
+"name": "Siemens Energy AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "CFR.SW",
+"name": "Compagnie Financière Richemont SA",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "LISN.SW",
+"name": "Chocoladefabriken Lindt & Sprüngli AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "ZURN.SW",
+"name": "Zurich Insurance Group AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "MRNA.SW",
+"name": "Moderna, Inc.",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "IFX.SW",
+"name": "Infineon Technologies AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "DBK.SW",
+"name": "Deutsche Bank Aktiengesellschaft",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "SREN.SW",
+"name": "Swiss Re AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "LONN.SW",
+"name": "Lonza Group AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "GALD.SW",
+"name": "Galderma Group AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "BAYN.SW",
+"name": "Bayer Aktiengesellschaft",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "HOLN.SW",
+"name": "Holcim AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "GIVN.SW",
+"name": "Givaudan SA",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "MBG.SW",
+"name": "Mercedes-Benz Group AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "SCMN.SW",
+"name": "Swisscom AG",
+"region": "ch",
+"zone": "europe",
+"currency": "CHF",
+"type": "ACTION"
+},
+{
+"symbol": "AZN.L",
+"name": "AstraZeneca PLC",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "RR.L",
+"name": "Rolls-Royce Holdings plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "BATS.L",
+"name": "British American Tobacco p.l.c.",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "BP.L",
+"name": "BP p.l.c.",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "GSK.L",
+"name": "GSK plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "NG.L",
+"name": "National Grid plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "BARC.L",
+"name": "Barclays PLC",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "LLOY.L",
+"name": "Lloyds Banking Group plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "NWG.L",
+"name": "NatWest Group plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "LSEG.L",
+"name": "London Stock Exchange Group plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "AAL.L",
+"name": "Anglo American plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "WPM.L",
+"name": "Wheaton Precious Metals Corp.",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "DGE.L",
+"name": "Diageo plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "RKT.L",
+"name": "Reckitt Benckiser Group plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "TSCO.L",
+"name": "Tesco PLC",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "SSE.L",
+"name": "SSE plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "ANTO.L",
+"name": "Antofagasta plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "HLN.L",
+"name": "Haleon plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "VOD.L",
+"name": "Vodafone Group Public Limited Company",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "EXPN.L",
+"name": "Experian plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "SUNB.L",
+"name": "Sunbelt Rentals Holdings, Inc.",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "III.L",
+"name": "3i Group Ord",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "PRU.L",
+"name": "Prudential plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "BT-A.L",
+"name": "BT Group plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "IMB.L",
+"name": "Imperial Brands PLC",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "AV.L",
+"name": "Aviva plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "AIBG.L",
+"name": "AIB Group plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "NXT.L",
+"name": "NEXT plc",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "IAG.L",
+"name": "International Consolidated Airlines Group S.A.",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "CCH.L",
+"name": "Coca-Cola HBC AG",
+"region": "gb",
+"zone": "europe",
+"currency": "GBp",
+"type": "ACTION"
+},
+{
+"symbol": "INVE-A.ST",
+"name": "Investor AB (publ)",
+"region": "se",
+"zone": "europe",
+"currency": "SEK",
+"type": "ACTION"
+},
+{
+"symbol": "ATCO-A.ST",
+"name": "Atlas Copco AB (publ)",
+"region": "se",
+"zone": "europe",
+"currency": "SEK",
+"type": "ACTION"
+},
+{
+"symbol": "VOLV-A.ST",
+"name": "AB Volvo (publ)",
+"region": "se",
+"zone": "europe",
+"currency": "SEK",
+"type": "ACTION"
+},
+{
+"symbol": "NDA-SE.ST",
+"name": "Nordea Bank Abp",
+"region": "se",
+"zone": "europe",
+"currency": "SEK",
+"type": "ACTION"
+},
+{
+"symbol": "NOKIA-SEK.ST",
+"name": "Nokia Oyj",
+"region": "se",
+"zone": "europe",
+"currency": "SEK",
+"type": "ACTION"
+},
+{
+"symbol": "SHB-B.ST",
+"name": "Svenska Handelsbanken AB (publ)",
+"region": "se",
+"zone": "europe",
+"currency": "SEK",
+"type": "ACTION"
+},
+{
+"symbol": "SAND.ST",
+"name": "Sandvik AB (publ)",
+"region": "se",
+"zone": "europe",
+"currency": "SEK",
+"type": "ACTION"
+},
+{
+"symbol": "SWED-A.ST",
+"name": "Swedbank AB (publ)",
+"region": "se",
+"zone": "europe",
+"currency": "SEK",
+"type": "ACTION"
+},
+{
+"symbol": "NOVO-B.CO",
+"name": "Novo Nordisk A/S",
+"region": "dk",
+"zone": "europe",
+"currency": "DKK",
+"type": "ACTION"
+},
+{
+"symbol": "DSV.CO",
+"name": "DSV A/S",
+"region": "dk",
+"zone": "europe",
+"currency": "DKK",
+"type": "ACTION"
+},
+{
+"symbol": "MAERSK-B.CO",
+"name": "A.P. Møller - Mærsk A/S",
+"region": "dk",
+"zone": "europe",
+"currency": "DKK",
+"type": "ACTION"
+},
+{
+"symbol": "DANSKE.CO",
+"name": "Danske Bank A/S",
+"region": "dk",
+"zone": "europe",
+"currency": "DKK",
+"type": "ACTION"
+},
+{
+"symbol": "GMAB.CO",
+"name": "Genmab A/S",
+"region": "dk",
+"zone": "europe",
+"currency": "DKK",
+"type": "ACTION"
+},
+{
+"symbol": "NSIS-B.CO",
+"name": "Novozymes A/S",
+"region": "dk",
+"zone": "europe",
+"currency": "DKK",
+"type": "ACTION"
+},
+{
+"symbol": "ERIBR.HE",
+"name": "Telefonaktiebolaget LM Ericsson (publ)",
+"region": "fi",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "KNEBV.HE",
+"name": "KONE Oyj",
+"region": "fi",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SAMPO.HE",
+"name": "Sampo Oyj",
+"region": "fi",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "RY.TO",
+"name": "Royal Bank of Canada",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "SHOP.TO",
+"name": "Shopify Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "TD.TO",
+"name": "The Toronto-Dominion Bank",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "BMO.TO",
+"name": "Bank of Montreal",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "CNQ.TO",
+"name": "Canadian Natural Resources Limited",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "BNS.TO",
+"name": "The Bank of Nova Scotia",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "ENB.TO",
+"name": "Enbridge Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "CM.TO",
+"name": "Canadian Imperial Bank of Commerce",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "SU.TO",
+"name": "Suncor Energy Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "BN.TO",
+"name": "Brookfield Corporation",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "AEM.TO",
+"name": "Agnico Eagle Mines Limited",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "CP.TO",
+"name": "Canadian Pacific Kansas City Limited",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "BAM.TO",
+"name": "Brookfield Asset Management Ltd.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "CNR.TO",
+"name": "Canadian National Railway Company",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "TRP.TO",
+"name": "TC Energy Corporation",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "IMO.TO",
+"name": "Imperial Oil Limited",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "ABX.TO",
+"name": "Barrick Mining Corporation",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "CVE.TO",
+"name": "Cenovus Energy Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "GWO.TO",
+"name": "Great-West Lifeco Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "NA.TO",
+"name": "National Bank of Canada",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "L.TO",
+"name": "Loblaw Companies Limited",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "ATD.TO",
+"name": "Alimentation Couche-Tard Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "CSU.TO",
+"name": "Constellation Software Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "TRI.TO",
+"name": "Thomson Reuters Corporation",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "WCN.TO",
+"name": "Waste Connections, Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "SLF.TO",
+"name": "Sun Life Financial Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "BBD-A.TO",
+"name": "Bombardier Inc.",
+"region": "ca",
+"zone": "americas",
+"currency": "CAD",
+"type": "ACTION"
+},
+{
+"symbol": "SAP.DE",
+"name": "SAP SE",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SIE.DE",
+"name": "Siemens Aktiengesellschaft",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "DTE.DE",
+"name": "Deutsche Telekom AG",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "639.DE",
+"name": "Spotify Technology S.A.",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "DIO.DE",
+"name": "Christian Dior SE",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "MUV2.DE",
+"name": "Münchener Rückversicherungs-Gesellschaft Aktiengesellschaft in München",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "DHL.DE",
+"name": "DHL AG",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "DB1.DE",
+"name": "Deutsche Börse AG",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "EOAN.DE",
+"name": "E.ON SE",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "RHM.DE",
+"name": "Rheinmetall AG",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "SHL.DE",
+"name": "Siemens Healthineers AG",
+"region": "de",
+"zone": "europe",
+"currency": "EUR",
+"type": "ACTION"
+},
+{
+"symbol": "BTC-EUR",
+"name": "Bitcoin",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "ETH-EUR",
+"name": "Ethereum",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "XRP-EUR",
+"name": "XRP",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "BNB-EUR",
+"name": "BNB",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "SOL-EUR",
+"name": "Solana",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "DOGE-EUR",
+"name": "Dogecoin",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "ADA-EUR",
+"name": "Cardano",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "TRX-EUR",
+"name": "TRON",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "LINK-EUR",
+"name": "Chainlink",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "AVAX-EUR",
+"name": "Avalanche",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "XLM-EUR",
+"name": "Stellar",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "DOT-EUR",
+"name": "Polkadot",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "LTC-EUR",
+"name": "Litecoin",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "BCH-EUR",
+"name": "Bitcoin Cash",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "SHIB-EUR",
+"name": "Shiba Inu",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "UNI-EUR",
+"name": "Uniswap",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "NEAR-EUR",
+"name": "NEAR Protocol",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "ATOM-EUR",
+"name": "Cosmos",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "HBAR-EUR",
+"name": "Hedera",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+},
+{
+"symbol": "ETC-EUR",
+"name": "Ethereum Classic",
+"region": "crypto",
+"zone": "crypto",
+"currency": "EUR",
+"type": "CRYPTO"
+}
+]
+}
