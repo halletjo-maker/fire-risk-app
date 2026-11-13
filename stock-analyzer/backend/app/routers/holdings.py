@@ -48,6 +48,20 @@ def overview(user: dict = Depends(current_user)) -> dict:
     return holdings.summary(user["id"])
 
 
+@router.post("/refresh")
+def refresh_now(background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
+    """Bouton « Rafraîchir » : cours tout de suite, puis stop et objectif recalculés en arrière-plan."""
+    from ..services import live
+
+    with get_conn() as conn:
+        ids = [r[0] for r in conn.execute(
+            "SELECT product_id FROM holding_tx WHERE user_id = ? GROUP BY product_id "
+            "HAVING SUM(CASE kind WHEN 'BUY' THEN qty ELSE -qty END) > 1e-9", (user["id"],))]
+    live.fast_prices(ids)
+    background.add_task(holdings.refresh_quotes)
+    return holdings.summary(user["id"])
+
+
 @router.post("/tx", status_code=201)
 def add(payload: TxIn, background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
     try:

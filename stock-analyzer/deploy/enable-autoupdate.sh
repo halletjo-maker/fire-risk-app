@@ -21,9 +21,22 @@ set -euo pipefail
 rm -f ${DATA_DIR}/update.request
 echo "=== \$(date -Is) : mise à jour ==="
 cd ${APP_DIR}
+PREV=\$(git rev-parse HEAD)
 git fetch --depth 1 "https://x-access-token:\$(cat /root/.github-token)@github.com/${REPO}.git" ${BRANCH}
 git reset --hard FETCH_HEAD
 ${APP_DIR}/venv/bin/pip install -q -r stock-analyzer/backend/requirements.txt
+# Filet de sécurité : les tests automatiques passent sur la nouvelle version AVANT la mise en ligne.
+# Sinon : retour à la version précédente (qui continue de tourner) et alerte à l'administrateur.
+if ! (cd stock-analyzer/backend && SMTP_HOST= SMTP_USER= SMTP_PASSWORD= timeout 600 \\
+      ${APP_DIR}/venv/bin/python -m pytest -q -x -p no:cacheprovider > /tmp/mm100-tests.log 2>&1); then
+  echo "!!! tests en échec : retour à la version \${PREV:0:7}"
+  tail -n 30 /tmp/mm100-tests.log
+  git reset --hard "\$PREV"
+  ${APP_DIR}/venv/bin/pip install -q -r stock-analyzer/backend/requirements.txt || true
+  runuser -u analyse -- ${APP_DIR}/venv/bin/python stock-analyzer/deploy/watchdog_alert.py update_failed \\
+    "\$(grep -E 'FAILED|Error' /tmp/mm100-tests.log | head -n 3 | cut -c1-300)" || true
+  exit 1
+fi
 git log -1 --format='%h|%cI|%s' > ${APP_DIR}/VERSION
 bash ${APP_DIR}/stock-analyzer/deploy/enable-autoupdate.sh > /dev/null || true  # réapplique ces réglages s'ils ont changé
 systemctl restart analyse-boursiere

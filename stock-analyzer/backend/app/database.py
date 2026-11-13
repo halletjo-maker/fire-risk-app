@@ -79,6 +79,14 @@ CREATE TABLE IF NOT EXISTS holding_refs (
     PRIMARY KEY (user_id, product_id)
 );
 -- Dernier cours, stop et objectif des titres détenus (mis à jour avec les watchlists)
+-- Alertes « forte variation du jour » déjà envoyées (une par titre et par jour au plus)
+CREATE TABLE IF NOT EXISTS move_alerts (
+    user_id         INTEGER NOT NULL,
+    product_id      TEXT    NOT NULL,
+    day             TEXT    NOT NULL,
+    price           REAL,
+    PRIMARY KEY (user_id, product_id, day)
+);
 CREATE TABLE IF NOT EXISTS holding_quotes (
     product_id      TEXT PRIMARY KEY,
     price           REAL,

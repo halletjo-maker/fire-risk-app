@@ -2,6 +2,7 @@
 
 - refresh_watchlists : met à jour prix / score / signal des produits suivis (Module 8)
 - check_alerts       : évalue les alertes et envoie les mails (Module 9)
+- fast_prices        : toutes les 5 min, cours des watchlists personnelles et des positions + alertes
 Les deux tâches tournent toutes les REFRESH_INTERVAL_MINUTES (15 par défaut).
 """
 from __future__ import annotations
@@ -98,6 +99,19 @@ def refresh_holdings() -> None:
         logger.exception("Mise à jour des positions impossible")
 
 
+def fast_prices() -> None:
+    """Toutes les 5 min : cours des watchlists personnelles et des positions, puis alertes
+    (approche du stop, objectif, forte variation du jour)."""
+    from .services import holdings, live
+
+    try:
+        if live.fast_prices():
+            holdings.check_alerts()
+            live.check_moves()
+    except Exception:
+        logger.exception("Cours rapides impossibles")
+
+
 def nightly_backup() -> None:
     from .services import backup
     backup.nightly()
@@ -140,6 +154,11 @@ def start_scheduler() -> None:
         refresh_holdings, "interval", minutes=minutes, id="refresh_holdings",
         name="Mes positions (cours, stop, alertes)", replace_existing=True,
         next_run_time=datetime.now().astimezone() + timedelta(minutes=2),
+    )
+    scheduler.add_job(
+        fast_prices, "interval", minutes=5, id="fast_prices",
+        name="Cours rapides + forte variation (toutes les 5 min)", replace_existing=True,
+        next_run_time=datetime.now().astimezone() + timedelta(minutes=1),
     )
     scheduler.add_job(
         nightly_backup, "cron", hour=3, minute=40, id="nightly_backup",

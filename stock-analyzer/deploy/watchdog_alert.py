@@ -53,6 +53,12 @@ def smtp_config(env: dict, s: dict) -> dict | None:
 
 
 def message(kind: str, detail: str, url: str) -> tuple[str, str]:
+    if kind == "update_failed":
+        return ("⚠️ MM100 : mise à jour refusée par les tests",
+                f"La nouvelle version n'a pas passé les tests automatiques : le site {url} reste sur la "
+                f"version précédente et fonctionne normalement.\n\nDétail : {detail}\n\n"
+                "Que faire : ouvre une session Claude Code et colle ce message pour corriger.\n\n"
+                "— Mise à jour du serveur")
     if kind == "up":
         return "✅ MM100 fonctionne à nouveau", f"Le site {url} répond de nouveau normalement.\n\n{detail}\n\n— Surveillance du serveur"
     return ("⚠️ MM100 ne répond plus",

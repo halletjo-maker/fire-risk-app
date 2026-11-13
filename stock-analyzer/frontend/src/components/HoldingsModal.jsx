@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Briefcase, ChevronDown, Plus, Receipt, Trash2 } from 'lucide-react'
+import { Briefcase, ChevronDown, Plus, Receipt, RefreshCw, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { changeColor, fmtPct, fmtPrice } from '../lib/format'
 import Modal from './Modal'
@@ -231,6 +231,15 @@ export default function HoldingsModal({ onClose }) {
   const [showTx, setShowTx] = useState(false)
 
   const load = () => api.holdings().then(setData).catch((e) => setError(e.message))
+  const [refreshing, setRefreshing] = useState(false)
+  const refreshNow = async () => {
+    setRefreshing(true)
+    try {
+      setData(await api.refreshHoldings())
+      setTimeout(load, 20 * 1000) // stop et objectif recalculés en arrière-plan
+    } catch (e) { setError(e.message) }
+    setRefreshing(false)
+  }
   useEffect(() => {
     load()
     const t = setInterval(load, 60 * 1000)
@@ -247,7 +256,12 @@ export default function HoldingsModal({ onClose }) {
           <p className="text-xs text-muted">Tes vrais placements, encodés à la main. Visible par toi seul ; rien n'est relié à ton compte Saxo.</p>
           {data.positions.length > 0 && (
             <div className="rounded-lg border border-line p-3">
-              <p className="text-xs text-muted">Valeur actuelle</p>
+              <p className="flex items-center justify-between text-xs text-muted">
+                Valeur actuelle
+                <button className="btn-ghost -my-1 gap-1 px-2 py-1 text-xs" onClick={refreshNow} disabled={refreshing}>
+                  <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} /> {refreshing ? 'Mise à jour…' : 'Rafraîchir'}
+                </button>
+              </p>
               <p className="text-2xl font-bold">{eur(t.value_eur)}</p>
               <p className={`text-sm font-semibold ${changeColor(t.pnl_eur)}`}>{signed(t.pnl_eur)} (frais compris) · investi {eur(t.cost_eur)}</p>
               {t.missing_quotes > 0 && <p className="mt-1 text-xs text-muted">Cours en cours de mise à jour pour {t.missing_quotes} titre(s)…</p>}

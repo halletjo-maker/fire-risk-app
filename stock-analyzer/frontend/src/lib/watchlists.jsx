@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api'
 
-const REFRESH_MS = 15 * 60 * 1000 // même rythme que le serveur
+const REFRESH_MS = 2 * 60 * 1000 // relit les cours (mis à jour toutes les 5 min côté serveur)
 const Ctx = createContext(null)
 export const useWatchlists = () => useContext(Ctx)
 
@@ -57,7 +57,7 @@ export function WatchlistProvider({ email, children }) {
     if (selectedId && !itemsRef.current[selectedId]) loadItems(selectedId)
   }, [selectedId, email, loadItems])
 
-  // Rafraîchissement automatique toutes les 15 minutes (et au retour sur l'app)
+  // Relecture automatique toutes les 2 minutes (et au retour sur l'app)
   useEffect(() => {
     const tick = () => Object.keys(itemsRef.current).forEach((id) => loadItems(Number(id), { silent: true }))
     const timer = setInterval(tick, REFRESH_MS)

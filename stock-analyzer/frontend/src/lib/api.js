@@ -99,6 +99,7 @@ export const api = {
   checkAlerts: () => request('/alerts/check', { method: 'POST' }),
   quote: (id) => request(`/quote?id=${encodeURIComponent(id)}`),
   holdings: () => request('/holdings'),
+  refreshHoldings: () => request('/holdings/refresh', { method: 'POST' }),
   sendFeedback: (body) => request('/public/feedback', { method: 'POST', body }),
   feedbackList: () => request('/users/feedback'),
   feedbackRead: () => request('/users/feedback/read', { method: 'POST' }),
