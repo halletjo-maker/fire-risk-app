@@ -66,6 +66,17 @@ def test_weekly_mail_encrypted_and_restorable(auth_client):
     with sqlite3.connect(target) as conn:
         assert conn.execute("SELECT email FROM users").fetchall() == [("jean@exemple.be",)]
 
+    # Test de restauration depuis l'application (fichier déposé sur le téléphone), sans toucher la base
+    import base64
+    b64 = "data:application/octet-stream;base64," + base64.b64encode(blob).decode()
+    v = c.post("/admin/backup/verify", json={"data_b64": b64, "passphrase": "mon secret de secours"}).json()
+    assert v["ok"] is True and {"label": "comptes", "count": 1} in v["counts"]
+    bad = c.post("/admin/backup/verify", json={"data_b64": b64, "passphrase": "faux"})
+    assert bad.status_code == 400 and "incorrect" in bad.json()["detail"]
+    junk = c.post("/admin/backup/verify", json={"data_b64": base64.b64encode(b"n'importe quoi").decode(),
+                                                "passphrase": "x"})
+    assert junk.status_code == 400 and "pas une sauvegarde" in junk.json()["detail"]
+
 
 def test_backup_admin_only(auth_client):
     c = auth_client

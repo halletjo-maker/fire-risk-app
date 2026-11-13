@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, DatabaseBackup, KeyRound, Send } from 'lucide-react'
+import { Check, DatabaseBackup, KeyRound, Send, ShieldCheck } from 'lucide-react'
 import { api } from '../lib/api'
 import { Spinner } from './ui'
 import PasswordInput from './PasswordInput'
@@ -110,6 +110,7 @@ export default function BackupSettings() {
           <p className="text-[11px] text-muted">Rien n'est modifié ; les copies déjà reçues avant un changement de mot de passe gardent l'ancien.</p>
         </form>
       )}
+      {!editing && info.passphrase_set && <RestoreTest />}
       {result && (
         <p className={`mt-2 text-sm ${result.sent ? 'text-bull' : 'text-warn'}`} role="status">
           {result.sent ? 'Copie envoyée : regarde ta boîte mail.' : `Non envoyée : ${result.status}`}
@@ -139,5 +140,63 @@ export default function BackupSettings() {
         </form>
       )}
     </div>
+  )
+}
+
+// Test de restauration : la copie reçue par mail s'ouvre-t-elle ? (rien n'est remplacé)
+function RestoreTest() {
+  const [open, setOpen] = useState(false)
+  const [file, setFile] = useState(null)
+  const [pass, setPass] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [res, setRes] = useState(null)
+  const [err, setErr] = useState(null)
+
+  const run = async (e) => {
+    e.preventDefault()
+    setBusy(true); setRes(null); setErr(null)
+    try {
+      const b64 = await new Promise((resolve, reject) => {
+        const r = new FileReader()
+        r.onload = () => resolve(r.result)
+        r.onerror = () => reject(new Error('Fichier illisible sur ce téléphone.'))
+        r.readAsDataURL(file)
+      })
+      setRes(await api.verifyBackup(b64, pass))
+    } catch (x) { setErr(x.message) } finally { setBusy(false) }
+  }
+
+  if (!open) {
+    return (
+      <button className="mt-2 flex items-center gap-1.5 text-sm text-muted underline-offset-2 hover:text-gray-100 hover:underline"
+        onClick={() => setOpen(true)}>
+        <ShieldCheck className="h-4 w-4" /> Tester une copie reçue par mail
+      </button>
+    )
+  }
+  return (
+    <form onSubmit={run} className="mt-3 space-y-2 rounded-lg bg-bg p-3">
+      <p className="text-xs text-muted">
+        1. Dans ta boîte mail, ouvre le mail « Sauvegarde MM100 » et enregistre la pièce jointe <b>.mm100</b> sur ton téléphone.
+        2. Choisis-la ci-dessous et tape ton mot de passe de sauvegarde. Le serveur l'ouvre à part : tes données actuelles ne sont pas touchées.
+      </p>
+      <input type="file" accept=".mm100,application/octet-stream" className="block w-full text-sm"
+        onChange={(e) => { setFile(e.target.files?.[0] || null); setRes(null); setErr(null) }} />
+      <PasswordInput id="bk-test" value={pass} onChange={(v) => { setPass(v); setErr(null) }} autoComplete="off" placeholder="Mot de passe de sauvegarde" />
+      {err && <p className="text-sm text-bear" role="alert">❌ {err}</p>}
+      {res && (
+        <div className="text-sm text-bull" role="status">
+          ✅ Test réussi : la copie s'ouvre et elle est intacte ({res.size_kb} ko).
+          <ul className="mt-1 list-disc pl-5 text-xs text-gray-300">
+            {res.counts.map((c) => <li key={c.label}>{c.count} {c.label}</li>)}
+            {res.last_day && <li>portefeuilles suivis jusqu'au {res.last_day.split('-').reverse().join('/')}</li>}
+          </ul>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <button type="button" className="btn-ghost flex-1 justify-center border border-line" onClick={() => setOpen(false)}>Fermer</button>
+        <button type="submit" className="btn-primary flex-1" disabled={!file || !pass || busy}>{busy ? 'Vérification…' : 'Tester'}</button>
+      </div>
+    </form>
   )
 }

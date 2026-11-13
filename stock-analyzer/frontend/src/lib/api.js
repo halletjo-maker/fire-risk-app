@@ -61,6 +61,7 @@ export const api = {
   pushTest: () => request('/push/test', { method: 'POST' }),
   checkBackupPassphrase: (passphrase) => request('/admin/backup/check', { method: 'POST', body: { passphrase } }),
   sendBackup: () => request('/admin/backup/send', { method: 'POST' }),
+  verifyBackup: (data_b64, passphrase) => request('/admin/backup/verify', { method: 'POST', body: { data_b64, passphrase } }),
   setPreferences: (body) => request('/users/me/preferences', { method: 'PUT', body }),
   sendMonthlyReport: (period) => request('/portfolios/report/send', { method: 'POST', body: { period } }),
   adminUpdate: () => request('/admin/update', { method: 'POST' }),

@@ -131,6 +131,41 @@ def check_passphrase(passphrase: str) -> bool | None:
     return hmac.compare_digest(_derive(passphrase, bytes.fromhex(salt)), key.encode())
 
 
+VERIFY_COUNTS = (("users", "comptes"), ("watchlists", "watchlists"), ("watchlist_items", "produits suivis"),
+                 ("portfolios", "portefeuilles fictifs"), ("portfolio_positions", "lignes de portefeuilles"),
+                 ("holding_tx", "opérations de « Mes positions »"))
+
+
+def verify(blob: bytes, passphrase: str) -> dict:
+    """Test de restauration sans risque : ouvre la copie dans un fichier temporaire, vérifie qu'elle est
+    intacte et compte ce qu'elle contient. La base en service n'est jamais touchée.
+    ValueError si le fichier ou le mot de passe ne va pas."""
+    try:
+        data = gzip.decompress(decrypt(blob, passphrase))
+    except (OSError, EOFError):
+        raise ValueError("Le fichier est incomplet ou abîmé.") from None
+    fd, path = tempfile.mkstemp(suffix=".db")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        try:
+            if conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                raise ValueError("La sauvegarde s'ouvre mais elle est abîmée.")
+            tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+            counts = [{"label": label, "count": conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]}
+                      for t, label in VERIFY_COUNTS if t in tables]
+            last = conn.execute("SELECT MAX(day) FROM portfolio_values").fetchone()[0] \
+                if "portfolio_values" in tables else None
+        finally:
+            conn.close()
+    except sqlite3.DatabaseError:
+        raise ValueError("Le contenu n'est pas une base lisible.") from None
+    finally:
+        os.unlink(path)
+    return {"ok": True, "size_kb": round(len(data) / 1000), "counts": counts, "last_day": last}
+
+
 # ── Envoi hebdomadaire ───────────────────────────────────────────────────────
 def status() -> dict:
     from .mail import sender

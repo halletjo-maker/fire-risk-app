@@ -124,6 +124,24 @@ def check_backup_passphrase(payload: BackupCheckIn, admin: dict = Depends(admin_
     return {"ok": backup.check_passphrase(payload.passphrase)}
 
 
+class BackupVerifyIn(BaseModel):
+    data_b64: str = Field(min_length=10, max_length=40_000_000)  # fichier .mm100 (≤ 20 Mo) encodé
+    passphrase: str = Field(min_length=1, max_length=200)
+
+
+@router.post("/backup/verify")
+def verify_backup(payload: BackupVerifyIn, admin: dict = Depends(admin_user)) -> dict:
+    """Test de restauration : la copie reçue par mail s'ouvre-t-elle, et que contient-elle ?"""
+    import base64
+    import binascii
+
+    try:
+        blob = base64.b64decode(payload.data_b64.split(",", 1)[-1], validate=False)
+        return backup.verify(blob, payload.passphrase)
+    except (ValueError, binascii.Error) as exc:
+        raise HTTPException(status_code=400, detail=str(exc) or "Fichier illisible.") from None
+
+
 @router.post("/backup/send")
 def send_backup_now(admin: dict = Depends(admin_user)) -> dict:
     result = backup.send_by_mail()
