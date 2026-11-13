@@ -206,10 +206,12 @@ def _screen_ids(watchlist_id: int | None, kind: str | None = None) -> list[int]:
         return [r["id"] for r in rows]
 
 
-def refresh(watchlist_id: int | None = None, resync: bool = False, zones: set[str] | None = None) -> int:
+def refresh(watchlist_id: int | None = None, resync: bool = False, zones: set[str] | None = None,
+            wait: bool = False) -> int:
     """Met à jour les listes larges (toutes, ou une seule). Avec `zones` : seulement les titres de la
-    liste mondiale dont la Bourse est ouverte. Renvoie le nombre de titres calculés."""
-    if not _lock.acquire(blocking=False):
+    liste mondiale dont la Bourse est ouverte. Renvoie le nombre de titres calculés.
+    `wait` : attendre la fin d'une mise à jour en cours au lieu d'abandonner (nouvelle liste, bouton)."""
+    if not _lock.acquire(blocking=wait, timeout=3600 if wait else -1):
         logger.info("Mise à jour des listes larges déjà en cours")
         return 0
     try:
@@ -293,4 +295,4 @@ def _days_ago(days: int) -> str:
 
 
 def refresh_in_background(watchlist_id: int) -> None:
-    threading.Thread(target=refresh, args=(watchlist_id,), daemon=True).start()
+    threading.Thread(target=refresh, args=(watchlist_id,), kwargs={"wait": True}, daemon=True).start()

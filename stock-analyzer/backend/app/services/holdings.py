@@ -4,7 +4,8 @@ Règles de la taxe sur les plus-values (loi d'avril 2026, d'après les publicati
 c'est une estimation, pas un calcul officiel) :
 - 10 % sur les plus-values réalisées à partir du 1er janvier 2026 ;
 - titres achetés avant 2026 : regroupés au prix moyen pondéré ; base = valeur au 31/12/2025, ou le prix
-  d'achat moyen s'il est plus élevé, pour les ventes jusqu'au 31/12/2030 ;
+  d'achat moyen s'il est plus élevé, pour les ventes jusqu'au 31/12/2030 ; ce prix d'achat plus élevé
+  ramène la plus-value au plus à zéro (les pertes d'avant 2026 ne sont pas déductibles) ;
 - titres achetés à partir de 2026 : FIFO (les plus anciens sont vendus en premier) ;
 - frais de courtage et TOB non déductibles ; montants convertis en euros au cours du jour de l'opération ;
 - moins-values déduites des plus-values de la même année seulement ;
@@ -70,12 +71,23 @@ def fx_on(currency: str | None, day: str) -> float | None:
 # ── Calcul ──────────────────────────────────────────────────────────────────
 def _transactions(conn, user_id: int) -> list[dict]:
     return [dict(r) for r in conn.execute(
-        "SELECT * FROM holding_tx WHERE user_id = ? ORDER BY day, id", (user_id,))]
+        "SELECT * FROM holding_tx WHERE user_id = ? ORDER BY day, CASE kind WHEN 'BUY' THEN 0 ELSE 1 END, id", (user_id,))]
 
 
 def _refs(conn, user_id: int) -> dict:
     return {r["product_id"]: dict(r) for r in conn.execute(
         "SELECT * FROM holding_refs WHERE user_id = ?", (user_id,))}
+
+
+def _tax_gain(unit_value: float, p: dict, pre_tax_unit: float | None, ref_unit: float | None) -> float:
+    """Plus-value fiscale si tout était vendu à ce prix (même règle que les ventes réalisées)."""
+    gain = sum(l["qty"] * (unit_value - l["unit"]) for l in p["lots"])
+    if p["pre_qty"] > 1e-9 and pre_tax_unit is not None:
+        pre = (unit_value - pre_tax_unit) * p["pre_qty"]
+        if ref_unit is not None and pre_tax_unit > ref_unit and pre < 0:
+            pre = min(0.0, (unit_value - ref_unit) * p["pre_qty"])
+        gain += pre
+    return gain
 
 
 def compute(transactions: list[dict], refs: dict, quotes: dict) -> dict:
@@ -102,6 +114,7 @@ def compute(transactions: list[dict], refs: dict, quotes: dict) -> dict:
         year = int(t["day"][:4])
         ref = refs.get(t["product_id"])
         while left > 1e-9:
+            floor_unit = None  # valeur au 31/12/2025 : sous ce prix, une perte reste déductible
             if p["pre_qty"] > 1e-9:
                 take = min(left, p["pre_qty"])
                 hist_unit = p["pre_cost"] / p["pre_qty"]
@@ -110,6 +123,7 @@ def compute(transactions: list[dict], refs: dict, quotes: dict) -> dict:
                 elif ref and ref.get("ref_price") and ref.get("ref_fx"):
                     ref_unit = ref["ref_price"] / ref["ref_fx"]
                     tax_unit = max(ref_unit, hist_unit) if year <= HIST_COST_UNTIL else ref_unit
+                    floor_unit = ref_unit
                 else:
                     tax_unit = hist_unit
                     problems.append(f"{p['name']} : valeur au 31/12/2025 manquante, prix d'achat utilisé à la place.")
@@ -129,9 +143,15 @@ def compute(transactions: list[dict], refs: dict, quotes: dict) -> dict:
                 break
             p["realized_eur"] += (unit_price - cost_unit) * take
             if tax_unit is not None:
+                gain = (unit_price - tax_unit) * take
+                if floor_unit is not None and tax_unit > floor_unit and gain < 0:
+                    # Prix d'achat plus élevé que la valeur au 31/12/2025 : il réduit la plus-value jusqu'à
+                    # zéro, mais une perte d'avant 2026 n'est pas déductible ; seule compte la baisse sous
+                    # la valeur au 31/12/2025.
+                    gain = min(0.0, (unit_price - floor_unit) * take)
                 realized.append({"tx_id": t["id"], "day": t["day"], "year": year, "product_id": t["product_id"],
                                  "name": p["name"], "qty": take, "proceeds": unit_price * take,
-                                 "basis": tax_unit * take, "gain": (unit_price - tax_unit) * take})
+                                 "basis": unit_price * take - gain, "gain": gain})
             left -= take
 
     positions = []
@@ -147,7 +167,6 @@ def compute(transactions: list[dict], refs: dict, quotes: dict) -> dict:
         if p["pre_qty"] > 1e-9:
             hist_unit = p["pre_cost"] / p["pre_qty"]
             pre_tax_unit = max(ref_unit, hist_unit) if ref_unit else hist_unit
-        tax_basis = (pre_tax_unit or 0) * p["pre_qty"] + sum(l["qty"] * l["unit"] for l in p["lots"])
         q = quotes.get(p["product_id"]) or {}
         value = qty * q["price"] / q["fx"] if q.get("price") and q.get("fx") else None
         positions.append({
@@ -156,7 +175,7 @@ def compute(transactions: list[dict], refs: dict, quotes: dict) -> dict:
             "fees_eur": round(p["fees"], 2), "value_eur": round(value, 2) if value is not None else None,
             "pnl_eur": round(value - cost - p["fees"], 2) if value is not None else None,
             "pnl_pct": round((value - cost - p["fees"]) / cost * 100, 2) if value is not None and cost else None,
-            "tax_gain_eur": round(value - tax_basis, 2) if value is not None else None,
+            "tax_gain_eur": round(_tax_gain(value / qty, p, pre_tax_unit, ref_unit), 2) if value is not None else None,
             "pre2026_qty": round(p["pre_qty"], 8) if p["pre_qty"] > 1e-9 else 0,
             "ref_price": ref.get("ref_price"), "ref_missing": p["pre_qty"] > 1e-9 and not ref_unit,
             "price": q.get("price"), "change_pct": q.get("change_pct"), "stop_price": q.get("stop_price"),
@@ -268,14 +287,17 @@ def set_ref(user_id: int, product_id: str, price: float, fx: float, source: str)
 
 
 # ── Cours et alertes (planificateur) ────────────────────────────────────────
-def refresh_quotes() -> int:
-    """Cours, stop-loss et objectif des titres détenus (analyse complète, comme les watchlists)."""
+def refresh_quotes(only: list[str] | None = None) -> int:
+    """Cours, stop-loss et objectif des titres détenus (analyse complète, comme les watchlists).
+    `only` : ces produits seulement (bouton « Rafraîchir » d'un utilisateur)."""
     from . import analysis, paper, targets
 
     with get_conn() as conn:
         ids = [r[0] for r in conn.execute(
             "SELECT product_id FROM holding_tx GROUP BY user_id, product_id "
             "HAVING SUM(CASE kind WHEN 'BUY' THEN qty ELSE -qty END) > 1e-9")]
+    if only is not None:
+        ids = [i for i in ids if i in set(only)]
     done = 0
     for pid in sorted(set(ids)):
         try:

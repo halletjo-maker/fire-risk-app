@@ -23,20 +23,29 @@ echo "=== \$(date -Is) : mise à jour ==="
 cd ${APP_DIR}
 PREV=\$(git rev-parse HEAD)
 git fetch --depth 1 "https://x-access-token:\$(cat /root/.github-token)@github.com/${REPO}.git" ${BRANCH}
-git reset --hard FETCH_HEAD
-${APP_DIR}/venv/bin/pip install -q -r stock-analyzer/backend/requirements.txt
-# Filet de sécurité : les tests automatiques passent sur la nouvelle version AVANT la mise en ligne.
-# Sinon : retour à la version précédente (qui continue de tourner) et alerte à l'administrateur.
-if ! (cd stock-analyzer/backend && SMTP_HOST= SMTP_USER= SMTP_PASSWORD= timeout 600 \\
-      ${APP_DIR}/venv/bin/python -m pytest -q -x -p no:cacheprovider > /tmp/mm100-tests.log 2>&1); then
-  echo "!!! tests en échec : retour à la version \${PREV:0:7}"
-  tail -n 30 /tmp/mm100-tests.log
+# Filet de sécurité : installation + tests automatiques sur la nouvelle version AVANT la mise en ligne.
+# Au moindre échec : retour à la version précédente (qui continue de tourner) et alerte à l'administrateur.
+rollback() {
+  trap - ERR
+  echo "!!! \$1 : retour à la version \${PREV:0:7}"
   git reset --hard "\$PREV"
   ${APP_DIR}/venv/bin/pip install -q -r stock-analyzer/backend/requirements.txt || true
-  runuser -u analyse -- ${APP_DIR}/venv/bin/python stock-analyzer/deploy/watchdog_alert.py update_failed \\
-    "\$(grep -E 'FAILED|Error' /tmp/mm100-tests.log | head -n 3 | cut -c1-300)" || true
+  runuser -u analyse -- ${APP_DIR}/venv/bin/python stock-analyzer/deploy/watchdog_alert.py update_failed "\$2" || true
   exit 1
+}
+trap 'rollback "erreur pendant l installation" "Installation des dépendances impossible (réseau ou version)."' ERR
+git reset --hard FETCH_HEAD
+${APP_DIR}/venv/bin/pip install -q -r stock-analyzer/backend/requirements.txt
+# Tests sous l'utilisateur limité « analyse », base temporaire, sans mail réel
+TESTDIR=\$(mktemp -d) && chown analyse "\$TESTDIR"
+if ! (cd stock-analyzer/backend && runuser -u analyse -- env SMTP_HOST= SMTP_USER= SMTP_PASSWORD= \\
+      DATABASE_PATH="\$TESTDIR/test.db" PYTHONDONTWRITEBYTECODE=1 TMPDIR="\$TESTDIR" timeout 600 \\
+      ${APP_DIR}/venv/bin/python -m pytest -q -x -p no:cacheprovider > "\$TESTDIR/tests.log" 2>&1); then
+  tail -n 30 "\$TESTDIR/tests.log"
+  rollback "tests en échec" "\$(grep -E 'FAILED|Error' "\$TESTDIR/tests.log" | head -n 3 | cut -c1-300)"
 fi
+rm -rf "\$TESTDIR"
+trap - ERR
 git log -1 --format='%h|%cI|%s' > ${APP_DIR}/VERSION
 bash ${APP_DIR}/stock-analyzer/deploy/enable-autoupdate.sh > /dev/null || true  # réapplique ces réglages s'ils ont changé
 systemctl restart analyse-boursiere

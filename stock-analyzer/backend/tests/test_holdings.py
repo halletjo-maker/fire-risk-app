@@ -34,6 +34,13 @@ def test_pre_2026_uses_value_at_31_12_2025_or_higher_cost():
     assert holdings.compute(txs, refs, {})["realized"][0]["gain"] == 10 * (100 - 90)
     txs = [tx(1, "BUY", "2024-05-01", 10, 90), tx(2, "SELL", "2031-04-01", 10, 100)]
     assert holdings.compute(txs, refs, {})["realized"][0]["gain"] == 10 * (100 - 80)
+    # Prix d'achat plus élevé : il ramène la plus-value à zéro, sans créer de perte déductible…
+    refs100 = {"yf:ABC": {"ref_price": 100, "ref_fx": 1.0}}
+    txs = [tx(1, "BUY", "2024-05-01", 10, 150), tx(2, "SELL", "2026-04-01", 10, 120)]
+    assert holdings.compute(txs, refs100, {})["realized"][0]["gain"] == 0
+    # … mais une baisse sous la valeur au 31/12/2025 reste une perte déductible
+    txs = [tx(1, "BUY", "2024-05-01", 10, 150), tx(2, "SELL", "2026-04-01", 10, 90)]
+    assert holdings.compute(txs, refs100, {})["realized"][0]["gain"] == -100
     # Vente avant 2026 : pas concernée
     txs = [tx(1, "BUY", "2024-05-01", 10, 90), tx(2, "SELL", "2025-04-01", 10, 100)]
     assert holdings.compute(txs, refs, {})["realized"] == []

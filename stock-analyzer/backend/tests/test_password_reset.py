@@ -61,3 +61,9 @@ def test_forgot_is_rate_limited(auth_client, monkeypatch):
     for _ in range(5):
         assert c.post("/users/password/forgot", json={"email": "jean@exemple.be"}).status_code == 200
     assert c.post("/users/password/forgot", json={"email": "jean@exemple.be"}).status_code == 429
+
+
+def test_reset_link_never_points_to_foreign_site(auth_client, monkeypatch):
+    mails = setup(auth_client, monkeypatch)
+    auth_client.post("/users/password/forgot", json={"email": "jean@exemple.be", "app_url": "https://evil.example"})
+    assert "evil.example" not in mails[-1][2] and "reinitialiser=" in mails[-1][2]

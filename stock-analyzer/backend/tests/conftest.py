@@ -35,6 +35,7 @@ def _no_benchmark_network(monkeypatch):
 def _make_client(tmp_path, monkeypatch, override: bool):
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
     monkeypatch.setenv("SCHEDULER_ENABLED", "false")
+    monkeypatch.setenv("CORS_ORIGINS", "https://1.2.3.4.sslip.io,https://mm100.be")  # adresses « à nous » des tests
     monkeypatch.delenv("ALLOWED_EMAILS", raising=False)
     from fastapi.testclient import TestClient
 

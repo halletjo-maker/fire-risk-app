@@ -155,7 +155,8 @@ def run(portfolio_id: int) -> dict:
                 reason = "Tendance de fond baissière (sous une MM200 qui baisse)"
             if reason:
                 proceeds = pos["qty"] * price / fx
-                ptype = "CRYPTO" if CRYPTO_SYMBOL.search(pos["symbol"] or "") else "ACTION"
+                ptype = pos.get("product_type") or (it or {}).get("product_type") or (
+                    "CRYPTO" if CRYPTO_SYMBOL.search(pos["symbol"] or "") else "ACTION")
                 f = turbo.sell_fee(proceeds) if is_turbo else fee(proceeds, pos["currency"], ptype, pos["symbol"])
                 cost = pos["qty"] * pos["entry_price"] / pos["entry_fx"] + pos["entry_fee"]
                 cash += proceeds - f
@@ -231,11 +232,11 @@ def run(portfolio_id: int) -> dict:
             stop_pct, target = TRAIL_PCT, None  # pas d'objectif : on laisse courir les gains
             conn.execute(
                 "INSERT INTO portfolio_positions (portfolio_id, symbol, product_id, name, currency, qty, entry_price, "
-                "entry_fx, entry_fee, entry_score, target, stop, stop_pct, high, last_price, last_fx) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "entry_fx, entry_fee, entry_score, target, stop, stop_pct, high, last_price, last_fx, product_type) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (portfolio_id, it["symbol"], it["product_id"], it["name"], it["currency"] or "EUR", qty, price, fx, f,
                  it["last_score"], target, rnd(price * (1 - stop_pct / 100)), round(stop_pct, 2),
-                 price, price, fx))
+                 price, price, fx, ptype))
             cash -= cost + f
             fees += f
             held_value += cost

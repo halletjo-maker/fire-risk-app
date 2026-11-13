@@ -242,11 +242,27 @@ def me(user: dict = Depends(current_user)) -> dict:
 
 # ── Administration : inviter des amis, gérer les membres ───────────────────
 
+def _origin(url: str) -> str:
+    from urllib.parse import urlsplit
+    parts = urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}".lower() if parts.scheme in ("http", "https") and parts.netloc else ""
+
+
 def _app_url(payload_url: str | None, request: Request) -> str:
+    """Adresse du site pour les liens envoyés par mail. Seules nos propres adresses sont acceptées :
+    un lien de réinitialisation ne doit jamais pointer vers un site choisi par celui qui le demande."""
+    from ..config import get_settings
+
+    settings = get_settings()
+    base = str(request.base_url).rstrip("/")
+    trusted = {_origin(settings.app_public_url), _origin(base)}
+    trusted |= {_origin(o) for o in settings.cors_origins if o != "*"}
+    trusted.discard("")
     url = (payload_url or "").strip().rstrip("/")
-    if url.startswith(("http://", "https://")) and " " not in url:
+    if url and " " not in url and _origin(url) in trusted:
         return url
-    return str(request.base_url).rstrip("/")
+    public = settings.app_public_url.rstrip("/")
+    return public if _origin(public) and "localhost" not in public else base
 
 
 @router.get("/members")

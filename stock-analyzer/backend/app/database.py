@@ -288,7 +288,8 @@ CREATE TABLE IF NOT EXISTS portfolio_positions (
     financing       REAL,       -- turbos : niveau de financement (= barrière) à l'achat, en devise du sous-jacent
     leverage        REAL,       -- turbos : levier à l'achat
     under_entry     REAL,       -- turbos : cours du sous-jacent à l'achat
-    under_last      REAL        -- turbos : dernier cours du sous-jacent
+    under_last      REAL,       -- turbos : dernier cours du sous-jacent
+    product_type    TEXT        -- ACTION, ETF, CRYPTO… (TOB de la vente)
 );
 
 -- Valeur du portefeuille, une ligne par jour (courbe d'évolution)
@@ -426,6 +427,7 @@ MIGRATIONS = [
     ("portfolio_positions", "leverage", "REAL"),
     ("portfolio_positions", "under_entry", "REAL"),
     ("portfolio_positions", "under_last", "REAL"),
+    ("portfolio_positions", "product_type", "TEXT"),
     ("watchlist_items", "guard", "INTEGER"),
     ("portfolio_positions", "shares_checked_at", "TEXT"),
     ("users", "push_alerts", "INTEGER NOT NULL DEFAULT 1"),

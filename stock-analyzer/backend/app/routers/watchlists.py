@@ -276,7 +276,7 @@ def refresh(watchlist_id: int, background: BackgroundTasks, user: dict = Depends
     with get_conn() as conn:
         wl = _own(conn, watchlist_id, user["id"])
     if wl["kind"].startswith("screen:"):
-        background.add_task(screens.refresh, watchlist_id)
+        background.add_task(screens.refresh, watchlist_id, wait=True)
     else:
         background.add_task(watchlist_service.refresh_all, watchlist_id)
     return {"scheduled": True}
@@ -305,7 +305,7 @@ def create_preset(key: str, background: BackgroundTasks, user: dict = Depends(cu
         wl_id = screens.create_preset_watchlist(user["id"], key)
     except RuntimeError:
         raise HTTPException(status_code=503, detail="Liste Nasdaq momentanément indisponible. Réessaie plus tard.")
-    background.add_task(screens.refresh, wl_id)
+    background.add_task(screens.refresh, wl_id, wait=True)
     with get_conn() as conn:
         return {"watchlist": _summary(conn, wl_id)}
 

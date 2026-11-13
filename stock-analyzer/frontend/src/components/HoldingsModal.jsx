@@ -264,6 +264,15 @@ export default function HoldingsModal({ onClose }) {
               </p>
               <p className="text-2xl font-bold">{eur(t.value_eur)}</p>
               <p className={`text-sm font-semibold ${changeColor(t.pnl_eur)}`}>{signed(t.pnl_eur)} (frais compris) · investi {eur(t.cost_eur)}</p>
+              {(() => {
+                const last = data.positions.map((x) => x.refreshed_at).filter(Boolean).sort().pop()
+                if (!last) return null
+                const d = new Date(last.replace(' ', 'T') + 'Z')
+                const old = Date.now() - d.getTime() > 20 * 60 * 1000
+                return <p className={`mt-1 text-[11px] ${old ? 'text-warn' : 'text-muted'}`}>
+                  Cours de {d.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' })}{old ? ' (Bourse fermée ou source en retard)' : ''}
+                </p>
+              })()}
               {t.missing_quotes > 0 && <p className="mt-1 text-xs text-muted">Cours en cours de mise à jour pour {t.missing_quotes} titre(s)…</p>}
             </div>
           )}

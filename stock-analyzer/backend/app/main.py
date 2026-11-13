@@ -29,9 +29,20 @@ logging.basicConfig(
 )
 
 
+def _close_interrupted_backtests() -> None:
+    """Un test sur le passé tourne dans un fil de l'application : un redémarrage l'interrompt."""
+    from .database import get_conn
+
+    with get_conn() as conn:
+        conn.execute("UPDATE backtests SET status = 'error', progress = 100, finished_at = datetime('now'), "
+                     "result = '{\"error\": \"Interrompu par un redémarrage du serveur : relance le test.\"}' "
+                     "WHERE status = 'running'")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
+    _close_interrupted_backtests()
     start_scheduler()
     yield
     stop_scheduler()

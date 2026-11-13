@@ -9,7 +9,8 @@ depuis la dernière (Bourse fermée le week-end : la variation du vendredi reste
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from ..database import get_conn
 from . import market
@@ -18,6 +19,20 @@ logger = logging.getLogger(__name__)
 
 MOVE_PCT = 5.0
 SAME_PRICE = 0.005  # cours identique à ±0,5 % de la dernière alerte : pas de nouvelle alerte
+TZ = ZoneInfo("Europe/Brussels")
+TRADED_TODAY: set[str] = set()  # produits dont le dernier cours date d'aujourd'hui (Bourse ouverte)
+
+
+def _today() -> str:
+    return datetime.now(TZ).date().isoformat()
+
+
+def traded_on(q: dict, today: str) -> bool:
+    """Le cours date-t-il de la séance du jour ? Sans heure connue : oui en semaine."""
+    t = q.get("time")
+    if t:
+        return str(t)[:10] == today
+    return date.fromisoformat(today).weekday() < 5
 
 
 def _tracked() -> list[str]:
@@ -32,9 +47,18 @@ def _tracked() -> list[str]:
 
 
 def fast_prices(product_ids: list[str] | None = None) -> int:
-    """Cours et variation du jour, sans recalculer l'analyse. Renvoie le nombre de produits mis à jour."""
-    done = 0
-    for pid in (_tracked() if product_ids is None else product_ids):
+    """Cours et variation du jour, sans recalculer l'analyse. Renvoie le nombre de produits mis à jour.
+    Tâche planifiée : quand toutes les Bourses sont fermées (nuit, week-end), seules les cryptos."""
+    from . import world
+    from .paper import CRYPTO_SYMBOL
+
+    done, today = 0, _today()
+    ids = product_ids
+    if ids is None:
+        ids = _tracked()
+        if world.open_zones() == {"crypto"}:
+            ids = [p for p in ids if CRYPTO_SYMBOL.search(p)]
+    for pid in ids:
         try:
             data = market.get_quote(pid)
         except Exception:
@@ -43,11 +67,14 @@ def fast_prices(product_ids: list[str] | None = None) -> int:
         q = (data or {}).get("quote") or {}
         if not q.get("price"):
             continue
+        (TRADED_TODAY.add if traded_on(q, today) else TRADED_TODAY.discard)(pid)
         with get_conn() as conn:
-            conn.execute("UPDATE watchlist_items SET last_price = ?, last_change_pct = ? WHERE product_id = ?",
+            # Heure de mise à jour avancée (sauf produit pas encore analysé : il reste « en cours »)
+            conn.execute("UPDATE watchlist_items SET last_price = ?, last_change_pct = ?, last_refresh_at = "
+                         "CASE WHEN last_refresh_at IS NULL THEN NULL ELSE datetime('now') END WHERE product_id = ?",
                          (q["price"], q.get("change_pct"), pid))
-            conn.execute("UPDATE holding_quotes SET price = ?, change_pct = ? WHERE product_id = ?",
-                         (q["price"], q.get("change_pct"), pid))
+            conn.execute("UPDATE holding_quotes SET price = ?, change_pct = ?, refreshed_at = datetime('now') "
+                         "WHERE product_id = ?", (q["price"], q.get("change_pct"), pid))
         done += 1
     return done
 
@@ -71,16 +98,21 @@ def _moves() -> dict[int, dict[str, dict]]:
     return out
 
 
-def check_moves(today: str | None = None) -> int:
-    """Une notification groupée par utilisateur. Renvoie le nombre de titres signalés."""
+def check_moves(today: str | None = None, traded: set[str] | None = None) -> int:
+    """Une notification groupée par utilisateur. Renvoie le nombre de titres signalés.
+    Seulement pour les titres cotés aujourd'hui : la nuit et le week-end, la variation affichée est
+    celle de la veille et ne doit pas déclencher de nouvelle alerte."""
     from . import push
 
-    today = today or date.today().isoformat()
+    today = today or _today()
+    traded = TRADED_TODAY if traded is None else traded
     sent = 0
     for uid, moves in _moves().items():
         fresh = []
         with get_conn() as conn:
             for pid, m in moves.items():
+                if pid not in traded:
+                    continue
                 last = conn.execute("SELECT day, price FROM move_alerts WHERE user_id = ? AND product_id = ? "
                                     "ORDER BY day DESC LIMIT 1", (uid, pid)).fetchone()
                 if last and (last["day"] == today or (last["price"] and m["price"]
