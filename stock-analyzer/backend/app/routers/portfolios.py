@@ -1,0 +1,174 @@
+"""Portefeuilles fictifs : capital virtuel, achats et ventes automatiques (simulation)."""
+from __future__ import annotations
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from pydantic import BaseModel, Field
+
+from ..database import get_conn
+from ..deps import current_user
+from ..services import paper, regime
+
+router = APIRouter(prefix="/portfolios", tags=["portefeuilles fictifs"])
+
+
+class PortfolioIn(BaseModel):
+    watchlist_id: int | None = None
+    universe: str | None = Field(default=None, pattern="^all$")  # « all » : portefeuille Opportunités
+    product: str | None = Field(default=None, pattern="^turbo$")  # « turbo » : turbos Call levier 2 sur Monde 500
+    capital: float = Field(default=5000, ge=500, le=1_000_000)
+    max_positions: int = Field(default=10, ge=1, le=30)
+    name: str | None = Field(default=None, max_length=50)
+
+
+def _own(conn, pid: int, user_id: int):
+    pf = conn.execute("SELECT * FROM portfolios WHERE id = ? AND user_id = ?", (pid, user_id)).fetchone()
+    if pf is None:
+        raise HTTPException(status_code=404, detail="Portefeuille introuvable")
+    return pf
+
+
+@router.get("")
+def list_portfolios(user: dict = Depends(current_user)) -> dict:
+    with get_conn() as conn:
+        rows = conn.execute("SELECT * FROM portfolios WHERE user_id = ? ORDER BY id", (user["id"],)).fetchall()
+        out = []
+        for pf in rows:
+            s = paper.summary(conn, pf)
+            s.pop("positions")
+            out.append(s)
+    return {"portfolios": out}
+
+
+@router.post("", status_code=201)
+def create(payload: PortfolioIn, background: BackgroundTasks, user: dict = Depends(current_user)) -> dict:
+    if payload.universe == "all":
+        from ..services import screens
+        with get_conn() as conn:
+            have = {r["kind"] for r in conn.execute("SELECT kind FROM watchlists WHERE user_id = ?", (user["id"],))}
+        for key, preset in screens.PRESETS.items():  # les listes larges manquantes sont créées
+            if preset["kind"] not in have:
+                try:
+                    screens.refresh_in_background(screens.create_preset_watchlist(user["id"], key))
+                except Exception:
+                    pass  # source momentanément indisponible : la liste sera ajoutée plus tard
+    max_positions = payload.max_positions
+    if payload.product == "turbo":  # sous-jacents : la liste Monde 500 (actions avec turbos), créée si besoin
+        from ..services import screens
+        with get_conn() as conn:
+            row = conn.execute("SELECT id FROM watchlists WHERE user_id = ? AND kind = ? ORDER BY id LIMIT 1",
+                               (user["id"], screens.PRESETS["world"]["kind"])).fetchone()
+        if row is None:
+            try:
+                wid = screens.create_preset_watchlist(user["id"], "world")
+                screens.refresh_in_background(wid)
+            except Exception:
+                raise HTTPException(status_code=503, detail="Liste Monde 500 indisponible pour l'instant, réessaie plus tard.")
+        else:
+            wid = row["id"]
+        payload = payload.model_copy(update={"watchlist_id": wid, "universe": None,
+                                             "name": payload.name or "Turbos Call"})
+        max_positions = min(max_positions, 5)
+    with get_conn() as conn:
+        if payload.universe == "all":
+            wl_id, default_name = None, "Opportunités"
+        else:
+            wl = conn.execute("SELECT id, name FROM watchlists WHERE id = ? AND user_id = ?",
+                              (payload.watchlist_id, user["id"])).fetchone()
+            if wl is None:
+                raise HTTPException(status_code=404, detail="Watchlist introuvable")
+            wl_id, default_name = wl["id"], f"Fictif · {wl['name']}"
+        name = (payload.name or "").strip() or default_name
+        pid = conn.execute(
+            "INSERT INTO portfolios (user_id, watchlist_id, name, initial_cash, cash, max_positions, universe, product) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (user["id"], wl_id, name, payload.capital, payload.capital, max_positions, payload.universe,
+             payload.product)).lastrowid
+        pf = conn.execute("SELECT * FROM portfolios WHERE id = ?", (pid,)).fetchone()
+        result = paper.summary(conn, pf)
+    background.add_task(paper.run, pid)  # premiers achats sur les cours actuels
+    return {"portfolio": result}
+
+
+class ReportIn(BaseModel):
+    period: str = Field(default="previous", pattern="^(previous|current)$")
+
+
+@router.post("/report/send")
+def send_report(payload: ReportIn | None = None, user: dict = Depends(current_user)) -> dict:
+    """Envoi immédiat : « previous » = mois dernier complet, « current » = du 1er à aujourd'hui."""
+    from ..services import monthly
+
+    if payload and payload.period == "current":
+        now = monthly.datetime.now(monthly.TZ)
+        result = monthly.send_for_user(user["id"], now.year, now.month, force=True, until_day=now.day)
+    else:
+        year, month = monthly.previous_month()
+        result = monthly.send_for_user(user["id"], year, month, force=True)
+    if result.get("status") == "Aucun portefeuille fictif sur cette période":
+        result["status"] = ("Aucun portefeuille fictif le mois dernier : choisis « Mois en cours »."
+                            if not (payload and payload.period == "current") else "Aucun portefeuille fictif.")
+    return result
+
+
+def full_detail(conn, pf) -> dict:
+    """Résumé + opérations clôturées + courbe comparée au MSCI World (vue privée et page publique)."""
+    pid = pf["id"]
+    s = paper.summary(conn, pf)
+    s["is_public"] = bool(pf["is_public"]) if "is_public" in pf.keys() else False
+    s["trades"] = [dict(r) for r in conn.execute(
+        "SELECT id, symbol, name, currency, qty, entry_price, entry_at, exit_price, exit_at, exit_reason, pnl_eur, "
+        "ROUND((exit_price * qty / exit_fx - exit_fee) / (entry_price * qty / entry_fx + entry_fee) * 100 - 100, 2) "
+        "AS pnl_pct FROM portfolio_positions WHERE portfolio_id = ? AND status = 'CLOSED' "
+        "ORDER BY exit_at DESC LIMIT 100", (pid,))]
+    s["history"] = [dict(r) for r in conn.execute(
+        "SELECT day, value_eur FROM portfolio_values WHERE portfolio_id = ? ORDER BY day", (pid,))]
+    # Repère : la même somme placée dans l'ETF MSCI World le jour de la création
+    days = [h["day"] for h in s["history"]]
+    for h, v in zip(s["history"], regime.indexed(days, pf["created_at"][:10], pf["initial_cash"])):
+        h["benchmark_eur"] = v
+    s["benchmark_label"] = regime.LABEL
+    s["regime"] = regime.regime()
+    closed = [t["pnl_eur"] for t in s["trades"] if t["pnl_eur"] is not None]
+    s["stats"] = {"closed": len(closed), "wins": sum(1 for x in closed if x > 0), "realized_eur": round(sum(closed), 2)}
+    return s
+
+
+@router.get("/{pid}")
+def detail(pid: int, user: dict = Depends(current_user)) -> dict:
+    with get_conn() as conn:
+        s = full_detail(conn, _own(conn, pid, user["id"]))
+    s["can_publish"] = bool(user.get("is_admin"))
+    return {"portfolio": s}
+
+
+class PublicIn(BaseModel):
+    public: bool
+
+
+@router.post("/{pid}/public")
+def set_public(pid: int, payload: PublicIn, user: dict = Depends(current_user)) -> dict:
+    """Administrateur : montre ce portefeuille (un seul à la fois) sur la page publique « Portefeuille témoin »."""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Réservé à l'administrateur de l'application.")
+    with get_conn() as conn:
+        _own(conn, pid, user["id"])
+        if payload.public:
+            conn.execute("UPDATE portfolios SET is_public = 0 WHERE is_public = 1")
+        conn.execute("UPDATE portfolios SET is_public = ? WHERE id = ?", (int(payload.public), pid))
+    return {"is_public": payload.public}
+
+
+@router.post("/{pid}/run")
+def run_now(pid: int, user: dict = Depends(current_user)) -> dict:
+    """Applique les règles tout de suite (sur les derniers cours connus)."""
+    with get_conn() as conn:
+        _own(conn, pid, user["id"])
+    return paper.run(pid)
+
+
+@router.delete("/{pid}")
+def delete(pid: int, user: dict = Depends(current_user)) -> dict:
+    with get_conn() as conn:
+        _own(conn, pid, user["id"])
+        conn.execute("DELETE FROM portfolios WHERE id = ?", (pid,))
+    return {"ok": True}

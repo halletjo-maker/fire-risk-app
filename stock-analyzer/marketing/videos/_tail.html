@@ -1,0 +1,27 @@
+<p class="foot">Information générale (règles connues en novembre 2026), pas un conseil fiscal ni en investissement.</p>
+<div class="prog" id="prog"></div>
+<script>
+const TOTAL = __TOTAL__, ease = (x) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3)
+function render(t) {
+  for (const sc of document.querySelectorAll('.scene')) {
+    const a = +sc.dataset.start, b = +sc.dataset.end
+    const vis = Math.min(ease((t - a) / .4), 1 - ease((t - b + .4) / .4))
+    sc.style.opacity = t >= a && t < b ? vis : 0
+    for (const el of sc.querySelectorAll('.el')) {
+      const p = ease((t - a - +el.dataset.in) / .55)
+      el.style.opacity = p; el.style.transform = `translateY(${(1 - p) * 50}px)`
+    }
+    for (const c of sc.querySelectorAll('[data-count]')) {
+      const [f, to] = c.dataset.count.split(',').map(Number)
+      c.textContent = Math.round(f + (to - f) * ease((t - a - .2) / +c.dataset.dur))
+    }
+    for (const g of sc.querySelectorAll('[data-draw]')) {
+      const L = g.getTotalLength(); g.style.strokeDasharray = L
+      g.style.strokeDashoffset = L * (1 - ease((t - a - +g.dataset.draw) / +(g.dataset.ddur || 3)))
+    }
+    for (const f of sc.querySelectorAll('[data-fill]')) f.style.width = `${+f.dataset.fill * ease((t - a - +f.dataset.fdelay) / +f.dataset.fdur)}%`
+  }
+  document.getElementById('prog').style.width = `${t / TOTAL * 100}%`
+}
+window.render = render; window.TOTAL = TOTAL; render(0)
+</script></body></html>

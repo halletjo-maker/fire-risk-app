@@ -1,0 +1,146 @@
+import { useEffect, useState } from 'react'
+import { api, SESSION_EXPIRED } from './lib/api'
+import LoginScreen from './components/LoginScreen'
+import Landing from './site/Landing'
+import AppLayout from './components/AppLayout'
+import { Spinner } from './components/ui'
+
+// Lien d'invitation : https://…/?invitation=JETON
+function invitationToken() {
+  try { return new URLSearchParams(window.location.search).get('invitation') } catch { return null }
+}
+function resetToken() {
+  try { return new URLSearchParams(window.location.search).get('reinitialiser') } catch { return null }
+}
+function clearInvitationFromUrl() {
+  try {
+    const url = new URL(window.location.href)
+    url.searchParams.delete('invitation')
+    url.searchParams.delete('reinitialiser')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+  } catch { /* sans importance */ }
+}
+
+export default function App() {
+  // undefined = chargement, null = pas connecté, objet = utilisateur connecté
+  const [user, setUser] = useState(undefined)
+  const [auth, setAuth] = useState({ setup_required: false, registration_open: false })
+  const [invitation, setInvitation] = useState(null) // { token, email, invited_by }
+  const [reset, setReset] = useState(null) // { token, email } : lien « mot de passe oublié »
+  const [notice, setNotice] = useState(null)
+  // Visiteur non connecté : page d'accueil, sauf lien d'invitation, première utilisation ou « Se connecter »
+  const [showLogin, setShowLogin] = useState(() => {
+    try { return new URLSearchParams(window.location.search).has('connexion') } catch { return false }
+  })
+  const [bootError, setBootError] = useState(null)
+
+  const boot = async () => {
+    setBootError(null)
+    setUser(undefined)
+    try {
+      const { user, setup_required, registration_open } = await api.currentUser()
+      const rtoken = resetToken()
+      if (rtoken) {
+        try {
+          const info = await api.resetInfo(rtoken)
+          setReset({ token: rtoken, ...info })
+          setAuth({ setup_required, registration_open })
+          setUser(null)  // le lien sert à choisir un nouveau mot de passe, même si une session existait
+          return
+        } catch (e) {
+          if (!user) setNotice(e.message)  // lien expiré : on continue normalement
+          clearInvitationFromUrl()
+        }
+      }
+      const token = invitationToken()
+      if (token && !user) {
+        try {
+          const info = await api.invitationInfo(token)
+          setInvitation({ token, ...info })
+        } catch (e) {
+          setNotice(e.message)
+          clearInvitationFromUrl()
+        }
+      } else if (token) {
+        clearInvitationFromUrl() // déjà connecté sur cet appareil
+      }
+      setAuth({ setup_required, registration_open })
+      setUser(user)
+    } catch (e) {
+      setBootError(e.message)
+    }
+  }
+
+  useEffect(() => { boot() }, [])
+
+  // Une requête refusée (session expirée, mot de passe changé ailleurs) ramène à la connexion
+  useEffect(() => {
+    const expired = () => {
+      setUser((u) => {
+        if (u) setNotice('Ta session a expiré : reconnecte-toi.')
+        return null
+      })
+    }
+    window.addEventListener(SESSION_EXPIRED, expired)
+    return () => window.removeEventListener(SESSION_EXPIRED, expired)
+  }, [])
+
+  const handleAuth = async (mode, email, password) => {
+    let res
+    if (mode === 'reset') res = await api.resetPassword(reset.token, password)
+    else if (mode === 'invite') res = await api.register(email, password, invitation.token)
+    else if (mode === 'register') res = await api.register(email, password)
+    else res = await api.login(email, password)
+    if (mode === 'invite' || mode === 'reset') { clearInvitationFromUrl(); setInvitation(null); setReset(null) }
+    try {  // « ?connexion=1 » n'a plus d'utilité une fois connecté
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('connexion')) { url.searchParams.delete('connexion'); window.history.replaceState(null, '', url.pathname + url.search) }
+    } catch { /* sans importance */ }
+    setNotice(null)
+    setAuth({ setup_required: false, registration_open: auth.registration_open && mode !== 'register' })
+    setUser(res.user)
+  }
+
+  const handleLogout = async () => {
+    try { await api.logout() } catch { /* serveur injoignable : on déconnecte quand même */ } finally {
+      setNotice(null)
+      setUser(null)
+    }
+  }
+
+  if (bootError) {
+    return (
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="card max-w-sm p-6 text-center">
+          <p className="font-semibold text-bear">Connexion au serveur impossible</p>
+          <p className="mt-2 text-sm text-muted">{bootError}</p>
+          <button className="btn-primary mt-4 w-full" onClick={boot}>Réessayer</button>
+        </div>
+      </div>
+    )
+  }
+  if (user === undefined) {
+    return <div className="flex min-h-full items-center justify-center"><Spinner /></div>
+  }
+  if (!user && !showLogin && !invitation && !reset && !auth.setup_required && !notice) {
+    return <Landing onLogin={() => { setShowLogin(true); window.scrollTo(0, 0) }} />
+  }
+  if (!user) {
+    return (
+      <LoginScreen
+        onBack={invitation || reset || auth.setup_required ? null : () => {
+          setShowLogin(false)
+          setNotice(null)
+          try { window.history.replaceState(null, '', '/') } catch { /* sans importance */ }
+        }}
+        setupRequired={auth.setup_required}
+        registrationOpen={auth.registration_open}
+        invitation={invitation}
+        reset={reset}
+        notice={notice}
+        onSubmit={handleAuth}
+      />
+    )
+  }
+  return <AppLayout user={user} onLogout={handleLogout} />
+}
